@@ -2,7 +2,7 @@
 
 Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
-**Próximo paso:** Etapa 6 (Seed): scripts/seed.ts (panorámicas CC0 de Poly Haven + planos SVG generados), scripts/create-admin.ts. El botón "Borrar datos de ejemplo" ya está en el dashboard.
+**Próximo paso:** Etapa 7 (Calidad local): Playwright (iPhone y escritorio), tsc/eslint/build limpios, tests de RLS. Después BLOQUEO A (Supabase).
 
 **Cómo verificar:** `npm run typecheck`, `npm run lint`, `npm test` (unitarios + base con PGlite), `npm run build`.
 
@@ -19,7 +19,7 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 - [x] 3. Web pública: inicio, listados con filtros en la URL, ficha, consulta, WhatsApp, OG, sitemap, robots, 404. Probado sin datos; falta probar con datos reales (etapa 8).
 - [x] 4. Visores: tour 360° (Pannellum) y planos con zoom/paneo táctil. Falta probarlos con datos reales (etapa 8).
 - [x] 5. Panel /admin: acceso, dashboard, propiedades (listado + editor en 5 pasos con autoguardado), fotos, tour con editor de hotspots, planos con puntos, consultas + CSV, configuración con vista previa, usuarios, ayuda. Falta probarlo con Supabase real (etapa 8).
-- [ ] 6. Seed, create-admin y "Borrar datos de ejemplo".
+- [x] 6. Seed (`npm run seed`), `npm run crear-admin` y botón "Borrar datos de ejemplo" en el dashboard. Imágenes probadas con `npm run seed -- --solo-imagenes`; la carga en Supabase se prueba en la etapa 8.
 - [ ] 7. Calidad local: tsc, eslint, build, Playwright, RLS.
   - [ ] BLOQUEO A: Supabase configurado (SETUP-CUENTAS pasos 1 y 2).
 - [ ] 8. Supabase real: link, db push, Storage, seed, admin, tipos generados, tests.

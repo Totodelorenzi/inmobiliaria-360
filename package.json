@@ -11,7 +11,9 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test:unit": "node --import ./scripts/alias.ts --test \"tests/unit/**/*.test.ts\"",
     "test:db": "node --import ./scripts/alias.ts --test \"tests/db/**/*.test.ts\"",
-    "test": "npm run test:unit && npm run test:db"
+    "test": "npm run test:unit && npm run test:db",
+    "seed": "node --env-file-if-exists=.env.local --import ./scripts/alias.ts scripts/seed.ts",
+    "crear-admin": "node --env-file-if-exists=.env.local --import ./scripts/alias.ts scripts/create-admin.ts"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",

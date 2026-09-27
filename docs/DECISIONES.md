@@ -73,3 +73,9 @@ Una línea por decisión: fecha · qué · por qué.
 - 2026-09-27 · Ubicación en el panel: búsqueda de la dirección en Nominatim (OpenStreetMap) + pin arrastrable · sin API key ni costo; uso ocasional dentro de su política.
 - 2026-09-27 · Logo en WebP o PNG (nunca JPG) · conserva la transparencia.
 - 2026-09-27 · Vista previa del tour de borradores en /admin/vista-previa/[id] reutilizando el visor público · un borrador no es visible en /propiedad/…
+- 2026-09-27 · Fotos comunes de ejemplo generadas desde las panorámicas con proyección en perspectiva (gnomónica, bilineal) · parecen fotos de cámara (líneas rectas) sin descargar más imágenes.
+- 2026-09-27 · Seed idempotente: borra los datos `es_demo` anteriores (filas y archivos) y los recrea; `--solo-imagenes` prueba el procesamiento sin Supabase · se puede correr las veces que haga falta.
+- 2026-09-27 · Panorámicas de Poly Haven: JPG "tonemapped" (~5 MB) con caché en scripts/.cache (ignorada por git) · CC0, sin atribución obligatoria; se bajan una sola vez.
+- 2026-09-27 · Planos de ejemplo en SVG propio (unidad tipo y terraza de amenities) con franja de título aparte; los puntos se guardan en % de la imagen completa · el dibujo y los puntos coinciden.
+- 2026-09-27 · create-admin: contraseña de 20 caracteres sin ambiguos (0/O, 1/l) generada con `crypto.randomInt`, guardada solo en .env.local; si el usuario existe, se sincroniza con la de .env.local.
+- 2026-09-27 · Scripts con `node --env-file-if-exists=.env.local --import ./scripts/alias.ts` · reusan el código de src/ (clientes, slug, storage) sin compilar.
