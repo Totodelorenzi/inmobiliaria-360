@@ -22,3 +22,16 @@ Una línea por decisión: fecha · qué · por qué.
 - 2026-09-27 · `cn()` propio sin clsx ni tailwind-merge · 3 líneas; los componentes evitan clases en conflicto.
 - 2026-09-27 · Tests unitarios con `node --test` (tests/unit) y `allowImportingTsExtensions` · Node 24 ejecuta TypeScript nativo: cero dependencias.
 - 2026-09-27 · @supabase/ssr y @supabase/supabase-js fijadas a versión exacta · son las verificadas; se actualizan a propósito, no por accidente.
+- 2026-09-27 · Enums de Postgres (operacion, tipo_propiedad, estado_obra, moneda, rol_miembro, tipo_plano, origen_lead) · la base valida los valores y TypeScript recibe uniones exactas.
+- 2026-09-27 · Funciones de RLS en el esquema `private` (security definer, `search_path = ''`) · evitan recursión entre políticas y la API no las expone.
+- 2026-09-27 · Permisos explícitos por rol (`revoke all` + grants mínimos) además de RLS · defensa en profundidad: anon solo lee y crea leads. Toda tabla nueva tiene que declarar sus grants.
+- 2026-09-27 · Solo el rol admin edita la agencia y gestiona miembros; propiedades y leads, cualquier miembro · la spec no distingue permisos; marca y usuarios son sensibles.
+- 2026-09-27 · Leads validados en la base: el formulario exige nombre + teléfono o email; la propiedad tiene que estar publicada y ser de esa agencia · frena basura enviada directo a la API.
+- 2026-09-27 · `leads.property_id` con `on delete set null` · borrar una propiedad no borra sus consultas.
+- 2026-09-27 · `cochera` es cantidad (smallint) y `precio` null significa "Consultar" · cubren "2 cocheras" y avisos sin precio.
+- 2026-09-27 · Triggers de integridad: hotspots y puntos de plano solo apuntan a escenas de la misma propiedad; marcar foto principal desmarca la anterior; `updated_at` automático.
+- 2026-09-27 · Storage en rutas `{agency_id}/{property_id}/archivo` (logo en `fotos/{agency_id}/agencia/`); buckets fotos 10 MB, panoramas 20 MB, planos 10 MB, con tipos MIME restringidos · la política decide por la primera carpeta y borrar una propiedad es borrar su carpeta.
+- 2026-09-27 · Las columnas `*_url` guardan la URL pública completa, como la spec · no hace falta armar URLs al mostrar; los archivos se borran por carpeta.
+- 2026-09-27 · Tests de base con PGlite (Postgres 18 en WASM) y una réplica mínima de Supabase (`tests/db/supabase-shim.sql`) · no hay Docker; cada test corre en una transacción que se revierte.
+- 2026-09-27 · `"type": "module"` en package.json · Node ejecuta los tests TypeScript como ESM sin advertencias.
+- 2026-09-27 · Tipos de la base escritos con helpers `Table`/`Rel` (Update = Partial<Insert>) · compactos y verificados contra supabase-js; se regeneran en la etapa 8.

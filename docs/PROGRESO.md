@@ -2,9 +2,9 @@
 
 Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
-**Próximo paso:** Etapa 2 (Base de datos): migraciones SQL en supabase/migrations, RLS, buckets y políticas de Storage, tests con PGlite en tests/db/, tipos a mano en src/types/database.ts.
+**Próximo paso:** Etapa 3 (Web pública completa): inicio, listados con filtros en la URL, ficha, SEO (sitemap, robots, JSON-LD, OG), 404.
 
-**Cómo verificar:** `npm run typecheck`, `npm run lint`, `npm run test:unit`, `npm run build`.
+**Cómo verificar:** `npm run typecheck`, `npm run lint`, `npm test` (unitarios + base con PGlite), `npm run build`.
 
 ## Arranque
 
@@ -15,7 +15,7 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 ## Etapas
 
 - [x] 1. Base: dependencias, carpetas, clientes Supabase, `env.ts`, `proxy.ts`, layout, sistema de diseño (tokens, fuentes, componentes en src/components/ui).
-- [ ] 2. Base de datos: migraciones, RLS, Storage, tests PGlite, tipos a mano.
+- [x] 2. Base de datos: migraciones (esquema, RLS, Storage) en supabase/migrations, 26 tests PGlite en tests/db, tipos a mano.
 - [ ] 3. Web pública completa.
 - [ ] 4. Visores: tour 360° y planos.
 - [ ] 5. Panel /admin completo.
