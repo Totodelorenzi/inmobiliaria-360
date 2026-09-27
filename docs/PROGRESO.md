@@ -2,7 +2,9 @@
 
 Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
-**Próximo paso:** Etapa 1 (Base): dependencias, `src/lib/env.ts`, clientes de Supabase, `proxy.ts`, layout y sistema de diseño.
+**Próximo paso:** Etapa 2 (Base de datos): migraciones SQL en supabase/migrations, RLS, buckets y políticas de Storage, tests con PGlite en tests/db/, tipos a mano en src/types/database.ts.
+
+**Cómo verificar:** `npm run typecheck`, `npm run lint`, `npm run test:unit`, `npm run build`.
 
 ## Arranque
 
@@ -12,7 +14,7 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
 ## Etapas
 
-- [ ] 1. Base: dependencias, carpetas, clientes Supabase, `env.ts`, `proxy.ts`, layout, sistema de diseño.
+- [x] 1. Base: dependencias, carpetas, clientes Supabase, `env.ts`, `proxy.ts`, layout, sistema de diseño (tokens, fuentes, componentes en src/components/ui).
 - [ ] 2. Base de datos: migraciones, RLS, Storage, tests PGlite, tipos a mano.
 - [ ] 3. Web pública completa.
 - [ ] 4. Visores: tour 360° y planos.
