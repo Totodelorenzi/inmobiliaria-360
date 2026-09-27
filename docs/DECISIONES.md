@@ -49,3 +49,9 @@ Una línea por decisión: fecha · qué · por qué.
 - 2026-09-27 · Formulario de consulta con trampa anti-bots (campo oculto) y validación en servidor + base · sin captcha que moleste; falta límite por IP (pendiente, ver PROGRESO).
 - 2026-09-27 · Error boundaries con `retry()` · Next 16 lo recomienda en lugar de `reset()`.
 - 2026-09-27 · Hook de resolución para Node (`scripts/alias.ts`: alias `@/`, extensiones, `server-only`) · tests y scripts reusan el código de src/ sin compilar ni sumar dependencias.
+- 2026-09-27 · Pannellum 2.5.7 (fijado) importado dinámicamente como script global + textos en español · pesa 56 KB y solo se descarga en /tour.
+- 2026-09-27 · Tour: hotspots propios (círculo amarillo con flecha y nombre visible, accesibles por teclado), autorrotación hasta el primer toque (no vuelve al cambiar de ambiente), `?escena=` en la URL para compartir, precarga de las escenas vecinas con `crossOrigin` igual al de Pannellum (reusa la caché).
+- 2026-09-27 · Giroscopio con `DeviceOrientationEvent.requestPermission()` en iOS; pantalla completa sobre el visor entero (con controles) y oculta donde no hay soporte (iPhone) · la API de pantalla completa no existe en Safari de iPhone.
+- 2026-09-27 · Zoom y paneo de planos con un hook propio (`use-pan-zoom.ts`: pellizco, arrastre, doble toque, rueda, teclado) · ~150 líneas, sin dependencia; los puntos compensan la escala para seguir midiendo 44 px.
+- 2026-09-27 · Imagen Open Graph como ruta propia `/og/propiedad/[slug]` (cacheada en la CDN) en vez de `opengraph-image.tsx` · la ficha, el tour y los planos comparten la misma imagen.
+- 2026-09-27 · Tour y planos en el grupo `(visor)` con layout propio a pantalla completa · sin header/footer; ISR bajo demanda (`generateStaticParams` vacío).

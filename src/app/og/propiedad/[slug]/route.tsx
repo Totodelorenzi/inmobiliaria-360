@@ -3,10 +3,10 @@ import { normalizeHex } from "@/lib/color";
 import { getAgencia, getPropiedad } from "@/lib/data/sitio";
 import { formatPrecio, formatUbicacion, OPERACION_LABEL } from "@/lib/format";
 
-export const alt = "Foto y precio de la propiedad";
-export const size = { width: 1200, height: 630 };
-export const contentType = "image/png";
-export const revalidate = 3600;
+import { OG_SIZE as size } from "@/lib/og";
+
+// La CDN de Vercel la guarda una hora y la sirve vieja mientras la regenera.
+const headers = { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" };
 
 /** Descarga la foto como data URL (solo JPEG o PNG, que es lo que soporta el generador). */
 async function fotoComoDataUrl(url: string | undefined) {
@@ -21,7 +21,8 @@ async function fotoComoDataUrl(url: string | undefined) {
   }
 }
 
-export default async function Imagen({ params }: { params: Promise<{ slug: string }> }) {
+/** Imagen para compartir la propiedad (WhatsApp, redes): foto, precio, título y etiquetas. */
+export async function GET(_request: Request, { params }: RouteContext<"/og/propiedad/[slug]">) {
   const { slug } = await params;
   const agencia = await getAgencia();
   const p = agencia ? await getPropiedad(agencia.id, slug) : null;
@@ -34,7 +35,7 @@ export default async function Imagen({ params }: { params: Promise<{ slug: strin
           {agencia?.nombre ?? "Propiedades"}
         </div>
       ),
-      size,
+      { ...size, headers },
     );
   }
 
@@ -89,6 +90,6 @@ export default async function Imagen({ params }: { params: Promise<{ slug: strin
         </div>
       </div>
     ),
-    size,
+    { ...size, headers },
   );
 }

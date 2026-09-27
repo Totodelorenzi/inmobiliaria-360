@@ -44,6 +44,7 @@ import {
   whatsappLink,
 } from "@/lib/format";
 import { ubicacionPublica } from "@/lib/geo";
+import { metadataCompartir } from "@/lib/og";
 
 export const revalidate = 3600;
 
@@ -77,7 +78,7 @@ export async function generateMetadata({ params }: PageProps<"/propiedad/[slug]"
     title: `${p.titulo} · ${formatPrecio(p.precio, p.moneda, p.operacion)}`,
     description: resumen(p).slice(0, 160),
     alternates: { canonical: `/propiedad/${p.slug}` },
-    openGraph: { type: "website", url: `/propiedad/${p.slug}`, title: p.titulo, description: resumen(p).slice(0, 200) },
+    ...metadataCompartir(p.slug, p.titulo, resumen(p).slice(0, 200), `/propiedad/${p.slug}`),
   };
 }
 

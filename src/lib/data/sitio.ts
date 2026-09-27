@@ -210,3 +210,63 @@ export async function getSlugs(agencyId: string) {
   if (error) fallar("las propiedades", error);
   return data;
 }
+
+export type EscenaTour = Pick<
+  Tables<"tour_scenes">,
+  "id" | "nombre_ambiente" | "panorama_url" | "thumb_url" | "yaw_inicial" | "pitch_inicial"
+> & { hotspots: Pick<Tables<"tour_hotspots">, "id" | "target_scene_id" | "yaw" | "pitch" | "texto">[] };
+
+/** Tour 360° de una propiedad publicada: escenas ordenadas con sus hotspots. */
+export const getTour = cache(async (agencyId: string, slug: string) => {
+  const { data, error } = await createPublicClient()
+    .from("properties")
+    .select(
+      "id, slug, titulo, operacion, precio, moneda, planos:property_plans(count), " +
+        "escenas:tour_scenes(id, nombre_ambiente, panorama_url, thumb_url, orden, yaw_inicial, pitch_inicial, " +
+        "hotspots:tour_hotspots!tour_hotspots_scene_id_fkey(id, target_scene_id, yaw, pitch, texto))",
+    )
+    .eq("agency_id", agencyId)
+    .eq("publicada", true)
+    .eq("slug", slug)
+    .maybeSingle();
+  if (error) fallar("el tour", error);
+  if (!data) return null;
+  const fila = data as unknown as Pick<Propiedad, "id" | "slug" | "titulo" | "operacion" | "precio" | "moneda"> & {
+    planos: { count: number }[];
+    escenas: (EscenaTour & { orden: number })[];
+  };
+  return {
+    ...fila,
+    tienePlanos: (fila.planos[0]?.count ?? 0) > 0,
+    escenas: fila.escenas.sort((a, b) => a.orden - b.orden),
+  };
+});
+
+export type PlanoVisor = Pick<Tables<"property_plans">, "id" | "nombre" | "url" | "thumb_url"> & {
+  puntos: Pick<Tables<"plan_hotspots">, "id" | "x_pct" | "y_pct" | "texto" | "scene_id">[];
+};
+
+/** Planos de una propiedad publicada con sus puntos. */
+export const getPlanos = cache(async (agencyId: string, slug: string) => {
+  const { data, error } = await createPublicClient()
+    .from("properties")
+    .select(
+      "id, slug, titulo, escenas:tour_scenes(count), " +
+        "planos:property_plans(id, nombre, url, thumb_url, orden, puntos:plan_hotspots(id, x_pct, y_pct, texto, scene_id))",
+    )
+    .eq("agency_id", agencyId)
+    .eq("publicada", true)
+    .eq("slug", slug)
+    .maybeSingle();
+  if (error) fallar("los planos", error);
+  if (!data) return null;
+  const fila = data as unknown as Pick<Propiedad, "id" | "slug" | "titulo"> & {
+    escenas: { count: number }[];
+    planos: (PlanoVisor & { orden: number })[];
+  };
+  return {
+    ...fila,
+    tieneTour: (fila.escenas[0]?.count ?? 0) > 0,
+    planos: fila.planos.sort((a, b) => a.orden - b.orden),
+  };
+});

@@ -1,0 +1,74 @@
+/* Estilos de los visores (tour 360° y planos). Pannellum crea su propio DOM: hace falta CSS global. */
+
+.visor-tour .pnlm-container {
+  background: #000;
+  font-family: var(--font-sans);
+}
+
+/* Se usa el indicador de carga propio (en español). */
+.visor-tour .pnlm-load-box,
+.visor-tour .pnlm-about-msg {
+  display: none !important;
+}
+
+.hotspot-tour {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 0;
+  height: 0;
+  overflow: visible;
+  cursor: pointer;
+}
+
+.hotspot-tour__icono {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-top: -26px;
+  border: 3px solid #fff;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.45);
+  transition: transform 150ms;
+  animation: hotspot-pulso 2.4s ease-out infinite;
+}
+
+.hotspot-tour:hover .hotspot-tour__icono,
+.hotspot-tour:focus-visible .hotspot-tour__icono {
+  transform: scale(1.12);
+}
+
+.hotspot-tour:focus-visible {
+  outline: none;
+}
+
+.hotspot-tour:focus-visible .hotspot-tour__icono {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.hotspot-tour__texto {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.75);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+@keyframes hotspot-pulso {
+  0% {
+    box-shadow: 0 0 0 0 rgb(255 200 61 / 0.7), 0 4px 16px rgb(0 0 0 / 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 16px rgb(255 200 61 / 0), 0 4px 16px rgb(0 0 0 / 0.45);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(255 200 61 / 0), 0 4px 16px rgb(0 0 0 / 0.45);
+  }
+}

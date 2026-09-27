@@ -2,7 +2,7 @@
 
 Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
-**Próximo paso:** Etapa 4 (Visores): tour 360° con Pannellum en /propiedad/[slug]/tour y visor de planos en /propiedad/[slug]/planos.
+**Próximo paso:** Etapa 5 (Panel /admin): login y recuperación, dashboard, propiedades (listado y alta en 5 pasos), fotos, tour, planos, leads, configuración, usuarios, ayuda.
 
 **Cómo verificar:** `npm run typecheck`, `npm run lint`, `npm test` (unitarios + base con PGlite), `npm run build`.
 
@@ -17,7 +17,7 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 - [x] 1. Base: dependencias, carpetas, clientes Supabase, `env.ts`, `proxy.ts`, layout, sistema de diseño (tokens, fuentes, componentes en src/components/ui).
 - [x] 2. Base de datos: migraciones (esquema, RLS, Storage) en supabase/migrations, 26 tests PGlite en tests/db, tipos a mano.
 - [x] 3. Web pública: inicio, listados con filtros en la URL, ficha, consulta, WhatsApp, OG, sitemap, robots, 404. Probado sin datos; falta probar con datos reales (etapa 8).
-- [ ] 4. Visores: tour 360° y planos.
+- [x] 4. Visores: tour 360° (Pannellum) y planos con zoom/paneo táctil. Falta probarlos con datos reales (etapa 8).
 - [ ] 5. Panel /admin completo.
 - [ ] 6. Seed, create-admin y "Borrar datos de ejemplo".
 - [ ] 7. Calidad local: tsc, eslint, build, Playwright, RLS.
@@ -30,7 +30,7 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
 ## Pendientes técnicos
 
-- Probar la web pública con datos reales (inicio, filtros, ficha, mapa, consulta, OG) apenas haya Supabase.
+- Probar con datos reales apenas haya Supabase: inicio, filtros, ficha, mapa, consulta, OG, tour (hotspots, giroscopio en iPhone) y planos (pellizco).
 - Límite de consultas por IP en /api/whatsapp y el formulario (hoy: trampa anti-bots + validación).
 
 ## Pendientes del usuario
