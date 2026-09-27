@@ -330,3 +330,24 @@ describe("storage", () => {
     assert.equal((await db.query("select * from storage.objects")).rows.length, 1);
   });
 });
+
+describe("búsqueda", () => {
+  test("encuentra sin tildes ni mayúsculas y no expone direcciones ocultas", async () => {
+    const ids = await como(db, "adminA", async (tx) => {
+      await tx.query(
+        `insert into properties (id, agency_id, titulo, slug, operacion, tipo, barrio, direccion, mostrar_direccion_exacta, publicada)
+         values ('20000000-0000-4000-8000-0000000000e1', $1, 'Luminoso', 'luminoso', 'venta', 'departamento', 'Núñez', 'Cuba 3100', false, true),
+                ('20000000-0000-4000-8000-0000000000e2', $1, 'Casa', 'casa-x', 'venta', 'casa', 'Belgrano', 'Cuba 2200', true, true)`,
+        [ID.agenciaA],
+      );
+      const buscar = async (q: string) =>
+        (await tx.query<{ slug: string }>("select slug from properties where busqueda like $1 order by slug", [`%${q}%`])).rows.map(
+          (r) => r.slug,
+        );
+      return { nunez: await buscar("nunez"), depto: await buscar("depto"), cuba: await buscar("cuba") };
+    });
+    assert.deepEqual(ids.nunez, ["luminoso"]);
+    assert.ok(ids.depto.includes("luminoso"));
+    assert.deepEqual(ids.cuba, ["casa-x"]);
+  });
+});

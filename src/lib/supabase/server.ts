@@ -29,10 +29,19 @@ export async function createClient() {
   });
 }
 
-/** Cliente anónimo sin cookies para lecturas públicas cacheables (web pública). RLS aplica. */
-export function createPublicClient() {
+/** Tag de caché de todo lo que muestra la web pública. El admin lo invalida al publicar cambios. */
+export const TAG_SITIO = "sitio";
+
+/**
+ * Cliente anónimo sin cookies para la web pública. RLS aplica.
+ * Con `cache`, las lecturas quedan en la caché de datos de Next con el tag del sitio.
+ */
+export function createPublicClient({ cache = true }: { cache?: boolean } = {}) {
   const { supabaseUrl, supabasePublishableKey } = getPublicEnv();
   return createSupabaseClient<Database>(supabaseUrl, supabasePublishableKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    global: cache
+      ? { fetch: (input, init) => fetch(input, { ...init, next: { tags: [TAG_SITIO], revalidate: 3600 } }) }
+      : undefined,
   });
 }

@@ -91,6 +91,7 @@ export type Database = {
           destacada: boolean;
           publicada: boolean;
           es_demo: boolean;
+          busqueda: string;
           created_at: string;
           updated_at: string;
         },
@@ -127,6 +128,8 @@ export type Database = {
           destacada?: boolean;
           publicada?: boolean;
           es_demo?: boolean;
+          /** Columna generada: no se escribe. */
+          busqueda?: never;
           created_at?: string;
           updated_at?: string;
         },

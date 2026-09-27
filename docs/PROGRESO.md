@@ -2,7 +2,7 @@
 
 Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
-**Próximo paso:** Etapa 3 (Web pública completa): inicio, listados con filtros en la URL, ficha, SEO (sitemap, robots, JSON-LD, OG), 404.
+**Próximo paso:** Etapa 4 (Visores): tour 360° con Pannellum en /propiedad/[slug]/tour y visor de planos en /propiedad/[slug]/planos.
 
 **Cómo verificar:** `npm run typecheck`, `npm run lint`, `npm test` (unitarios + base con PGlite), `npm run build`.
 
@@ -16,7 +16,7 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
 - [x] 1. Base: dependencias, carpetas, clientes Supabase, `env.ts`, `proxy.ts`, layout, sistema de diseño (tokens, fuentes, componentes en src/components/ui).
 - [x] 2. Base de datos: migraciones (esquema, RLS, Storage) en supabase/migrations, 26 tests PGlite en tests/db, tipos a mano.
-- [ ] 3. Web pública completa.
+- [x] 3. Web pública: inicio, listados con filtros en la URL, ficha, consulta, WhatsApp, OG, sitemap, robots, 404. Probado sin datos; falta probar con datos reales (etapa 8).
 - [ ] 4. Visores: tour 360° y planos.
 - [ ] 5. Panel /admin completo.
 - [ ] 6. Seed, create-admin y "Borrar datos de ejemplo".
@@ -27,6 +27,11 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 - [ ] 9. Deploy en Vercel (y SETUP-CUENTAS paso 5).
 - [ ] 10. Calidad en producción: Playwright, Lighthouse ≥90, RLS real, secretos.
 - [ ] 11. Entrega: README y resumen final.
+
+## Pendientes técnicos
+
+- Probar la web pública con datos reales (inicio, filtros, ficha, mapa, consulta, OG) apenas haya Supabase.
+- Límite de consultas por IP en /api/whatsapp y el formulario (hoy: trampa anti-bots + validación).
 
 ## Pendientes del usuario
 

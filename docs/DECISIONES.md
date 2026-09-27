@@ -35,3 +35,17 @@ Una línea por decisión: fecha · qué · por qué.
 - 2026-09-27 · Tests de base con PGlite (Postgres 18 en WASM) y una réplica mínima de Supabase (`tests/db/supabase-shim.sql`) · no hay Docker; cada test corre en una transacción que se revierte.
 - 2026-09-27 · `"type": "module"` en package.json · Node ejecuta los tests TypeScript como ESM sin advertencias.
 - 2026-09-27 · Tipos de la base escritos con helpers `Table`/`Rel` (Update = Partial<Insert>) · compactos y verificados contra supabase-js; se regeneran en la etapa 8.
+- 2026-09-27 · Caché con el modelo clásico (ISR + tag `sitio` en los fetch de Supabase + `updateTag` desde las Server Actions del admin), sin Cache Components · Cache Components exige `<Suspense>` en cada acceso a cookies de todo el panel; el modelo clásico sigue soportado en Next 16 y logra lo mismo: páginas estáticas que se actualizan al instante al publicar.
+- 2026-09-27 · Funciones de Vercel en `gru1` (São Paulo) vía vercel.json · misma región que Supabase: evita ~120 ms por consulta cruzando a EE. UU.
+- 2026-09-27 · Node 24 (`engines`) y @types/node 24 · alinea Vercel, los tipos y el runtime local.
+- 2026-09-27 · Buscador con columna generada `busqueda` (sin tildes ni mayúsculas, con `translate()`, sin extensiones) · "nunez" encuentra "Núñez"; la calle solo se indexa si la dirección es pública.
+- 2026-09-27 · Coordenadas: si la dirección está oculta, el servidor manda un centro desplazado 120–350 m (fijo por propiedad) y un círculo de 500 m · las coordenadas exactas nunca llegan al navegador ni al JSON-LD.
+- 2026-09-27 · Imágenes con `<img>` y `srcset` propio (miniatura 800 px + original 2400 px) en vez del optimizador de Vercel · el plan Hobby tiene cupo mensual de transformaciones; las fotos ya se comprimen al subirlas.
+- 2026-09-27 · Miniaturas en JPEG (las grandes en WebP) · la imagen Open Graph (Satori) y las vistas previas de WhatsApp no leen WebP de forma confiable.
+- 2026-09-27 · Leaflet se descarga recién cuando el mapa está por entrar en pantalla · no pesa en la carga inicial (Lighthouse); en el celular no captura el arrastre con un dedo.
+- 2026-09-27 · Selector fijo Alquiler/Venta: barra inferior con contadores en el celular + selector en el buscador del inicio · patrón de app móvil; en escritorio los contadores van en el buscador.
+- 2026-09-27 · Buscador del inicio y filtros funcionan sin JavaScript (`/buscar` redirige; formularios GET) y con JS navegan sin recargar · robustez y accesibilidad.
+- 2026-09-27 · Clicks en WhatsApp registrados con `navigator.sendBeacon` a `/api/whatsapp` · no demoran la apertura de WhatsApp y sobreviven al cambio de app.
+- 2026-09-27 · Formulario de consulta con trampa anti-bots (campo oculto) y validación en servidor + base · sin captcha que moleste; falta límite por IP (pendiente, ver PROGRESO).
+- 2026-09-27 · Error boundaries con `retry()` · Next 16 lo recomienda en lugar de `reset()`.
+- 2026-09-27 · Hook de resolución para Node (`scripts/alias.ts`: alias `@/`, extensiones, `server-only`) · tests y scripts reusan el código de src/ sin compilar ni sumar dependencias.
