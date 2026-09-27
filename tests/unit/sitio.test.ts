@@ -89,3 +89,12 @@ test("consulta: valida nombre, contacto y email con mensajes claros", async () =
   assert.ok(validarConsulta({ ...base, agencyId: "x" })!.general);
   assert.equal(validarConsulta({ ...base, telefono: "", email: "ana@mail.com" }), null);
 });
+
+test("teléfonos argentinos a formato WhatsApp", async () => {
+  const { telefonoWhatsapp } = await import("../../src/lib/format.ts");
+  for (const t of ["11 2233-4455", "011 15-2233-4455", "+54 9 11 2233 4455", "(011) 2233-4455", "5491122334455"]) {
+    assert.equal(telefonoWhatsapp(t), "5491122334455", t);
+  }
+  assert.equal(telefonoWhatsapp("0351 15 612-3456"), "5493516123456");
+  assert.equal(telefonoWhatsapp("1234"), "1234");
+});

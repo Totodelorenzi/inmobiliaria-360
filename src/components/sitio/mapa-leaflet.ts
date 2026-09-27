@@ -31,3 +31,33 @@ export function crearMapa(el: HTMLElement, { lat, lng, exacta }: Ubicacion) {
   }
   return () => mapa.remove();
 }
+
+/** Mapa del panel con un marcador que se puede arrastrar para ajustar la ubicación. */
+export function crearMapaEditable(el: HTMLElement, inicio: { lat: number; lng: number }, alMover: (lat: number, lng: number) => void) {
+  const mapa = L.map(el, { center: [inicio.lat, inicio.lng], zoom: 17, scrollWheelZoom: false });
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  }).addTo(mapa);
+  const marcador = L.marker([inicio.lat, inicio.lng], {
+    draggable: true,
+    autoPan: true,
+    icon: L.divIcon({ html: PIN, className: "", iconSize: [36, 36], iconAnchor: [18, 34] }),
+  }).addTo(mapa);
+  const redondear = (n: number) => Math.round(n * 1e6) / 1e6;
+  marcador.on("dragend", () => {
+    const { lat, lng } = marcador.getLatLng();
+    alMover(redondear(lat), redondear(lng));
+  });
+  mapa.on("click", (e: L.LeafletMouseEvent) => {
+    marcador.setLatLng(e.latlng);
+    alMover(redondear(e.latlng.lat), redondear(e.latlng.lng));
+  });
+  return {
+    mover(lat: number, lng: number) {
+      marcador.setLatLng([lat, lng]);
+      mapa.setView([lat, lng], 17);
+    },
+    destruir: () => mapa.remove(),
+  };
+}

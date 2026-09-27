@@ -66,3 +66,10 @@ Una línea por decisión: fecha · qué · por qué.
 - 2026-09-27 · HEIC con `heic-to/next` y PDF con `pdfjs-dist` (worker en el hilo principal), ambos cargados solo si hacen falta · no pesan en el panel; evita configurar un worker aparte con Turbopack.
 - 2026-09-27 · Planos en imagen a 3200 px (fotos a 2400) · los textos del plano tienen que leerse al hacer zoom.
 - 2026-09-27 · ESLint `no-unused-vars` con `ignoreRestSiblings` · permite descartar campos con `...resto` sin trucos.
+- 2026-09-27 · El panel llama a `connection()` antes de leer la sesión · sin esto, un build sin Supabase dejaba páginas del panel prerenderizadas (estáticas).
+- 2026-09-27 · Usuarios: invitar con `auth.admin.inviteUserByEmail` (clave secreta, solo en servidor y tras verificar rol admin); si la persona ya tiene cuenta, solo se la suma a la agencia · permite que un agente trabaje en más de una inmobiliaria.
+- 2026-09-27 · Exportar consultas en CSV con `;` y BOM UTF-8, y celdas que empiezan con = + - @ neutralizadas · Excel en español lo abre bien y no ejecuta fórmulas inyectadas.
+- 2026-09-27 · "Responder por WhatsApp" normaliza teléfonos argentinos (0, 15, +54 9) al formato de wa.me · los clientes escriben el número de mil formas.
+- 2026-09-27 · Ubicación en el panel: búsqueda de la dirección en Nominatim (OpenStreetMap) + pin arrastrable · sin API key ni costo; uso ocasional dentro de su política.
+- 2026-09-27 · Logo en WebP o PNG (nunca JPG) · conserva la transparencia.
+- 2026-09-27 · Vista previa del tour de borradores en /admin/vista-previa/[id] reutilizando el visor público · un borrador no es visible en /propiedad/…

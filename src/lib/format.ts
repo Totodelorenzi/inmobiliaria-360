@@ -79,3 +79,19 @@ export function normalizarBusqueda(texto: string) {
     .replace(/\s+/g, " ")
     .trim();
 }
+
+/**
+ * Teléfono argentino → formato wa.me (549 + área + número, sin 0 ni 15).
+ * "011 15-2233-4455", "11 2233-4455" y "+54 9 11 2233 4455" → "5491122334455".
+ * Si no se reconoce el formato, devuelve solo los dígitos.
+ */
+export function telefonoWhatsapp(telefono: string) {
+  let d = telefono.replace(/\D/g, "");
+  if (d.startsWith("549")) return d;
+  if (d.startsWith("54")) d = d.slice(2);
+  d = d.replace(/^0/, "");
+  // Quitar el "15" de celulares escritos a la antigua (área de 2 a 4 dígitos + 15 + número).
+  const con15 = d.match(/^(\d{2,4})15(\d{6,8})$/);
+  if (con15 && con15[1].length + con15[2].length === 10) d = con15[1] + con15[2];
+  return d.length === 10 ? `549${d}` : d;
+}

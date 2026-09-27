@@ -54,9 +54,13 @@ type Props = {
   slug: string;
   tienePlanos: boolean;
   whatsapp: { href: string; agencyId: string; propertyId: string } | null;
+  /** A dónde lleva "cerrar" (por defecto, la ficha pública). */
+  volverA?: string;
+  /** Link a los planos (por defecto, los planos públicos). */
+  enlacePlanos?: string;
 };
 
-export function VisorTour({ escenas, titulo, slug, tienePlanos, whatsapp }: Props) {
+export function VisorTour({ escenas, titulo, slug, tienePlanos, whatsapp, volverA, enlacePlanos }: Props) {
   const marcoRef = useRef<HTMLDivElement>(null);
   const panoramaRef = useRef<HTMLDivElement>(null);
   const visorRef = useRef<Visor | null>(null);
@@ -263,7 +267,7 @@ export function VisorTour({ escenas, titulo, slug, tienePlanos, whatsapp }: Prop
         </p>
       )}
 
-      <BarraVisor titulo={titulo} subtitulo={nombreActual} volverA={`/propiedad/${slug}`}>
+      <BarraVisor titulo={titulo} subtitulo={nombreActual} volverA={volverA ?? `/propiedad/${slug}`}>
         {soportaGiroscopio && (
           <button type="button" className={botonVisor} onClick={alternarGiroscopio} aria-pressed={giroscopio} aria-label="Mover la vista con el celular">
             <Smartphone aria-hidden />
@@ -284,7 +288,7 @@ export function VisorTour({ escenas, titulo, slug, tienePlanos, whatsapp }: Prop
       <div className="absolute inset-x-0 bottom-0 z-20 flex flex-col gap-2 bg-linear-to-t from-black/85 to-transparent pt-10 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <div className="flex items-end justify-between gap-2 px-3">
           {tienePlanos ? (
-            <Link href={`/propiedad/${slug}/planos`} className={cn(botonVisor, "w-auto gap-2 px-4 text-sm font-semibold")}>
+            <Link href={enlacePlanos ?? `/propiedad/${slug}/planos`} className={cn(botonVisor, "w-auto gap-2 px-4 text-sm font-semibold")}>
               <DraftingCompass aria-hidden /> Ver planos
             </Link>
           ) : (

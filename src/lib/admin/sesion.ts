@@ -1,5 +1,6 @@
 import "server-only";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { cache } from "react";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
@@ -16,6 +17,8 @@ type Estado = { tipo: "sin-sesion" } | { tipo: "sin-agencia"; email: string } | 
 
 /** Usuario logueado y su inmobiliaria (una consulta por request gracias a cache()). */
 export const getEstadoSesion = cache(async (): Promise<Estado> => {
+  // Siempre dinámico: el panel nunca se prerenderiza (aunque se compile sin Supabase configurado).
+  await connection();
   if (!isSupabaseConfigured()) return { tipo: "sin-sesion" };
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();

@@ -2,7 +2,7 @@
 
 Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
-**Próximo paso:** Etapa 5, seguir con el editor de propiedades en 5 pasos (/admin/propiedades/[id]), después consultas, configuración, usuarios y ayuda.
+**Próximo paso:** Etapa 6 (Seed): scripts/seed.ts (panorámicas CC0 de Poly Haven + planos SVG generados), scripts/create-admin.ts. El botón "Borrar datos de ejemplo" ya está en el dashboard.
 
 **Cómo verificar:** `npm run typecheck`, `npm run lint`, `npm test` (unitarios + base con PGlite), `npm run build`.
 
@@ -18,7 +18,7 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 - [x] 2. Base de datos: migraciones (esquema, RLS, Storage) en supabase/migrations, 26 tests PGlite en tests/db, tipos a mano.
 - [x] 3. Web pública: inicio, listados con filtros en la URL, ficha, consulta, WhatsApp, OG, sitemap, robots, 404. Probado sin datos; falta probar con datos reales (etapa 8).
 - [x] 4. Visores: tour 360° (Pannellum) y planos con zoom/paneo táctil. Falta probarlos con datos reales (etapa 8).
-- [~] 5. Panel /admin. Hecho: acceso (login, recuperar, nueva contraseña, links de mail), dashboard, listado con acciones, Server Actions de todo, procesamiento y subida de imágenes. Falta: editor en 5 pasos, consultas, configuración, usuarios, ayuda.
+- [x] 5. Panel /admin: acceso, dashboard, propiedades (listado + editor en 5 pasos con autoguardado), fotos, tour con editor de hotspots, planos con puntos, consultas + CSV, configuración con vista previa, usuarios, ayuda. Falta probarlo con Supabase real (etapa 8).
 - [ ] 6. Seed, create-admin y "Borrar datos de ejemplo".
 - [ ] 7. Calidad local: tsc, eslint, build, Playwright, RLS.
   - [ ] BLOQUEO A: Supabase configurado (SETUP-CUENTAS pasos 1 y 2).
@@ -30,7 +30,7 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
 ## Pendientes técnicos
 
-- Probar con datos reales apenas haya Supabase: inicio, filtros, ficha, mapa, consulta, OG, tour (hotspots, giroscopio en iPhone) y planos (pellizco).
+- Probar con datos reales apenas haya Supabase: panel completo (login, subida de fotos/360°/PDF, hotspots, invitaciones), inicio, filtros, ficha, mapa, consulta, OG, tour (hotspots, giroscopio en iPhone) y planos (pellizco).
 - Límite de consultas por IP en /api/whatsapp y el formulario (hoy: trampa anti-bots + validación).
 
 ## Pendientes del usuario

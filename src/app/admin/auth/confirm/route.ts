@@ -1,6 +1,7 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import type { NextRequest } from "next/server";
+import { isSupabaseConfigured } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 
 const TIPOS: EmailOtpType[] = ["invite", "recovery", "email", "magiclink", "signup", "email_change"];
@@ -14,6 +15,7 @@ export async function GET(request: NextRequest) {
   const next = searchParams.get("next") ?? "/admin";
   const destino = next.startsWith("/admin") && !next.startsWith("//") ? next : "/admin";
 
+  if (!isSupabaseConfigured()) redirect("/admin/login");
   const supabase = await createClient();
   if (tokenHash && tipo && TIPOS.includes(tipo)) {
     const { error } = await supabase.auth.verifyOtp({ type: tipo, token_hash: tokenHash });

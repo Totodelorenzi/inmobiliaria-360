@@ -142,3 +142,19 @@ export async function pdfAImagenes(archivo: File, alAvanzar?: (pagina: number, t
   await tarea.destroy();
   return paginas;
 }
+
+/** Logo: máx. 600 px, WebP o PNG (nunca JPG, para no perder la transparencia). */
+export async function procesarLogo(archivo: File): Promise<{ blob: Blob; extension: "webp" | "png" }> {
+  const bitmap = await decodificar(await normalizar(archivo), archivo.name);
+  try {
+    const { ancho, alto } = medidas(bitmap.width, bitmap.height, 600);
+    const canvas = dibujar(bitmap, ancho, alto);
+    const webp = await aBlob(canvas, "image/webp", 0.9);
+    if (webp?.type === "image/webp") return { blob: webp, extension: "webp" };
+    const png = await aBlob(canvas, "image/png", 1);
+    if (!png) throw new ErrorImagen("No se pudo procesar el logo.");
+    return { blob: png, extension: "png" };
+  } finally {
+    bitmap.close();
+  }
+}
