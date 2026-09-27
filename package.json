@@ -13,7 +13,9 @@
     "test:db": "node --import ./scripts/alias.ts --test \"tests/db/**/*.test.ts\"",
     "test": "npm run test:unit && npm run test:db",
     "seed": "node --env-file-if-exists=.env.local --import ./scripts/alias.ts scripts/seed.ts",
-    "crear-admin": "node --env-file-if-exists=.env.local --import ./scripts/alias.ts scripts/create-admin.ts"
+    "crear-admin": "node --env-file-if-exists=.env.local --import ./scripts/alias.ts scripts/create-admin.ts",
+    "test:e2e": "node --env-file=tests/e2e/.env node_modules/@playwright/test/cli.js test",
+    "e2e:instalar": "node --env-file=tests/e2e/.env node_modules/@playwright/test/cli.js install chromium webkit"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
@@ -28,7 +30,9 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@electric-sql/pglite": "^0.5.8",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/leaflet": "^1.9.22",
     "@types/node": "^24.19.0",

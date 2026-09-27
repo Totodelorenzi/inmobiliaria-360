@@ -79,3 +79,6 @@ Una línea por decisión: fecha · qué · por qué.
 - 2026-09-27 · Planos de ejemplo en SVG propio (unidad tipo y terraza de amenities) con franja de título aparte; los puntos se guardan en % de la imagen completa · el dibujo y los puntos coinciden.
 - 2026-09-27 · create-admin: contraseña de 20 caracteres sin ambiguos (0/O, 1/l) generada con `crypto.randomInt`, guardada solo en .env.local; si el usuario existe, se sincroniza con la de .env.local.
 - 2026-09-27 · Scripts con `node --env-file-if-exists=.env.local --import ./scripts/alias.ts` · reusan el código de src/ (clientes, slug, storage) sin compilar.
+- 2026-09-27 · Navegadores de Playwright dentro del proyecto (`PLAYWRIGHT_BROWSERS_PATH=0` vía tests/e2e/.env) · regla de aislamiento: nada fuera de la carpeta del proyecto.
+- 2026-09-27 · E2E en iPhone 15 (WebKit) y escritorio (Chromium), con etiquetas @sin-datos / @con-datos / @admin que se activan solas según .env.local o `E2E_BASE_URL` · los mismos tests corren en local sin base, en local con Supabase y contra producción.
+- 2026-09-27 · Accesibilidad verificada con axe (WCAG 2.1 A/AA, sin problemas graves ni críticos) dentro de los E2E · cumple la exigencia de la spec y detecta regresiones.
