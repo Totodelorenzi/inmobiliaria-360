@@ -55,3 +55,14 @@ Una línea por decisión: fecha · qué · por qué.
 - 2026-09-27 · Zoom y paneo de planos con un hook propio (`use-pan-zoom.ts`: pellizco, arrastre, doble toque, rueda, teclado) · ~150 líneas, sin dependencia; los puntos compensan la escala para seguir midiendo 44 px.
 - 2026-09-27 · Imagen Open Graph como ruta propia `/og/propiedad/[slug]` (cacheada en la CDN) en vez de `opengraph-image.tsx` · la ficha, el tour y los planos comparten la misma imagen.
 - 2026-09-27 · Tour y planos en el grupo `(visor)` con layout propio a pantalla completa · sin header/footer; ISR bajo demanda (`generateStaticParams` vacío).
+- 2026-09-27 · Auth de Supabase configurada por código en `supabase/config.toml` (registro cerrado, contraseña ≥10 con letras y números, mails de invitación y recuperación en español) y subida con `supabase config push` · menos pasos manuales para el usuario (reemplaza casi todo el paso 5 de la guía).
+- 2026-09-27 · Links de los mails con `token_hash` → `/admin/auth/confirm` (verifyOtp) en vez del flujo PKCE por defecto · funcionan aunque el mail se abra en otro navegador (la app de Gmail usa uno propio).
+- 2026-09-27 · "Cargar propiedad" crea un borrador al instante y todo el alta es edición con autoguardado · las fotos necesitan el id de la propiedad para su carpeta y nada se pierde si se corta.
+- 2026-09-27 · El slug sigue al título solo mientras la propiedad nunca se publicó · después, los links compartidos no pueden romperse.
+- 2026-09-27 · Duplicar copia también los archivos en Storage (copy del lado del servidor) · si no, borrar el original rompería las fotos de la copia.
+- 2026-09-27 · Subida con XHR directo a la API de Storage (progreso por archivo) y `Cache-Control` de un año · supabase-js no informa progreso; los nombres son únicos (uuid), así que la caché larga es segura.
+- 2026-09-27 · Panorámicas: máx. 6000 px pero nunca más de 16 M píxeles (~5650×2825) · Safari de iPhone no crea canvas más grandes y la compresión fallaría.
+- 2026-09-27 · Panorámicas que no son 2:1 se rechazan con un mensaje que explica cómo sacarlas · Pannellum las mostraría deformadas.
+- 2026-09-27 · HEIC con `heic-to/next` y PDF con `pdfjs-dist` (worker en el hilo principal), ambos cargados solo si hacen falta · no pesan en el panel; evita configurar un worker aparte con Turbopack.
+- 2026-09-27 · Planos en imagen a 3200 px (fotos a 2400) · los textos del plano tienen que leerse al hacer zoom.
+- 2026-09-27 · ESLint `no-unused-vars` con `ignoreRestSiblings` · permite descartar campos con `...resto` sin trucos.

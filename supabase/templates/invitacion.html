@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="es">
+  <body style="margin:0;padding:24px;background:#f5f6f8;font-family:Arial,Helvetica,sans-serif;color:#14161a">
+    <table role="presentation" width="100%" style="max-width:480px;margin:0 auto;background:#ffffff;border-radius:16px;padding:32px">
+      <tr><td>
+        <h1 style="margin:0 0 16px;font-size:22px">Te invitaron al panel de la inmobiliaria</h1>
+        <p style="margin:0 0 24px;font-size:16px;line-height:1.5">Con el panel vas a poder cargar propiedades, fotos, tours 360° y planos desde tu celular.</p>
+        <p style="margin:0 0 24px">
+          <a href="{{ .SiteURL }}/admin/auth/confirm?token_hash={{ .TokenHash }}&type=invite&next=/admin/nueva-clave"
+             style="display:inline-block;padding:14px 24px;background:#ffc83d;color:#1a1400;border-radius:12px;font-weight:bold;text-decoration:none">
+            Aceptar invitación y crear contraseña
+          </a>
+        </p>
+        <p style="margin:0;font-size:13px;color:#555c68">Si no esperabas este mail, podés ignorarlo.</p>
+      </td></tr>
+    </table>
+  </body>
+</html>

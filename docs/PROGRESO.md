@@ -2,7 +2,7 @@
 
 Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
-**Próximo paso:** Etapa 5 (Panel /admin): login y recuperación, dashboard, propiedades (listado y alta en 5 pasos), fotos, tour, planos, leads, configuración, usuarios, ayuda.
+**Próximo paso:** Etapa 5, seguir con el editor de propiedades en 5 pasos (/admin/propiedades/[id]), después consultas, configuración, usuarios y ayuda.
 
 **Cómo verificar:** `npm run typecheck`, `npm run lint`, `npm test` (unitarios + base con PGlite), `npm run build`.
 
@@ -18,7 +18,7 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 - [x] 2. Base de datos: migraciones (esquema, RLS, Storage) en supabase/migrations, 26 tests PGlite en tests/db, tipos a mano.
 - [x] 3. Web pública: inicio, listados con filtros en la URL, ficha, consulta, WhatsApp, OG, sitemap, robots, 404. Probado sin datos; falta probar con datos reales (etapa 8).
 - [x] 4. Visores: tour 360° (Pannellum) y planos con zoom/paneo táctil. Falta probarlos con datos reales (etapa 8).
-- [ ] 5. Panel /admin completo.
+- [~] 5. Panel /admin. Hecho: acceso (login, recuperar, nueva contraseña, links de mail), dashboard, listado con acciones, Server Actions de todo, procesamiento y subida de imágenes. Falta: editor en 5 pasos, consultas, configuración, usuarios, ayuda.
 - [ ] 6. Seed, create-admin y "Borrar datos de ejemplo".
 - [ ] 7. Calidad local: tsc, eslint, build, Playwright, RLS.
   - [ ] BLOQUEO A: Supabase configurado (SETUP-CUENTAS pasos 1 y 2).
