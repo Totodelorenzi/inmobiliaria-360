@@ -2,14 +2,17 @@
 
 import "pannellum/build/pannellum.css";
 import "./visor.css";
-import { DraftingCompass, Expand, Hand, Minimize, RotateCw, Smartphone } from "lucide-react";
+import { CalendarCheck, DraftingCompass, Expand, Hand, Minimize, PartyPopper, RotateCw, Smartphone, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { BotonWhatsapp } from "@/components/sitio/boton-whatsapp";
+import { PedirVisita } from "@/components/sitio/pedir-visita";
 import { Spinner } from "@/components/ui/spinner";
 import type { EscenaTour } from "@/lib/data/sitio";
 import { cn } from "@/lib/utils";
+import type { Enums } from "@/types/database";
 import { BarraVisor, botonVisor } from "./barra-visor";
+import { useRastreoTour } from "./use-rastreo-tour";
 
 type Visor = {
   on(evento: string, callback: (arg: string) => void): Visor;
@@ -53,14 +56,24 @@ type Props = {
   titulo: string;
   slug: string;
   tienePlanos: boolean;
-  whatsapp: { href: string; agencyId: string; propertyId: string } | null;
+  propertyId: string;
+  operacion: Enums<"operacion">;
+  whatsapp: { numero: string; mensaje: string } | null;
   /** A dónde lleva "cerrar" (por defecto, la ficha pública). */
   volverA?: string;
   /** Link a los planos (por defecto, los planos públicos). */
   enlacePlanos?: string;
+  /** false en la vista previa del panel: no registra eventos ni ofrece pedir visita. */
+  publico?: boolean;
 };
 
-export function VisorTour({ escenas, titulo, slug, tienePlanos, whatsapp, volverA, enlacePlanos }: Props) {
+export function VisorTour({ escenas, titulo, slug, tienePlanos, propertyId, operacion, whatsapp, volverA, enlacePlanos, publico = true }: Props) {
+  const rastreo = useRastreoTour({ propertyId, totalEscenas: escenas.length, activo: publico });
+  const rastreoRef = useRef(rastreo);
+  useEffect(() => {
+    rastreoRef.current = rastreo;
+  });
+  const [ctaCerrado, setCtaCerrado] = useState(false);
   const marcoRef = useRef<HTMLDivElement>(null);
   const panoramaRef = useRef<HTMLDivElement>(null);
   const visorRef = useRef<Visor | null>(null);
@@ -163,9 +176,13 @@ export function VisorTour({ escenas, titulo, slug, tienePlanos, whatsapp, volver
         setError(false);
         // La autorrotación corre solo hasta el primer toque, también al cambiar de ambiente.
         if (interactuoRef.current) visor?.stopAutoRotate();
-        if (visor) precargar(visor.getScene());
+        if (visor) {
+          precargar(visor.getScene());
+          rastreoRef.current.alCargarEscena(visor.getScene());
+        }
       });
       visor.on("scenechange", (id) => {
+        rastreoRef.current.alSalirDeEscena();
         setActual(id);
         setCargando(true);
         window.history.replaceState(window.history.state, "", `?escena=${id}`);
@@ -294,10 +311,32 @@ export function VisorTour({ escenas, titulo, slug, tienePlanos, whatsapp, volver
           ) : (
             <span />
           )}
-          {whatsapp && (
-            <BotonWhatsapp {...whatsapp} size="icon" className="shadow-lg" aria-label="Consultar por WhatsApp" />
-          )}
+          <div className="flex items-end gap-2">
+            {publico && (
+              <PedirVisita propertyId={propertyId} operacion={operacion} titulo={titulo} variant="accent" size="md" className="shadow-lg">
+                <CalendarCheck className="size-5" aria-hidden /> Pedir visita
+              </PedirVisita>
+            )}
+            {whatsapp && (
+              <BotonWhatsapp {...whatsapp} propertyId={propertyId} size="icon" className="shadow-lg" aria-label="Consultar por WhatsApp" />
+            )}
+          </div>
         </div>
+        {publico && rastreo.completo && !ctaCerrado && (
+          <div role="status" className="mx-3 flex items-center gap-3 rounded-2xl bg-white p-3 text-fg shadow-xl">
+            <PartyPopper className="size-7 shrink-0 text-brand-ink" aria-hidden />
+            <p className="min-w-0 flex-1 text-sm">
+              <strong className="block">¡Recorriste toda la propiedad!</strong>
+              Si te gustó, pedí una visita presencial: la coordinamos en un par de minutos.
+            </p>
+            <PedirVisita propertyId={propertyId} operacion={operacion} titulo={titulo} size="md" className="shrink-0">
+              Pedir visita
+            </PedirVisita>
+            <button type="button" onClick={() => setCtaCerrado(true)} className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-surface" aria-label="Cerrar aviso">
+              <X className="size-5" aria-hidden />
+            </button>
+          </div>
+        )}
         <nav aria-label="Ambientes">
           <ul className="flex snap-x gap-2 overflow-x-auto px-3 [scrollbar-width:none]">
             {escenas.map((escena) => {

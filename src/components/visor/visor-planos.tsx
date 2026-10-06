@@ -3,25 +3,52 @@
 import "./visor.css";
 import { MapPin, Minus, Plus, Rotate3d, Scan, X } from "lucide-react";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { buttonStyles } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import type { PlanoVisor } from "@/lib/data/sitio";
+import { registrar } from "@/lib/tracking/cliente";
+import { CronometroVisible } from "@/lib/tracking/cronometro";
 import { cn } from "@/lib/utils";
 import { BarraVisor, botonVisor } from "./barra-visor";
 import { usePanZoom } from "./use-pan-zoom";
 
-type Props = { planos: PlanoVisor[]; titulo: string; slug: string; tieneTour: boolean };
+type Props = { planos: PlanoVisor[]; titulo: string; slug: string; tieneTour: boolean; propertyId: string };
 
-export function VisorPlanos({ planos, titulo, slug, tieneTour }: Props) {
+/** Tiempo visible en un plano: se registra al cambiar de plano, al salir o al ocultar la pestaña. */
+function useTiempoPlano(propertyId: string, planId: string) {
+  useEffect(() => {
+    const crono = new CronometroVisible();
+    const cerrar = () => {
+      const ms = crono.tomar();
+      if (ms > 500) registrar({ tipo: "plan_view", propertyId, planId, duracionMs: ms });
+    };
+    const alOcultar = () => document.visibilityState === "hidden" && cerrar();
+    document.addEventListener("visibilitychange", alOcultar);
+    return () => {
+      cerrar();
+      document.removeEventListener("visibilitychange", alOcultar);
+      crono.detener();
+    };
+  }, [propertyId, planId]);
+}
+
+export function VisorPlanos({ planos, titulo, slug, tieneTour, propertyId }: Props) {
   const [indice, setIndice] = useState(0);
   const [seleccionado, setSeleccionado] = useState<string | null>(null);
   const plano = planos[indice];
   const punto = plano.puntos.find((p) => p.id === seleccionado);
+  useTiempoPlano(propertyId, plano.id);
+
+  function seleccionar(id: string | null) {
+    setSeleccionado(id);
+    const elegido = plano.puntos.find((p) => p.id === id);
+    if (elegido) registrar({ tipo: "plan_point_click", propertyId, planId: plano.id, meta: { punto: elegido.texto } });
+  }
 
   return (
     <div className="relative size-full bg-neutral-900">
-      <LienzoPlano key={plano.id} plano={plano} seleccionado={seleccionado} onSeleccionar={setSeleccionado} />
+      <LienzoPlano key={plano.id} plano={plano} seleccionado={seleccionado} onSeleccionar={seleccionar} />
 
       <BarraVisor titulo={titulo} subtitulo={plano.nombre} volverA={`/propiedad/${slug}`}>
         {tieneTour && (

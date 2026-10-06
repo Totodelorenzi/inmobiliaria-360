@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { AvisoPrivacidad } from "@/components/sitio/privacidad";
 import { SitioEnConfiguracion } from "@/components/sitio/secciones";
 import { SiteFooter } from "@/components/sitio/site-footer";
 import { SiteHeader } from "@/components/sitio/site-header";
@@ -37,6 +38,7 @@ export default async function SitioLayout({ children }: { children: React.ReactN
         {children}
       </main>
       <SiteFooter agencia={agencia} />
+      <AvisoPrivacidad />
     </div>
   );
 }

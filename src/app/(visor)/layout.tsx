@@ -1,4 +1,5 @@
 import type { Viewport } from "next";
+import { AvisoPrivacidad } from "@/components/sitio/privacidad";
 import { SitioEnConfiguracion } from "@/components/sitio/secciones";
 import { brandStyle } from "@/lib/color";
 import { getAgencia } from "@/lib/data/sitio";
@@ -12,6 +13,7 @@ export default async function VisorLayout({ children }: { children: React.ReactN
   return (
     <div style={brandStyle(agencia.color_primario)} className="fixed inset-0 overflow-hidden bg-black text-white">
       {children}
+      <AvisoPrivacidad posicion="arriba" />
     </div>
   );
 }

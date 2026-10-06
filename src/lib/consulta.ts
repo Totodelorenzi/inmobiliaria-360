@@ -5,9 +5,11 @@ export type DatosConsulta = {
   telefono: string;
   email: string;
   mensaje: string;
+  /** Casilla de consentimiento (Ley 25.326). */
+  acepto: boolean;
 };
 
-export type ErroresConsulta = Partial<Record<"nombre" | "contacto" | "email" | "mensaje" | "general", string>>;
+export type ErroresConsulta = Partial<Record<"nombre" | "contacto" | "email" | "mensaje" | "acepto" | "general", string>>;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -27,6 +29,7 @@ export function validarConsulta(d: DatosConsulta): ErroresConsulta | null {
 
   if (d.email && (!EMAIL.test(d.email) || d.email.length > 200)) errores.email = "Revisá el email, parece incompleto.";
   if (d.mensaje.length > 2000) errores.mensaje = "El mensaje es muy largo (máximo 2000 caracteres).";
+  if (!d.acepto) errores.acepto = "Para responderte necesitamos que aceptes el uso de tus datos.";
 
   return Object.keys(errores).length > 0 ? errores : null;
 }

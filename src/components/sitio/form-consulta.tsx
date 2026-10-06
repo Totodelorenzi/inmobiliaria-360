@@ -1,6 +1,7 @@
 "use client";
 
 import { CircleCheck, Send } from "lucide-react";
+import Link from "next/link";
 import { useActionState } from "react";
 import { enviarConsulta, type EstadoConsulta } from "@/app/(sitio)/propiedad/[slug]/acciones";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,11 @@ export function FormConsulta({ agencyId, propertyId }: { agencyId: string; prope
         <CircleCheck className="size-10" aria-hidden />
         <p className="text-lg font-bold">¡Gracias por tu consulta!</p>
         <p className="text-fg">Te vamos a responder a la brevedad.</p>
+        {estado.codigo && (
+          <p className="text-sm text-fg">
+            Tu código de referencia es <strong className="font-mono">{estado.codigo}</strong>.
+          </p>
+        )}
       </div>
     );
   }
@@ -52,6 +58,22 @@ export function FormConsulta({ agencyId, propertyId }: { agencyId: string; prope
       <Field label="Mensaje" error={e?.mensaje}>
         {(a) => <Textarea {...a} name="mensaje" rows={4} maxLength={2000} defaultValue={v?.mensaje ?? MENSAJE_INICIAL} />}
       </Field>
+      <div>
+        <label className="flex cursor-pointer items-start gap-3">
+          <input type="checkbox" name="acepto" defaultChecked={v?.acepto} required className="mt-1 size-5 shrink-0 accent-(--brand)" />
+          <span className="text-sm">
+            Acepto que la inmobiliaria use mis datos y lo que vi en este sitio para responderme.{" "}
+            <Link href="/privacidad" target="_blank" className="font-semibold text-brand-ink underline">
+              Privacidad
+            </Link>
+          </span>
+        </label>
+        {e?.acepto && (
+          <p role="alert" className="mt-1 text-sm font-medium text-danger">
+            {e.acepto}
+          </p>
+        )}
+      </div>
       <Button type="submit" variant="brand" size="lg" fullWidth loading={enviando}>
         {!enviando && <Send className="size-5" aria-hidden />}
         {enviando ? "Enviando…" : "Enviar consulta"}

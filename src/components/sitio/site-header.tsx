@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Container } from "@/components/ui/states";
 import type { Agencia } from "@/lib/data/sitio";
-import { whatsappLink } from "@/lib/format";
 import { BotonWhatsapp } from "./boton-whatsapp";
 import { LINKS_SITIO, MenuMovil } from "./menu-movil";
 
@@ -33,11 +32,7 @@ export function SiteHeader({ agencia }: { agencia: Agencia }) {
           ))}
         </nav>
         {agencia.whatsapp && (
-          <BotonWhatsapp
-            href={whatsappLink(agencia.whatsapp, `¡Hola ${agencia.nombre}! Quiero hacer una consulta.`)}
-            agencyId={agencia.id}
-            aria-label="Escribinos por WhatsApp"
-          >
+          <BotonWhatsapp numero={agencia.whatsapp} mensaje={`¡Hola ${agencia.nombre}! Quiero hacer una consulta.`} aria-label="Escribinos por WhatsApp">
             <span className="hidden sm:inline">WhatsApp</span>
           </BotonWhatsapp>
         )}

@@ -3,14 +3,16 @@
 import { ChevronLeft, ChevronRight, House, Images, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { buttonStyles } from "@/components/ui/button";
+import { registrar } from "@/lib/tracking/cliente";
 
 type Foto = { id: string; url: string; thumb_url: string | null };
 
 const srcSet = (f: Foto) => (f.thumb_url ? `${f.thumb_url} 800w, ${f.url} 2400w` : undefined);
 
 /** Galería: 1 foto grande con swipe en el celular, 2 en pantallas grandes, y "Ver todas". */
-export function Galeria({ fotos, titulo }: { fotos: Foto[]; titulo: string }) {
+export function Galeria({ fotos, titulo, propertyId }: { fotos: Foto[]; titulo: string; propertyId?: string }) {
   const pistaRef = useRef<HTMLUListElement>(null);
+  const vistas = useRef(new Set<number>([0]));
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [actual, setActual] = useState(0);
 
@@ -23,6 +25,14 @@ export function Galeria({ fotos, titulo }: { fotos: Foto[]; titulo: string }) {
     );
   }
 
+  /** Cada foto nueva que se ve (una vez por foto) suma interés. */
+  const verFoto = (i: number) => {
+    setActual(i);
+    if (!propertyId || vistas.current.has(i)) return;
+    vistas.current.add(i);
+    registrar({ tipo: "photo_view", propertyId, meta: { indice: i } });
+  };
+
   const anchoFoto = () => (pistaRef.current?.firstElementChild as HTMLElement | null)?.offsetWidth ?? 1;
   const mover = (dir: 1 | -1) => pistaRef.current?.scrollBy({ left: dir * anchoFoto(), behavior: "smooth" });
 
@@ -30,7 +40,7 @@ export function Galeria({ fotos, titulo }: { fotos: Foto[]; titulo: string }) {
     <div className="relative">
       <ul
         ref={pistaRef}
-        onScroll={(e) => setActual(Math.round(e.currentTarget.scrollLeft / anchoFoto()))}
+        onScroll={(e) => verFoto(Math.round(e.currentTarget.scrollLeft / anchoFoto()))}
         className="flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] md:gap-1"
         aria-label={`Fotos de ${titulo}`}
       >
@@ -78,7 +88,10 @@ export function Galeria({ fotos, titulo }: { fotos: Foto[]; titulo: string }) {
           </p>
           <button
             type="button"
-            onClick={() => dialogRef.current?.showModal()}
+            onClick={() => {
+              dialogRef.current?.showModal();
+              if (propertyId) registrar({ tipo: "photo_view", propertyId, meta: { todas: true } });
+            }}
             className={buttonStyles({ variant: "outline", className: "absolute right-3 bottom-3 shadow" })}
           >
             <Images className="size-4" aria-hidden /> Ver todas las fotos ({fotos.length})

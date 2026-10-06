@@ -1,12 +1,15 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { buttonStyles, type ButtonSize } from "@/components/ui/button";
+import { whatsappLink } from "@/lib/format";
+import { codigoReferencia, registrar } from "@/lib/tracking/cliente";
 import { WhatsappIcon } from "./iconos-marca";
 
 type Props = {
-  href: string;
-  agencyId: string;
+  /** Número de la inmobiliaria (solo dígitos con código de país). */
+  numero: string;
+  mensaje: string;
   propertyId?: string;
   size?: ButtonSize;
   fullWidth?: boolean;
@@ -15,25 +18,33 @@ type Props = {
   "aria-label"?: string;
 };
 
-/** Link a WhatsApp que registra la consulta ('whatsapp_click') sin demorar la apertura. */
-export function BotonWhatsapp({ href, agencyId, propertyId, size = "md", fullWidth, className, children, ...rest }: Props) {
-  function registrar() {
-    const cuerpo = JSON.stringify({ agencyId, propertyId: propertyId ?? null });
-    try {
-      if (!navigator.sendBeacon?.("/api/whatsapp", cuerpo)) {
-        void fetch("/api/whatsapp", { method: "POST", body: cuerpo, keepalive: true });
-      }
-    } catch {
-      // Registrar el click nunca debe impedir abrir WhatsApp.
-    }
-  }
+const conReferencia = (mensaje: string) => {
+  const ref = codigoReferencia();
+  return ref ? `${mensaje} (Ref. ${ref})` : mensaje;
+};
+
+/**
+ * Link a WhatsApp. El mensaje lleva el código de referencia del visitante ("Ref. A7K2"):
+ * al tocarlo se registra el click y el servidor crea el lead provisorio con ese código.
+ */
+export function BotonWhatsapp({ numero, mensaje, propertyId, size = "md", fullWidth, className, children, ...rest }: Props) {
+  const ref = useRef<HTMLAnchorElement>(null);
+
+  // Con la cookie ya presente, el link queda armado (sirve también para copiar o mantener apretado).
+  useEffect(() => {
+    if (ref.current) ref.current.href = whatsappLink(numero, conReferencia(mensaje));
+  }, [numero, mensaje]);
 
   return (
     <a
-      href={href}
+      ref={ref}
+      href={whatsappLink(numero, mensaje)}
       target="_blank"
       rel="noopener noreferrer"
-      onClick={registrar}
+      onClick={(e) => {
+        e.currentTarget.href = whatsappLink(numero, conReferencia(mensaje));
+        registrar({ tipo: "whatsapp_click", ...(propertyId ? { propertyId } : {}) }, { inmediato: true });
+      }}
       className={buttonStyles({ variant: "whatsapp", size, fullWidth, className })}
       {...rest}
     >

@@ -21,6 +21,8 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { BotonWhatsapp } from "@/components/sitio/boton-whatsapp";
 import { FormConsulta } from "@/components/sitio/form-consulta";
+import { PedirVisita } from "@/components/sitio/pedir-visita";
+import { BotonCompartir, RastreoVista } from "@/components/sitio/rastreo";
 import { Galeria } from "@/components/sitio/galeria";
 import { JsonLd } from "@/components/sitio/json-ld";
 import { Mapa } from "@/components/sitio/mapa";
@@ -41,7 +43,6 @@ import {
   OPERACION_LABEL,
   plural,
   TIPO_LABEL,
-  whatsappLink,
 } from "@/lib/format";
 import { ubicacionPublica } from "@/lib/geo";
 import { metadataCompartir } from "@/lib/og";
@@ -112,7 +113,7 @@ export default async function FichaPropiedad({ params }: PageProps<"/propiedad/[
     <>
       <Container className="px-0 sm:px-6 sm:pt-4">
         <div className="overflow-hidden sm:rounded-(--radius-card)">
-          <Galeria fotos={p.fotos} titulo={p.titulo} />
+          <Galeria fotos={p.fotos} titulo={p.titulo} propertyId={p.id} />
         </div>
       </Container>
 
@@ -269,53 +270,65 @@ export default async function FichaPropiedad({ params }: PageProps<"/propiedad/[
 
         <aside id="consulta" aria-labelledby="titulo-consulta" className="flex flex-col gap-4 lg:sticky lg:top-20">
           <div className="rounded-(--radius-card) border border-border p-5 shadow-(--shadow-card)">
-            <h2 id="titulo-consulta" className="mb-4 text-xl font-bold">
-              Consultá por esta propiedad
+            <h2 id="titulo-consulta" className="text-xl font-bold">
+              ¿Te interesa? Coordiná una visita
             </h2>
-            {agencia.whatsapp && (
-              <BotonWhatsapp
-                href={whatsappLink(agencia.whatsapp, mensajeWhatsapp)}
-                agencyId={agencia.id}
-                propertyId={p.id}
-                size="lg"
-                fullWidth
-                className="mb-4 hidden md:inline-flex"
-              >
-                Consultar por WhatsApp
-              </BotonWhatsapp>
-            )}
-            <FormConsulta agencyId={agencia.id} propertyId={p.id} />
+            <p className="mt-1 mb-4 text-sm text-muted">
+              {p.cantidadEscenas > 0
+                ? "Recorrela en 360° y pedí la visita respondiendo un par de preguntas."
+                : "Respondé un par de preguntas y te contactamos para coordinar."}
+            </p>
+            <PedirVisita
+              propertyId={p.id}
+              operacion={p.operacion}
+              titulo={p.titulo}
+              fullWidth
+              whatsapp={
+                agencia.whatsapp && (
+                  <BotonWhatsapp numero={agencia.whatsapp} mensaje={mensajeWhatsapp} propertyId={p.id} fullWidth>
+                    ¿Lo adelantamos por WhatsApp?
+                  </BotonWhatsapp>
+                )
+              }
+            />
+            <div className="mt-3 flex flex-wrap gap-2">
+              {agencia.whatsapp && (
+                <BotonWhatsapp numero={agencia.whatsapp} mensaje={mensajeWhatsapp} propertyId={p.id} className="flex-1">
+                  Consultar por WhatsApp
+                </BotonWhatsapp>
+              )}
+              <BotonCompartir propertyId={p.id} titulo={p.titulo} url={url} />
+            </div>
+            <details className="mt-4 border-t border-border pt-2">
+              <summary className="flex min-h-11 cursor-pointer items-center font-semibold text-brand-ink">Prefiero dejar una consulta por escrito</summary>
+              <div className="mt-3">
+                <FormConsulta agencyId={agencia.id} propertyId={p.id} />
+              </div>
+            </details>
           </div>
         </aside>
       </Container>
 
       <SeccionPropiedades titulo="Propiedades similares" items={relacionadas} total={0} verTodas={`/${p.operacion}`} />
 
-      {/* Barra fija en el celular: precio + WhatsApp */}
+      {/* Barra fija en el celular: precio + pedir visita (WhatsApp como opción secundaria) */}
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-bg/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur md:hidden">
-        <div className="flex items-center gap-3">
-          <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <div className="min-w-0 flex-1">
             <p className="text-xs text-muted">{OPERACION_LABEL[p.operacion]}</p>
             <p className="truncate font-display text-lg font-bold">{precio}</p>
           </div>
-          {agencia.whatsapp ? (
-            <BotonWhatsapp
-              href={whatsappLink(agencia.whatsapp, mensajeWhatsapp)}
-              agencyId={agencia.id}
-              propertyId={p.id}
-              className="ml-auto"
-            >
-              Consultar por WhatsApp
-            </BotonWhatsapp>
-          ) : (
-            <a href="#consulta" className={buttonStyles({ variant: "brand", className: "ml-auto" })}>
-              Consultar
-            </a>
+          <PedirVisita propertyId={p.id} operacion={p.operacion} titulo={p.titulo} size="md">
+            Pedir visita
+          </PedirVisita>
+          {agencia.whatsapp && (
+            <BotonWhatsapp numero={agencia.whatsapp} mensaje={mensajeWhatsapp} propertyId={p.id} size="icon" aria-label="Consultar por WhatsApp" />
           )}
         </div>
       </div>
       <div className="h-20 md:hidden" aria-hidden />
 
+      <RastreoVista propertyId={p.id} />
       <JsonLd data={jsonLd(p, url)} />
     </>
   );

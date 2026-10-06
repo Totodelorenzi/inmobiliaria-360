@@ -21,7 +21,10 @@ export default async function VistaPrevia({ params }: PageProps<"/admin/vista-pr
         titulo={`Vista previa · ${p.titulo}`}
         slug={p.slug}
         tienePlanos={false}
+        propertyId={p.id}
+        operacion={p.operacion}
         whatsapp={null}
+        publico={false}
         volverA={`/admin/propiedades/${p.id}?paso=tour`}
       />
     </div>

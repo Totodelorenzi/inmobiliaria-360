@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { VisorTour } from "@/components/visor/visor-tour";
 import { getAgencia, getTour } from "@/lib/data/sitio";
 import { getSiteUrl } from "@/lib/env";
-import { formatPrecio, whatsappLink } from "@/lib/format";
+import { formatPrecio } from "@/lib/format";
 import { metadataCompartir } from "@/lib/og";
 
 export const revalidate = 3600;
@@ -43,7 +43,9 @@ export default async function TourPage({ params }: PageProps<"/propiedad/[slug]/
       titulo={tour.titulo}
       slug={tour.slug}
       tienePlanos={tour.tienePlanos}
-      whatsapp={agencia.whatsapp ? { href: whatsappLink(agencia.whatsapp, mensaje), agencyId: agencia.id, propertyId: tour.id } : null}
+      propertyId={tour.id}
+      operacion={tour.operacion}
+      whatsapp={agencia.whatsapp ? { numero: agencia.whatsapp, mensaje } : null}
     />
   );
 }

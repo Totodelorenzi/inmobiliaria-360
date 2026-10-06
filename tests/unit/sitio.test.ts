@@ -80,8 +80,10 @@ test("consulta: valida nombre, contacto y email con mensajes claros", async () =
     telefono: "11 2233-4455",
     email: "",
     mensaje: "Hola",
+    acepto: true,
   };
   assert.equal(validarConsulta(base), null);
+  assert.match(validarConsulta({ ...base, acepto: false })!.acepto!, /aceptes/);
   assert.match(validarConsulta({ ...base, nombre: "" })!.nombre!, /nombre/);
   assert.match(validarConsulta({ ...base, telefono: "" })!.contacto!, /teléfono o un email/);
   assert.match(validarConsulta({ ...base, telefono: "12" })!.contacto!, /entre 6 y 15/);

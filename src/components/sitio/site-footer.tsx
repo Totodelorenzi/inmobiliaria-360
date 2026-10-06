@@ -83,7 +83,10 @@ export function SiteFooter({ agencia }: { agencia: Agencia }) {
         </div>
       </Container>
       <p className="border-t border-border py-4 text-center text-xs text-muted">
-        © {new Date().getFullYear()} {agencia.nombre}
+        © {new Date().getFullYear()} {agencia.nombre} ·{" "}
+        <Link href="/privacidad" className="inline-flex min-h-11 items-center underline">
+          Privacidad
+        </Link>
       </p>
     </footer>
   );
