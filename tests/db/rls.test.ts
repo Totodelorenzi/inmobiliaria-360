@@ -407,3 +407,42 @@ describe("pre-visita y calificación", () => {
     });
   });
 });
+
+describe("datos de ejemplo", () => {
+  test("la actividad del seed respeta todas las restricciones de la base", async () => {
+    const { generarActividad } = await import("../../scripts/seed/actividad.ts");
+    const propiedades = [
+      {
+        id: ID.pubA,
+        titulo: "Depto publicado A",
+        operacion: "venta" as const,
+        fotos: 2,
+        escenas: [
+          { id: ID.escenaPubA1, nombre: "Living" },
+          { id: ID.escenaPubA2, nombre: "Cocina" },
+        ],
+        planos: [{ id: ID.planoPubA, nombre: "Planta baja", puntos: ["Living"] }],
+      },
+      { id: ID.borradorA, titulo: "Borrador A", operacion: "alquiler" as const, fotos: 1, escenas: [{ id: ID.escenaBorradorA, nombre: "Living" }], planos: [] },
+    ];
+    const f = generarActividad(ID.agenciaA, propiedades, Date.now(), new Set(["A7K2"]));
+    const insertar = async (tx: Parameters<Parameters<typeof como>[2]>[0], tabla: string, filas: object[]) => {
+      if (filas.length === 0) return;
+      const columnas = [...new Set(filas.flatMap((x) => Object.keys(x)))];
+      await tx.query(
+        `insert into ${tabla} (${columnas.join(", ")}) select ${columnas.join(", ")} from jsonb_populate_recordset(null::${tabla}, $1)`,
+        [JSON.stringify(filas)],
+      );
+    };
+    const resumen = await como(db, "servicio", async (tx) => {
+      await insertar(tx, "visitors", f.visitantes.map((v) => ({ ...v, tracked_link_id: null })));
+      await insertar(tx, "tracked_links", f.links);
+      await insertar(tx, "visitor_events", f.eventos);
+      await insertar(tx, "leads", f.leads);
+      await insertar(tx, "visit_requests", f.pedidos);
+      const { rows } = await tx.query<{ n: number }>("select count(*)::int as n from leads where es_demo");
+      return rows[0].n;
+    });
+    assert.equal(resumen, f.leads.length);
+  });
+});

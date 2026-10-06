@@ -103,3 +103,5 @@ Una línea por decisión: fecha · qué · por qué.
 - 2026-10-06 · Línea de tiempo del lead agrupada por visita (sesión) y con repeticiones juntadas ("Miró 5 fotos", "Recorrió Living (2 min)") en `src/lib/previsita/linea-tiempo.ts` (pura, con tests) · se lee de un vistazo en el celular.
 - 2026-10-06 · Estadísticas: una pantalla para todas las propiedades (7/30/90 días) con atajo filtrado desde el editor; conversión = pedidos de visita / visitantes de la ficha.
 - 2026-10-06 · "Borrar datos de ejemplo" también elimina leads, links y visitantes demo (con la clave secreta, tras verificar rol admin) · el equipo no tiene permiso de borrar visitantes.
+- 2026-10-06 · Actividad de ejemplo generada por una función pura y determinística (semilla fija) con 15 personas guionadas (4 calientes, 5 tibias, 6 frías) + 45 visitantes anónimos; el puntaje sale del mismo `scoring.ts` · la demo cuenta historias creíbles ("terminó el tour, 3 visitas, crédito") y se testea sin base.
+- 2026-10-06 · Teléfonos de ejemplo con prefijo 0000 y emails @example.com · no existen: nadie recibe mensajes por probar la demo.

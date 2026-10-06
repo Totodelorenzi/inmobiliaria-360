@@ -165,7 +165,7 @@ export function calcularPuntaje(r: Resumen, calificacion: Calificacion = null, e
   if (r.planos > 0) sumar("planos", r.planos === 1 ? "Vio el plano" : `Vio ${r.planos} planos`, P.vioPlanos);
   if (r.puntosPlano > 0) sumar("puntos", `Tocó ${r.puntosPlano} ambientes del plano`, Math.min(P.maxPuntosPlano, r.puntosPlano * P.porPuntoPlano));
   if (r.visitas > 1) sumar("visitas", `${r.visitas} visitas`, Math.min(P.maxVisitasExtra, (r.visitas - 1) * P.porVisitaExtra));
-  if (r.fotos > 0) sumar("fotos", `Vio ${r.fotos} fotos`, Math.min(P.maxFotos, r.fotos * P.porFoto));
+  if (r.fotos > 0) sumar("fotos", r.fotos === 1 ? "Vio 1 foto" : `Vio ${r.fotos} fotos`, Math.min(P.maxFotos, r.fotos * P.porFoto));
   if (r.pidioVisita) sumar("visita", "Pidió visita presencial", P.pidioVisita);
   if (r.formulario) sumar("datos", "Dejó sus datos", P.dejoDatos);
   if (r.whatsapp) sumar("whatsapp", "Escribió por WhatsApp", P.whatsapp);

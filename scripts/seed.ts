@@ -9,6 +9,7 @@ import { slugify, slugDisponible } from "@/lib/admin/propiedad";
 import { borrarCarpetaPropiedad, type Bucket } from "@/lib/admin/storage";
 import { getAgencyId, isSupabaseConfigured } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { cargarActividad, type PropiedadCreada } from "./seed/actividad.ts";
 import { AGENCIA, AGENCIA_DEMO_ID, PROPIEDADES, panoramasUsadas } from "./seed/datos.ts";
 import * as img from "./seed/imagenes.ts";
 
@@ -83,7 +84,11 @@ async function main() {
     log(`Inmobiliaria creada: ${AGENCIA.nombre}`);
   }
 
-  // 2. Borrar los datos de ejemplo anteriores
+  // 2. Borrar los datos de ejemplo anteriores (actividad primero; los eventos caen en cascada)
+  for (const tabla of ["leads", "tracked_links", "visitors"] as const) {
+    const { error: errorTabla } = await db.from(tabla).delete().eq("agency_id", agencyId).eq("es_demo", true);
+    if (errorTabla) throw new Error(`No se pudo limpiar ${tabla}: ${errorTabla.message}`);
+  }
   const { data: viejas } = await db.from("properties").select("id").eq("agency_id", agencyId).eq("es_demo", true);
   for (const { id } of viejas ?? []) await borrarCarpetaPropiedad(db, agencyId, id);
   if (viejas?.length) {
@@ -100,6 +105,7 @@ async function main() {
     return panoramasTour.get(id)!;
   };
 
+  const creadas: PropiedadCreada[] = [];
   for (const [i, def] of PROPIEDADES.entries()) {
     const { fotos, escenas = [], hotspots = [], planos = [], ...datos } = def;
     const id = randomUUID();
@@ -122,11 +128,14 @@ async function main() {
       await db.from("property_photos").insert({ property_id: id, ...subida, orden, es_principal: orden === 0 });
     }
 
+    const creada: PropiedadCreada = { id, titulo: datos.titulo, operacion: datos.operacion, fotos: fotos.length, escenas: [], planos: [] };
+    creadas.push(creada);
     const idsEscenas: string[] = [];
     for (const [orden, escena] of escenas.entries()) {
       const subida = await subirImagen("panoramas", carpeta, await tourDe(escena.pano), "-mini");
       const sceneId = randomUUID();
       idsEscenas.push(sceneId);
+      creada.escenas.push({ id: sceneId, nombre: escena.nombre });
       await db.from("tour_scenes").insert({
         id: sceneId,
         property_id: id,
@@ -149,11 +158,19 @@ async function main() {
       const svg = plano.svg === "unidad-2-amb" ? img.svgUnidad2Amb() : img.svgAmenities();
       const subida = await subirImagen("planos", carpeta, await img.desdeSvg(svg, 3200, 600), "-mini");
       const planId = randomUUID();
+      creada.planos.push({ id: planId, nombre: plano.nombre, puntos: plano.puntos.map((pt) => pt.texto) });
       await db.from("property_plans").insert({ id: planId, property_id: id, nombre: plano.nombre, ...subida, orden, tipo_original: "imagen" });
       await db.from("plan_hotspots").insert(plano.puntos.map((p) => ({ plan_id: planId, x_pct: p.x, y_pct: p.y * img.PROPORCION_DIBUJO, texto: p.texto })));
     }
     log(`${i + 1}/${PROPIEDADES.length} ${datos.titulo} (${fotos.length} fotos${escenas.length ? `, tour de ${escenas.length} ambientes` : ""}${planos.length ? `, ${planos.length} planos` : ""})`);
   }
+
+  // 4. Visitas, leads y pedidos de visita de las últimas 3 semanas
+  const a = await cargarActividad(db, agencyId, creadas);
+  log(
+    `Actividad de ejemplo: ${a.visitantes} visitantes, ${a.eventos} eventos, ${a.leads} leads ` +
+      `(${a.niveles.caliente} calientes, ${a.niveles.tibio} tibios, ${a.niveles.frio} fríos), ${a.pedidos} pedidos de visita, ${a.links} links`,
+  );
 
   console.log(`\nListo. Inmobiliaria ${agencyId}. Siguiente paso: npm run crear-admin`);
 }

@@ -2,7 +2,7 @@
 
 Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
-**Próximo paso:** Etapa 7 (seed): visitantes y eventos de las últimas 3 semanas, ~15 leads (frío/tibio/caliente) con historial, pedidos de visita y 2 links de pre-visita, todo marcado como demo.
+**Próximo paso:** Etapa 8 (E2E): tour completo, pedido de visita, lead con puntaje e historial en el panel, y link personalizado. Después BLOQUEO A.
 
 **Cómo verificar:** `npm run typecheck`, `npm run lint`, `npm test` (unitarios + base con PGlite), `npm run build`, `npm run test:e2e` (Playwright; con el build hecho).
 
@@ -29,7 +29,7 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
   - [x] Puntaje (`src/lib/scoring.ts`) con desglose y tests.
   - [x] Panel: leads por puntaje con nivel, estado y notas; detalle con línea de tiempo; estadísticas por propiedad; leads calientes en el dashboard; generar link de pre-visita; CSV y borrado demo ampliados.
   - [x] Privacidad: /privacidad (Ley 25.326), aviso de primera visita, casilla de consentimiento, borrar el propio historial.
-- [~] 7. Seed (`npm run seed`), `npm run crear-admin` y botón "Borrar datos de ejemplo". Hecho: propiedades, fotos, tours y planos (imágenes probadas con `--solo-imagenes`). Falta: visitantes, eventos de 3 semanas, ~15 leads, pedidos de visita y links de ejemplo.
+- [x] 7. Seed (`npm run seed`), `npm run crear-admin` y botón "Borrar datos de ejemplo": propiedades, fotos, tours y planos + 3 semanas de actividad (60 visitantes, ~330 eventos, 15 leads frío/tibio/caliente, 5 pedidos de visita, 2 links). Probado con `--solo-imagenes` y con PGlite; la carga real va en la etapa 9.
 - [~] 8. Calidad local: typecheck, lint y build sin warnings; 42 unitarios + 32 de base + 14 E2E @sin-datos en iPhone y escritorio. Falta: E2E de tour completo, pedido de visita, lead con puntaje e historial en el panel, y link personalizado.
   - [ ] BLOQUEO A: Supabase configurado (SETUP-CUENTAS pasos 1 y 2).
 - [ ] 9. Supabase real: link, db push, Storage, seed, admin, tipos generados, tests.
