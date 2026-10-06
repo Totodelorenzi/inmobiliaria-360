@@ -47,55 +47,35 @@ describe("público (anónimo)", () => {
     await assert.rejects(como(db, "anon", (tx) => tx.query("update agencies set nombre = 'hack'")), RLS);
   });
 
-  test("puede dejar una consulta sobre una propiedad publicada o a la agencia", async () => {
-    await como(db, "anon", async (tx) => {
-      await tx.query(
-        `insert into leads (agency_id, property_id, nombre, email) values ($1, $2, 'Carla', 'carla@test.com')`,
-        [ID.agenciaA, ID.pubA],
-      );
-      await tx.query(`insert into leads (agency_id, property_id, origen) values ($1, $2, 'whatsapp_click')`, [
-        ID.agenciaA,
-        ID.pubA,
-      ]);
-      await tx.query(`insert into leads (agency_id, nombre, telefono) values ($1, 'Dani', '1122')`, [ID.agenciaA]);
-    });
-  });
-
-  test("no puede dejar consultas sobre borradores ni cruzando agencias", async () => {
+  test("no puede crear leads directo: entran solo por el servidor", async () => {
     await assert.rejects(
       como(db, "anon", (tx) =>
-        tx.query(`insert into leads (agency_id, property_id, nombre, telefono) values ($1, $2, 'X', '1')`, [
-          ID.agenciaA,
-          ID.borradorA,
-        ]),
-      ),
-      RLS,
-    );
-    await assert.rejects(
-      como(db, "anon", (tx) =>
-        tx.query(`insert into leads (agency_id, property_id, nombre, telefono) values ($1, $2, 'X', '1')`, [
-          ID.agenciaB,
-          ID.pubA,
-        ]),
+        tx.query(`insert into leads (agency_id, property_id, nombre, telefono) values ($1, $2, 'X', '1122')`, [ID.agenciaA, ID.pubA]),
       ),
       RLS,
     );
   });
 
-  test("un formulario sin nombre o sin contacto se rechaza", async () => {
+  test("la base valida los leads que crea el servidor", async () => {
+    const insertar = (columnas: string, valores: string) =>
+      como(db, "servicio", (tx) => tx.query(`insert into leads (agency_id, ${columnas}) values ($1, ${valores})`, [ID.agenciaA]));
     for (const valores of ["null, '1122'", "'Eva', null", "'  ', 'a@b.com'"]) {
-      await assert.rejects(
-        como(db, "anon", (tx) =>
-          tx.query(`insert into leads (agency_id, nombre, telefono) values ($1, ${valores})`, [ID.agenciaA]),
-        ),
-        /check constraint/,
-      );
+      await assert.rejects(insertar("nombre, telefono", valores), /check constraint/);
     }
+    await assert.rejects(insertar("nombre, telefono, origen", "'Eva', null, 'pedido_visita'"), /check constraint/);
+    await assert.rejects(insertar("nombre, origen", "null, 'link_personalizado'"), /check constraint/);
+    await assert.rejects(insertar("codigo_ref, origen", "'a7', 'whatsapp_click'"), /check constraint/);
+    await insertar("nombre, telefono, origen", "'Eva', '1122', 'pedido_visita'");
+    await insertar("codigo_ref, origen", "'Q4W8', 'whatsapp_click'");
   });
 
   test("no puede leer consultas ni miembros", async () => {
     await assert.rejects(como(db, "anon", (tx) => tx.query("select * from leads")), RLS);
     await assert.rejects(como(db, "anon", (tx) => tx.query("select * from agency_members")), RLS);
+    for (const tabla of ["visitors", "visitor_events", "visit_requests", "tracked_links"]) {
+      await assert.rejects(como(db, "anon", (tx) => tx.query(`select * from ${tabla}`)), RLS, tabla);
+    }
+    await assert.rejects(como(db, "anon", (tx) => tx.query("select * from estadisticas_propiedades(now() - interval '30 days')")), RLS);
   });
 });
 
@@ -173,7 +153,7 @@ describe("miembros de una agencia", () => {
 
   test("ven y borran solo las consultas de su agencia", async () => {
     await como(db, "agenteA", async (tx) => {
-      assert.equal(await contar(tx, "select * from leads"), 1);
+      assert.equal(await contar(tx, "select * from leads"), 2);
       assert.equal((await tx.query("delete from leads where agency_id = $1", [ID.agenciaB])).affectedRows, 0);
     });
   });
@@ -349,5 +329,81 @@ describe("búsqueda", () => {
     assert.deepEqual(ids.nunez, ["luminoso"]);
     assert.ok(ids.depto.includes("luminoso"));
     assert.deepEqual(ids.cuba, ["casa-x"]);
+  });
+});
+
+describe("pre-visita y calificación", () => {
+  test("cada agencia ve solo sus visitantes, eventos, pedidos de visita y links", async () => {
+    for (const [usuario, propios] of [["agenteA", ID.visitanteA], ["adminB", ID.visitanteB]] as const) {
+      await como(db, usuario, async (tx) => {
+        const visitantes = (await tx.query<{ id: string }>("select id from visitors")).rows.map((r) => r.id);
+        assert.deepEqual(visitantes, [propios]);
+        const eventos = (await tx.query<{ visitor_id: string }>("select distinct visitor_id from visitor_events")).rows;
+        assert.deepEqual(eventos.map((e) => e.visitor_id), [propios]);
+      });
+    }
+    await como(db, "agenteA", async (tx) => {
+      assert.equal(await contar(tx, "select * from visit_requests"), 1);
+      assert.equal(await contar(tx, "select * from tracked_links"), 1);
+    });
+    await como(db, "adminB", async (tx) => {
+      assert.equal(await contar(tx, "select * from visit_requests"), 0);
+      assert.equal(await contar(tx, "select * from tracked_links"), 0);
+    });
+  });
+
+  test("un miembro cambia estado y notas, pero no el puntaje ni leads ajenos", async () => {
+    await como(db, "agenteA", async (tx) => {
+      const r = await tx.query("update leads set estado = 'contactado', notas = 'Llamar el lunes' where id = $1", [ID.leadVisitanteA]);
+      assert.equal(r.affectedRows, 1);
+    });
+    await assert.rejects(como(db, "agenteA", (tx) => tx.query("update leads set score = 100 where id = $1", [ID.leadVisitanteA])), RLS);
+    await como(db, "adminB", async (tx) => {
+      assert.equal((await tx.query("update leads set estado = 'descartado' where id = $1", [ID.leadVisitanteA])).affectedRows, 0);
+    });
+  });
+
+  test("nadie con sesión escribe eventos ni visitantes (solo el servidor)", async () => {
+    await assert.rejects(
+      como(db, "adminA", (tx) =>
+        tx.query("insert into visitor_events (visitor_id, agency_id, property_id, tipo) values ($1, $2, $3, 'tour_complete')", [ID.visitanteA, ID.agenciaA, ID.pubA]),
+      ),
+      RLS,
+    );
+    await assert.rejects(
+      como(db, "adminA", (tx) => tx.query("insert into visitors (agency_id, codigo_ref) values ($1, 'ZZ99')", [ID.agenciaA])),
+      RLS,
+    );
+  });
+
+  test("un solo lead por visitante e inmobiliaria", async () => {
+    await assert.rejects(
+      como(db, "servicio", (tx) =>
+        tx.query("insert into leads (agency_id, visitor_id, origen) values ($1, $2, 'whatsapp_click')", [ID.agenciaA, ID.visitanteA]),
+      ),
+      /duplicate key/,
+    );
+  });
+
+  test("estadísticas por propiedad: solo con eventos de la propia agencia", async () => {
+    const consulta = "select * from estadisticas_propiedades(now() - interval '30 days') where property_id = $1";
+    const deA = await como(db, "adminA", async (tx) => (await tx.query<Record<string, string | number>>(consulta, [ID.pubA])).rows[0]);
+    assert.equal(Number(deA.vistas), 1);
+    assert.equal(Number(deA.visitantes), 1);
+    assert.equal(Number(deA.tours_iniciados), 1);
+    assert.equal(Number(deA.segundos_tour_promedio), 70);
+    assert.equal(Number(deA.pedidos_visita), 1);
+    const deB = await como(db, "adminB", async (tx) => (await tx.query<Record<string, string | number>>(consulta, [ID.pubA])).rows[0]);
+    assert.equal(Number(deB.vistas), 0);
+    assert.equal(Number(deB.pedidos_visita), 0);
+  });
+
+  test("borrar un visitante borra sus eventos y deja el lead sin historial", async () => {
+    await como(db, "servicio", async (tx) => {
+      await tx.query("delete from visitors where id = $1", [ID.visitanteA]);
+      assert.equal(await contar(tx, "select * from visitor_events where visitor_id = $1", [ID.visitanteA]), 0);
+      const { rows } = await tx.query<{ visitor_id: string | null }>("select visitor_id from leads where id = $1", [ID.leadVisitanteA]);
+      assert.equal(rows[0].visitor_id, null);
+    });
   });
 });

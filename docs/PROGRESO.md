@@ -2,7 +2,7 @@
 
 Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
-**Próximo paso:** Etapa 2 (ampliación): migraciones del modelo de pre-visita (visitors, visitor_events, visit_requests, tracked_links, columnas nuevas de leads), RLS y tests PGlite. Después, etapa 6 (Pre-visita y calificación).
+**Próximo paso:** Etapa 6 (Pre-visita y calificación): scoring + tracking + /api/eventos + /v/[codigo] + pedido de visita + panel + privacidad. Ojo: el formulario de consulta y /api/whatsapp todavía escriben leads con el cliente anónimo (la base ya no lo permite): se reescriben en esta etapa.
 
 **Cómo verificar:** `npm run typecheck`, `npm run lint`, `npm test` (unitarios + base con PGlite), `npm run build`, `npm run test:e2e` (Playwright; con el build hecho).
 
@@ -17,8 +17,8 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 ## Etapas
 
 - [x] 1. Base: dependencias, carpetas, clientes Supabase, `env.ts`, `proxy.ts`, layout, sistema de diseño (tokens, fuentes, componentes en src/components/ui).
-- [~] 2. Base de datos: migraciones (esquema, RLS, Storage, búsqueda) en supabase/migrations, 27 tests PGlite en tests/db, tipos a mano.
-  - [ ] Modelo de pre-visita: visitors, visitor_events, visit_requests, tracked_links, columnas nuevas de leads, RLS (el público no lee ni escribe) y tests.
+- [x] 2. Base de datos: 6 migraciones (esquema, RLS, Storage, búsqueda, pre-visita y sus restricciones), 32 tests PGlite en tests/db, tipos a mano.
+  - [x] Modelo de pre-visita: visitors, visitor_events, visit_requests, tracked_links, columnas nuevas de leads, función estadisticas_propiedades, RLS (el público no lee ni escribe) y tests.
 - [x] 3. Web pública: inicio, listados con filtros en la URL, ficha, consulta, WhatsApp, OG, sitemap, robots, 404. Falta probar con datos reales (etapa 9).
 - [x] 4. Visores: tour 360° (Pannellum) y planos con zoom/paneo táctil. Falta probarlos con datos reales (etapa 9).
 - [x] 5. Panel /admin: acceso, dashboard, propiedades (listado + editor en 5 pasos con autoguardado), fotos, tour con editor de hotspots, planos con puntos, consultas + CSV, configuración con vista previa, usuarios, ayuda. Falta probarlo con Supabase real (etapa 9).

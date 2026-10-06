@@ -24,6 +24,10 @@ export const ID = {
   fotoPubA1: "50000000-0000-4000-8000-00000000000a",
   fotoPubA2: "50000000-0000-4000-8000-00000000000b",
   fotoBorradorA: "50000000-0000-4000-8000-00000000000c",
+  visitanteA: "60000000-0000-4000-8000-00000000000a",
+  visitanteB: "60000000-0000-4000-8000-00000000000b",
+  leadVisitanteA: "70000000-0000-4000-8000-00000000000a",
+  linkA: "80000000-0000-4000-8000-00000000000a",
 } as const;
 
 const FIXTURES = `
@@ -59,6 +63,21 @@ const FIXTURES = `
   insert into public.leads (agency_id, property_id, nombre, telefono, origen) values
     ('${ID.agenciaA}', '${ID.pubA}', 'Ana', '1122334455', 'formulario'),
     ('${ID.agenciaB}', '${ID.pubB}', 'Beto', '1199887766', 'formulario');
+  insert into public.visitors (id, agency_id, codigo_ref, first_seen, last_seen) values
+    ('${ID.visitanteA}', '${ID.agenciaA}', 'A7K2', now(), now()),
+    ('${ID.visitanteB}', '${ID.agenciaB}', 'B3M9', now(), now());
+  insert into public.visitor_events (visitor_id, agency_id, property_id, tipo, scene_id, duracion_ms, sesion_id) values
+    ('${ID.visitanteA}', '${ID.agenciaA}', '${ID.pubA}', 'view_property', null, null, '90000000-0000-4000-8000-000000000001'),
+    ('${ID.visitanteA}', '${ID.agenciaA}', '${ID.pubA}', 'tour_start', null, null, '90000000-0000-4000-8000-000000000001'),
+    ('${ID.visitanteA}', '${ID.agenciaA}', '${ID.pubA}', 'scene_view', '${ID.escenaPubA1}', 40000, '90000000-0000-4000-8000-000000000001'),
+    ('${ID.visitanteA}', '${ID.agenciaA}', '${ID.pubA}', 'scene_view', '${ID.escenaPubA2}', 30000, '90000000-0000-4000-8000-000000000001'),
+    ('${ID.visitanteB}', '${ID.agenciaB}', '${ID.pubB}', 'view_property', null, null, '90000000-0000-4000-8000-000000000002');
+  insert into public.leads (id, agency_id, property_id, visitor_id, codigo_ref, nombre, telefono, origen, score, nivel) values
+    ('${ID.leadVisitanteA}', '${ID.agenciaA}', '${ID.pubA}', '${ID.visitanteA}', 'A7K2', 'Carla', '1144556677', 'pedido_visita', 72, 'caliente');
+  insert into public.visit_requests (lead_id, property_id, forma_pago, plazo, necesita_vender, franja_preferida) values
+    ('${ID.leadVisitanteA}', '${ID.pubA}', 'credito_hipotecario', '1_3_meses', false, 'tarde');
+  insert into public.tracked_links (id, agency_id, property_id, codigo, nombre_prospecto, visitor_id) values
+    ('${ID.linkA}', '${ID.agenciaA}', '${ID.pubA}', 'k8p2qz', 'Diego', '${ID.visitanteA}');
 `;
 
 /** Base en memoria con la réplica de Supabase, todas las migraciones y los datos de prueba. */
@@ -73,7 +92,7 @@ export async function crearBase() {
   return db;
 }
 
-type Usuario = keyof Pick<typeof ID, "adminA" | "agenteA" | "adminB"> | "anon";
+type Usuario = keyof Pick<typeof ID, "adminA" | "agenteA" | "adminB"> | "anon" | "servicio";
 
 /**
  * Ejecuta `fn` como lo haría la API de Supabase para ese usuario (rol + claims del JWT)
@@ -82,9 +101,11 @@ type Usuario = keyof Pick<typeof ID, "adminA" | "agenteA" | "adminB"> | "anon";
 export async function como<T>(db: PGlite, usuario: Usuario, fn: (tx: Transaction) => Promise<T>): Promise<T> {
   let resultado: T | undefined;
   await db.transaction(async (tx) => {
-    const claims = usuario === "anon" ? { role: "anon" } : { sub: ID[usuario], role: "authenticated" };
+    // "servicio" = la clave secreta del servidor (saltea RLS, igual que en Supabase).
+    const rol = usuario === "anon" ? "anon" : usuario === "servicio" ? "service_role" : "authenticated";
+    const claims = usuario === "anon" || usuario === "servicio" ? { role: rol } : { sub: ID[usuario], role: rol };
     await tx.query("select set_config('request.jwt.claims', $1, true)", [JSON.stringify(claims)]);
-    await tx.exec(`set local role ${usuario === "anon" ? "anon" : "authenticated"}`);
+    await tx.exec(`set local role ${rol}`);
     resultado = await fn(tx);
     await tx.rollback();
   });

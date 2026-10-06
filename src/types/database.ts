@@ -231,6 +231,17 @@ export type Database = {
           mensaje: string | null;
           origen: E["origen_lead"];
           created_at: string;
+          visitor_id: string | null;
+          codigo_ref: string | null;
+          score: number;
+          score_detalle: Json;
+          nivel: E["nivel_lead"];
+          estado: E["estado_lead"];
+          notas: string | null;
+          consentimiento_at: string | null;
+          ultima_actividad: string;
+          es_demo: boolean;
+          updated_at: string;
         },
         {
           id?: string;
@@ -242,15 +253,168 @@ export type Database = {
           mensaje?: string | null;
           origen?: E["origen_lead"];
           created_at?: string;
+          visitor_id?: string | null;
+          codigo_ref?: string | null;
+          score?: number;
+          score_detalle?: Json;
+          nivel?: E["nivel_lead"];
+          estado?: E["estado_lead"];
+          notas?: string | null;
+          consentimiento_at?: string | null;
+          ultima_actividad?: string;
+          es_demo?: boolean;
+          updated_at?: string;
         },
         [
           Rel<"leads_agency_id_fkey", "agency_id", "agencies">,
           Rel<"leads_property_id_fkey", "property_id", "properties">,
+          Rel<"leads_visitor_id_fkey", "visitor_id", "visitors">,
+        ]
+      >;
+      visitors: Table<
+        {
+          id: string;
+          agency_id: string;
+          codigo_ref: string;
+          first_seen: string | null;
+          last_seen: string | null;
+          utm_source: string | null;
+          utm_medium: string | null;
+          utm_campaign: string | null;
+          tracked_link_id: string | null;
+          es_demo: boolean;
+          created_at: string;
+        },
+        {
+          id?: string;
+          agency_id: string;
+          codigo_ref: string;
+          first_seen?: string | null;
+          last_seen?: string | null;
+          utm_source?: string | null;
+          utm_medium?: string | null;
+          utm_campaign?: string | null;
+          tracked_link_id?: string | null;
+          es_demo?: boolean;
+          created_at?: string;
+        },
+        [
+          Rel<"visitors_agency_id_fkey", "agency_id", "agencies">,
+          Rel<"visitors_tracked_link_id_fkey", "tracked_link_id", "tracked_links">,
+        ]
+      >;
+      tracked_links: Table<
+        {
+          id: string;
+          agency_id: string;
+          property_id: string;
+          codigo: string;
+          nombre_prospecto: string;
+          telefono_prospecto: string | null;
+          visitor_id: string | null;
+          creado_por: string | null;
+          es_demo: boolean;
+          created_at: string;
+        },
+        {
+          id?: string;
+          agency_id: string;
+          property_id: string;
+          codigo: string;
+          nombre_prospecto: string;
+          telefono_prospecto?: string | null;
+          visitor_id?: string | null;
+          creado_por?: string | null;
+          es_demo?: boolean;
+          created_at?: string;
+        },
+        [
+          Rel<"tracked_links_agency_id_fkey", "agency_id", "agencies">,
+          Rel<"tracked_links_property_id_fkey", "property_id", "properties">,
+          Rel<"tracked_links_visitor_id_fkey", "visitor_id", "visitors">,
+        ]
+      >;
+      visitor_events: Table<
+        {
+          id: number;
+          visitor_id: string;
+          agency_id: string;
+          property_id: string | null;
+          tipo: E["tipo_evento"];
+          scene_id: string | null;
+          plan_id: string | null;
+          duracion_ms: number | null;
+          sesion_id: string | null;
+          meta: Json;
+          created_at: string;
+        },
+        {
+          id?: never;
+          visitor_id: string;
+          agency_id: string;
+          property_id?: string | null;
+          tipo: E["tipo_evento"];
+          scene_id?: string | null;
+          plan_id?: string | null;
+          duracion_ms?: number | null;
+          sesion_id?: string | null;
+          meta?: Json;
+          created_at?: string;
+        },
+        [
+          Rel<"visitor_events_visitor_id_fkey", "visitor_id", "visitors">,
+          Rel<"visitor_events_property_id_fkey", "property_id", "properties">,
+          Rel<"visitor_events_scene_id_fkey", "scene_id", "tour_scenes">,
+          Rel<"visitor_events_plan_id_fkey", "plan_id", "property_plans">,
+        ]
+      >;
+      visit_requests: Table<
+        {
+          id: string;
+          lead_id: string;
+          property_id: string;
+          franja_preferida: "manana" | "tarde" | "fin_de_semana" | "cualquiera";
+          forma_pago: E["forma_pago"] | null;
+          plazo: E["plazo_compra"] | null;
+          necesita_vender: boolean | null;
+          presupuesto_aprox: number | null;
+          comentario: string | null;
+          created_at: string;
+        },
+        {
+          id?: string;
+          lead_id: string;
+          property_id: string;
+          franja_preferida?: "manana" | "tarde" | "fin_de_semana" | "cualquiera";
+          forma_pago?: E["forma_pago"] | null;
+          plazo?: E["plazo_compra"] | null;
+          necesita_vender?: boolean | null;
+          presupuesto_aprox?: number | null;
+          comentario?: string | null;
+          created_at?: string;
+        },
+        [
+          Rel<"visit_requests_lead_id_fkey", "lead_id", "leads">,
+          Rel<"visit_requests_property_id_fkey", "property_id", "properties">,
         ]
       >;
     };
     Views: { [_ in never]: never };
-    Functions: { [_ in never]: never };
+    Functions: {
+      estadisticas_propiedades: {
+        Args: { p_desde: string };
+        Returns: {
+          property_id: string;
+          vistas: number;
+          visitantes: number;
+          tours_iniciados: number;
+          tours_completos: number;
+          segundos_tour_promedio: number;
+          vieron_planos: number;
+          pedidos_visita: number;
+        }[];
+      };
+    };
     Enums: {
       rol_miembro: "admin" | "agente";
       operacion: "alquiler" | "venta";
@@ -258,11 +422,29 @@ export type Database = {
       estado_obra: "terminada" | "en_construccion" | "en_pozo";
       moneda: "ARS" | "USD";
       tipo_plano: "imagen" | "pdf";
-      origen_lead: "formulario" | "whatsapp_click";
+      origen_lead: "formulario" | "whatsapp_click" | "pedido_visita" | "link_personalizado";
+      tipo_evento:
+        | "view_property"
+        | "photo_view"
+        | "tour_start"
+        | "scene_view"
+        | "tour_complete"
+        | "plan_view"
+        | "plan_point_click"
+        | "whatsapp_click"
+        | "form_submit"
+        | "visit_request"
+        | "share";
+      nivel_lead: "frio" | "tibio" | "caliente";
+      estado_lead: "nuevo" | "contactado" | "visita_agendada" | "descartado" | "cerrado";
+      forma_pago: "contado" | "credito_hipotecario" | "financiacion" | "no_sabe";
+      plazo_compra: "inmediato" | "1_3_meses" | "3_6_meses" | "mas_6_meses";
     };
     CompositeTypes: { [_ in never]: never };
   };
 };
+
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 type PublicSchema = Database["public"];
 export type Tables<T extends keyof PublicSchema["Tables"]> = PublicSchema["Tables"][T]["Row"];
@@ -280,7 +462,24 @@ export const Constants = {
       estado_obra: ["terminada", "en_construccion", "en_pozo"],
       moneda: ["ARS", "USD"],
       tipo_plano: ["imagen", "pdf"],
-      origen_lead: ["formulario", "whatsapp_click"],
+      origen_lead: ["formulario", "whatsapp_click", "pedido_visita", "link_personalizado"],
+      tipo_evento: [
+        "view_property",
+        "photo_view",
+        "tour_start",
+        "scene_view",
+        "tour_complete",
+        "plan_view",
+        "plan_point_click",
+        "whatsapp_click",
+        "form_submit",
+        "visit_request",
+        "share",
+      ],
+      nivel_lead: ["frio", "tibio", "caliente"],
+      estado_lead: ["nuevo", "contactado", "visita_agendada", "descartado", "cerrado"],
+      forma_pago: ["contado", "credito_hipotecario", "financiacion", "no_sabe"],
+      plazo_compra: ["inmediato", "1_3_meses", "3_6_meses", "mas_6_meses"],
     },
   },
 } as const satisfies { public: { Enums: { [K in keyof PublicSchema["Enums"]]: readonly PublicSchema["Enums"][K][] } } };
