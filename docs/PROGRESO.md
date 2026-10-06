@@ -2,7 +2,7 @@
 
 Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
-**Próximo paso:** Etapa 6, panel: leads por puntaje (nivel, estado, notas, filtros, búsqueda por código), detalle con línea de tiempo, estadísticas por propiedad, leads calientes en el dashboard, generar link de pre-visita, CSV y borrado de datos demo ampliado.
+**Próximo paso:** Etapa 7 (seed): visitantes y eventos de las últimas 3 semanas, ~15 leads (frío/tibio/caliente) con historial, pedidos de visita y 2 links de pre-visita, todo marcado como demo.
 
 **Cómo verificar:** `npm run typecheck`, `npm run lint`, `npm test` (unitarios + base con PGlite), `npm run build`, `npm run test:e2e` (Playwright; con el build hecho).
 
@@ -22,15 +22,15 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 - [x] 3. Web pública: inicio, listados con filtros en la URL, ficha, consulta, WhatsApp, OG, sitemap, robots, 404. Falta probar con datos reales (etapa 9).
 - [x] 4. Visores: tour 360° (Pannellum) y planos con zoom/paneo táctil. Falta probarlos con datos reales (etapa 9).
 - [x] 5. Panel /admin: acceso, dashboard, propiedades (listado + editor en 5 pasos con autoguardado), fotos, tour con editor de hotspots, planos con puntos, consultas + CSV, configuración con vista previa, usuarios, ayuda. Falta probarlo con Supabase real (etapa 9).
-- [~] 6. Pre-visita y calificación:
+- [x] 6. Pre-visita y calificación:
   - [x] Tracking propio (`src/lib/tracking/`): lotes con sendBeacon, tiempo visible por escena y plano, sesiones, tour completo configurable.
   - [x] Route handlers `/api/eventos` y `/v/[codigo]` con validación y límite de tasa; unión del historial con el lead; código de referencia en WhatsApp.
   - [x] Pedido de visita presencial (CTA principal en ficha y al completar el tour).
   - [x] Puntaje (`src/lib/scoring.ts`) con desglose y tests.
-  - [ ] Panel: leads por puntaje con nivel, estado y notas; detalle con línea de tiempo; estadísticas por propiedad; leads calientes en el dashboard; generar link de pre-visita.
+  - [x] Panel: leads por puntaje con nivel, estado y notas; detalle con línea de tiempo; estadísticas por propiedad; leads calientes en el dashboard; generar link de pre-visita; CSV y borrado demo ampliados.
   - [x] Privacidad: /privacidad (Ley 25.326), aviso de primera visita, casilla de consentimiento, borrar el propio historial.
 - [~] 7. Seed (`npm run seed`), `npm run crear-admin` y botón "Borrar datos de ejemplo". Hecho: propiedades, fotos, tours y planos (imágenes probadas con `--solo-imagenes`). Falta: visitantes, eventos de 3 semanas, ~15 leads, pedidos de visita y links de ejemplo.
-- [~] 8. Calidad local: typecheck, lint y build sin warnings; 27 unitarios + 27 de base + 14 E2E @sin-datos en iPhone y escritorio. Falta: E2E de tour completo, pedido de visita, lead con puntaje e historial en el panel, y link personalizado.
+- [~] 8. Calidad local: typecheck, lint y build sin warnings; 42 unitarios + 32 de base + 14 E2E @sin-datos en iPhone y escritorio. Falta: E2E de tour completo, pedido de visita, lead con puntaje e historial en el panel, y link personalizado.
   - [ ] BLOQUEO A: Supabase configurado (SETUP-CUENTAS pasos 1 y 2).
 - [ ] 9. Supabase real: link, db push, Storage, seed, admin, tipos generados, tests.
   - [ ] BLOQUEO B: repo en GitHub y Vercel logueado (SETUP-CUENTAS pasos 3 y 4).

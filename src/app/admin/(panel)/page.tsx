@@ -1,12 +1,15 @@
-import { House, Inbox, Pencil, Plus } from "lucide-react";
+import { CalendarCheck, House, Inbox, Pencil, Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { GenerarLink } from "@/components/admin/leads";
+import { Puntaje } from "@/components/admin/nivel";
 import { BorrarDemo } from "@/components/admin/propiedades-lista";
 import { Aviso, Encabezado, Pagina, Panel } from "@/components/admin/ui";
 import { Button, buttonStyles } from "@/components/ui/button";
 import { crearBorrador } from "@/lib/admin/acciones";
-import { getResumen } from "@/lib/admin/datos";
+import { getOpcionesPropiedades, getResumen } from "@/lib/admin/datos";
 import { requerirSesion } from "@/lib/admin/sesion";
+import { resumenPuntaje } from "@/lib/scoring";
 
 export const metadata: Metadata = { title: "Inicio" };
 
@@ -26,13 +29,14 @@ const cuando = new Intl.DateTimeFormat("es-AR", {
 export default async function Dashboard({ searchParams }: PageProps<"/admin">) {
   const sesion = await requerirSesion();
   const { aviso } = await searchParams;
-  const r = await getResumen(sesion.agencia.id);
+  const [r, propiedades] = await Promise.all([getResumen(sesion.agencia.id), getOpcionesPropiedades(sesion.agencia.id)]);
   const mensaje = typeof aviso === "string" ? AVISOS[aviso] : undefined;
 
   const numeros = [
+    { valor: r.leadsSemana, texto: "leads nuevos en 7 días", href: "/admin/leads", Icono: Inbox },
+    { valor: r.pedidosSemana, texto: "pedidos de visita en 7 días", href: "/admin/leads?nivel=caliente", Icono: CalendarCheck },
     { valor: r.publicadas, texto: "propiedades publicadas", href: "/admin/propiedades?estado=publicadas", Icono: House },
     { valor: r.borradores, texto: "borradores", href: "/admin/propiedades?estado=borradores", Icono: Pencil },
-    { valor: r.leadsSemana, texto: "consultas en los últimos 7 días", href: "/admin/leads", Icono: Inbox },
   ];
 
   return (
@@ -44,7 +48,38 @@ export default async function Dashboard({ searchParams }: PageProps<"/admin">) {
         </div>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <Panel
+        titulo="Leads calientes de la semana"
+        className="mb-6 border-danger/30"
+        acciones={
+          <Link href="/admin/leads?nivel=caliente" className="text-sm font-semibold text-brand-ink underline">
+            Ver todos
+          </Link>
+        }
+      >
+        {r.calientes.length === 0 ? (
+          <p className="text-muted">
+            Esta semana todavía no hay leads calientes. Aparecen cuando alguien recorre la propiedad a fondo y pide visita.
+          </p>
+        ) : (
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {r.calientes.map((lead) => (
+              <li key={lead.id}>
+                <Link href={`/admin/leads/${lead.id}`} className="flex items-center gap-3 rounded-xl border border-border p-3 hover:border-brand">
+                  <Puntaje score={lead.score} nivel={lead.nivel} className="shrink-0" />
+                  <span className="min-w-0">
+                    <span className="block truncate font-semibold">{lead.nombre ?? `Ref. ${lead.codigo_ref}`}</span>
+                    <span className="block truncate text-sm text-muted">{lead.propiedad?.titulo ?? "Consulta general"}</span>
+                    <span className="block truncate text-xs">{resumenPuntaje(lead.score_detalle, 3)}</span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Panel>
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {numeros.map(({ valor, texto, href, Icono }) => (
           <Link key={href} href={href} className="flex items-center gap-4 rounded-(--radius-card) border border-border bg-bg p-4 hover:border-brand">
             <span className="grid size-12 place-items-center rounded-full bg-surface text-brand-ink">
@@ -64,14 +99,17 @@ export default async function Dashboard({ searchParams }: PageProps<"/admin">) {
             <Plus className="size-6" aria-hidden /> Cargar propiedad
           </Button>
         </form>
-        <Link href="/admin/leads" className={buttonStyles({ variant: "outline", size: "lg", fullWidth: true })}>
-          <Inbox className="size-6" aria-hidden /> Ver consultas
-        </Link>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Link href="/admin/leads" className={buttonStyles({ variant: "outline", size: "lg", fullWidth: true })}>
+            <Inbox className="size-6" aria-hidden /> Ver leads
+          </Link>
+          <GenerarLink propiedades={propiedades} />
+        </div>
       </div>
 
-      <Panel titulo="Últimas consultas" className="mt-6">
+      <Panel titulo="Últimos leads" className="mt-6">
         {r.ultimosLeads.length === 0 ? (
-          <p className="text-muted">Todavía no llegaron consultas. Van a aparecer acá apenas alguien escriba desde la web.</p>
+          <p className="text-muted">Todavía no hay leads. Aparecen cuando alguien pide visita, consulta, toca WhatsApp o abre un link de pre-visita.</p>
         ) : (
           <ul className="divide-y divide-border">
             {r.ultimosLeads.map((lead) => (

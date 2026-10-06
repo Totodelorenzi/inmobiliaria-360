@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleHelp, ExternalLink, House, Inbox, LayoutDashboard, LogOut, Menu, Settings, Users, X } from "lucide-react";
+import { ChartColumn, CircleHelp, ExternalLink, House, Inbox, LayoutDashboard, LogOut, Menu, Settings, Users, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRef } from "react";
@@ -13,7 +13,7 @@ type Props = { agencia: string; email: string; esAdmin: boolean };
 const PRINCIPALES = [
   { href: "/admin", label: "Inicio", Icono: LayoutDashboard },
   { href: "/admin/propiedades", label: "Propiedades", Icono: House },
-  { href: "/admin/leads", label: "Consultas", Icono: Inbox },
+  { href: "/admin/leads", label: "Leads", Icono: Inbox },
 ];
 
 function secundarios(esAdmin: boolean) {
@@ -24,6 +24,7 @@ function secundarios(esAdmin: boolean) {
           { href: "/admin/usuarios", label: "Usuarios", Icono: Users },
         ]
       : []),
+    { href: "/admin/estadisticas", label: "Estadísticas", Icono: ChartColumn },
     { href: "/admin/ayuda", label: "Ayuda", Icono: CircleHelp },
   ];
 }

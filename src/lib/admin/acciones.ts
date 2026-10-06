@@ -2,6 +2,7 @@
 
 import { updateTag } from "next/cache";
 import { redirect } from "next/navigation";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient, TAG_SITIO } from "@/lib/supabase/server";
 import type { TablesInsert } from "@/types/database";
 import {
@@ -204,10 +205,18 @@ export async function borrarDatosDeEjemplo(): Promise<Resultado> {
   const { data: demo, error } = await ctx.supabase.from("properties").select("id").eq("agency_id", ctx.sesion.agencia.id).eq("es_demo", true);
   if (error) return falla(error, "No se pudieron buscar los datos de ejemplo.");
   for (const { id } of demo) await borrarCarpetaPropiedad(ctx.supabase, ctx.sesion.agencia.id, id);
-  const { error: errorBorrado } = await ctx.supabase.from("properties").delete().eq("agency_id", ctx.sesion.agencia.id).eq("es_demo", true);
+  // Leads, links y visitantes de ejemplo: el equipo no tiene permiso de borrar visitantes, así que
+  // (ya verificado que es admin de la agencia) se usa la clave secreta. Los eventos caen en cascada.
+  const db = createAdminClient();
+  const agencia = ctx.sesion.agencia.id;
+  for (const tabla of ["leads", "tracked_links", "visitors"] as const) {
+    const { error: errorTabla } = await db.from(tabla).delete().eq("agency_id", agencia).eq("es_demo", true);
+    if (errorTabla) return falla(errorTabla, "No se pudieron borrar los leads de ejemplo.");
+  }
+  const { error: errorBorrado } = await ctx.supabase.from("properties").delete().eq("agency_id", agencia).eq("es_demo", true);
   if (errorBorrado) return falla(errorBorrado, "No se pudieron borrar los datos de ejemplo.");
   updateTag(TAG_SITIO);
-  return { ok: true, mensaje: `Listo: se borraron ${demo.length} propiedades de ejemplo.` };
+  return { ok: true, mensaje: `Listo: se borraron ${demo.length} propiedades de ejemplo con sus leads y visitas.` };
 }
 
 // ---------------------------------------------------------------------------

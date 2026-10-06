@@ -1,3 +1,4 @@
+import { ESTADO_LABEL as ESTADO, NIVEL_LABEL as NIVEL, ORIGEN_LABEL as ORIGEN } from "@/components/admin/nivel";
 import { getEstadoSesion } from "@/lib/admin/sesion";
 import { createClient } from "@/lib/supabase/server";
 
@@ -22,28 +23,34 @@ export async function GET(request: Request) {
   const estado = await getEstadoSesion();
   if (estado.tipo !== "ok") return new Response("Tu sesión venció. Volvé a entrar al panel.", { status: 401 });
 
-  const origen = new URL(request.url).searchParams.get("origen");
+  const nivel = new URL(request.url).searchParams.get("nivel");
   const supabase = await createClient();
   let query = supabase
     .from("leads")
-    .select("nombre, telefono, email, mensaje, origen, created_at, propiedad:properties(titulo, slug)")
+    .select("nombre, telefono, email, mensaje, origen, created_at, codigo_ref, score, nivel, estado, notas, ultima_actividad, propiedad:properties(titulo, slug)")
     .eq("agency_id", estado.sesion.agencia.id)
-    .order("created_at", { ascending: false })
+    .order("score", { ascending: false })
     .limit(10000);
-  if (origen === "formulario" || origen === "whatsapp_click") query = query.eq("origen", origen);
+  if (nivel === "caliente" || nivel === "tibio" || nivel === "frio") query = query.eq("nivel", nivel);
   const { data, error } = await query;
   if (error) return new Response("No se pudieron exportar las consultas.", { status: 500 });
 
   const filas = [
-    ["Fecha", "Nombre", "Teléfono", "Email", "Mensaje", "Origen", "Propiedad"],
+    ["Puntaje", "Nivel", "Estado", "Código", "Nombre", "Teléfono", "Email", "Propiedad", "Origen", "Mensaje", "Notas", "Primer contacto", "Última actividad"],
     ...data.map((l) => [
-      fecha.format(new Date(l.created_at)),
+      String(l.score),
+      NIVEL[l.nivel],
+      ESTADO[l.estado],
+      l.codigo_ref,
       l.nombre,
       l.telefono,
       l.email,
-      l.mensaje,
-      l.origen === "formulario" ? "Formulario" : "WhatsApp",
       l.propiedad?.titulo ?? "Consulta general",
+      ORIGEN[l.origen],
+      l.mensaje,
+      l.notas,
+      fecha.format(new Date(l.created_at)),
+      fecha.format(new Date(l.ultima_actividad)),
     ]),
   ];
   const csv = "﻿" + filas.map((f) => f.map(celda).join(";")).join("\r\n");
@@ -51,7 +58,7 @@ export async function GET(request: Request) {
   return new Response(csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="consultas-${hoy}.csv"`,
+      "Content-Disposition": `attachment; filename="leads-${hoy}.csv"`,
       "Cache-Control": "private, no-store",
     },
   });

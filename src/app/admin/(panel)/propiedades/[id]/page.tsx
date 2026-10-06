@@ -1,7 +1,8 @@
-import { ArrowLeft, ArrowRight, Check, ExternalLink } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChartColumn, Check, ExternalLink, Inbox } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { GenerarLink } from "@/components/admin/leads";
 import { PasoDatos } from "@/components/admin/paso-datos";
 import { PasoFotos } from "@/components/admin/paso-fotos";
 import { PasoPlanos } from "@/components/admin/paso-planos";
@@ -67,6 +68,17 @@ export default async function EditorPropiedad({ params, searchParams }: PageProp
           </a>
         )}
       </div>
+      {p.publicada && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          <GenerarLink propiedades={[{ id: p.id, titulo: p.titulo, publicada: true }]} propertyId={p.id} />
+          <Link href={`/admin/estadisticas?propiedad=${p.id}`} className={buttonStyles({ variant: "outline" })}>
+            <ChartColumn className="size-4" aria-hidden /> Estadísticas
+          </Link>
+          <Link href={`/admin/leads?propiedad=${p.id}`} className={buttonStyles({ variant: "outline" })}>
+            <Inbox className="size-4" aria-hidden /> Leads
+          </Link>
+        </div>
+      )}
       {sp.aviso === "duplicada" && (
         <div className="mb-4">
           <Aviso tono="ok">Propiedad duplicada como borrador. Cambiá lo que haga falta y publicala.</Aviso>

@@ -104,3 +104,24 @@ test("pedido de visita: venta pide pago y si necesita vender; alquiler no", asyn
   const mal = validarPedido({ nombre: "", telefono: "12", plazo: "ya", franja: "noche", acepto: false }, "alquiler");
   assert.deepEqual(Object.keys(mal.errores).sort(), ["acepto", "franja", "nombre", "plazo", "telefono"]);
 });
+
+test("línea de tiempo: agrupa por visita y junta repeticiones", async () => {
+  const { lineaDeTiempo, duracion } = await import("../../src/lib/previsita/linea-tiempo.ts");
+  const base = { duracion_ms: null, propiedad: "Casa", escena: null, plano: null, meta: {} };
+  const visitas = lineaDeTiempo([
+    { ...base, tipo: "view_property", created_at: "2026-10-01T10:00:00Z", sesion_id: "s1" },
+    { ...base, tipo: "photo_view", created_at: "2026-10-01T10:00:10Z", sesion_id: "s1" },
+    { ...base, tipo: "photo_view", created_at: "2026-10-01T10:00:20Z", sesion_id: "s1" },
+    { ...base, tipo: "scene_view", escena: "Living", duracion_ms: 40_000, created_at: "2026-10-01T10:01:00Z", sesion_id: "s1" },
+    { ...base, tipo: "scene_view", escena: "Living", duracion_ms: 50_000, created_at: "2026-10-01T10:02:00Z", sesion_id: "s1" },
+    { ...base, tipo: "view_property", created_at: "2026-10-03T19:00:00Z", sesion_id: "s2" },
+    { ...base, tipo: "visit_request", created_at: "2026-10-03T19:05:00Z", sesion_id: null },
+  ]);
+  assert.equal(visitas.length, 2);
+  assert.deepEqual(visitas[0].items.map((i) => i.texto), ["Vio la ficha de “Casa”", "Pidió visita presencial de “Casa”"]);
+  assert.equal(visitas[0].items[1].destacado, true);
+  assert.deepEqual(visitas[1].items.map((i) => i.texto), ["Vio la ficha de “Casa”", "Miró 2 fotos", "Recorrió Living (2 min)"]);
+  assert.equal(visitas[1].segundos, 90);
+  assert.equal(duracion(45), "45 s");
+  assert.equal(duracion(3900), "1 h 5 min");
+});
