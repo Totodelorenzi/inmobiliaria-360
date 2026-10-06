@@ -1,6 +1,10 @@
 # Especificación del producto
 
-> Copia fiel de la sección 5 de docs/PROMPT-ORIGINAL.md. Cambios de criterio: ver docs/DECISIONES.md.
+## Posicionamiento
+
+El producto es una herramienta de **pre-visita digital** para inmobiliarias y constructoras. No solo muestra propiedades: filtra y califica a los interesados. El comprador recorre fotos, planos y tour 360° antes de pedir una visita presencial; la herramienta registra su comportamiento y le entrega al vendedor leads calificados, con historial y puntaje, para que invierta su tiempo solo en quienes ya conocen la propiedad y tienen intención concreta.
+
+> "Contexto" a "Calidad": especificación original (sección 5 de docs/PROMPT-ORIGINAL.md). "Pre-visita y calificación": cambio de alcance del 2026-10-06. Cambios de criterio: docs/DECISIONES.md.
 
 **Contexto:** web para inmobiliarias de Argentina, cada una con su web propia con propiedades en alquiler y venta, incluidas propiedades en construcción o en pozo. Diferencial: tour virtual 360° armado con panorámicas que saca la inmobiliaria (una por ambiente, cámara 360 o panorámica de celular), y planos navegables para propiedades en construcción. Objetivo: que la inmobiliaria solo tenga que cargar fotos 360° o planos y salir a ofrecer la propiedad.
 
@@ -54,3 +58,59 @@ Una inmobiliaria y 9 propiedades (4 alquiler, 3 venta terminadas, 2 en pozo o co
 ## Calidad
 
 TypeScript, ESLint y build sin errores ni warnings; Playwright en iPhone y escritorio cubriendo inicio, filtros, ficha, tour, planos, consulta, login, alta completa de propiedad y verla publicada; Lighthouse mobile ≥90; accesibilidad (contraste, alt, foco visible, botones ≥44 px); estados vacíos, de carga y de error con mensajes útiles; pruebas de RLS; sin secretos en el repo.
+
+## Pre-visita y calificación (cambio de alcance 2026-10-06)
+
+### Modelo de datos
+
+- **visitors:** id (uuid anónimo en cookie first-party), agency_id, first_seen, last_seen, utm_source, utm_medium, utm_campaign, tracked_link_id (nullable).
+- **visitor_events:** id, visitor_id, agency_id, property_id, tipo ('view_property' | 'photo_view' | 'tour_start' | 'scene_view' | 'tour_complete' | 'plan_view' | 'plan_point_click' | 'whatsapp_click' | 'form_submit' | 'visit_request' | 'share'), scene_id o plan_id (nullable), duracion_ms, meta (jsonb), created_at.
+- **leads** (se agrega): visitor_id, codigo_ref (código corto único, ej. "A7K2"), score (0-100), nivel ('frio' | 'tibio' | 'caliente'), estado ('nuevo' | 'contactado' | 'visita_agendada' | 'descartado' | 'cerrado'), notas.
+- **visit_requests:** id, lead_id, property_id, franja_preferida, forma_pago ('contado' | 'credito_hipotecario' | 'financiacion' | 'no_sabe'), plazo ('inmediato' | '1_3_meses' | '3_6_meses' | 'mas_6_meses'), necesita_vender (bool), presupuesto_aprox (nullable), comentario, created_at.
+- **tracked_links:** id, agency_id, property_id, codigo (corto, único), nombre_prospecto, telefono_prospecto, creado_por, created_at.
+- RLS: el público no lee ninguna de estas tablas. Eventos y pedidos de visita entran solo por route handlers del servidor, con validación del payload, límite de tasa por visitante e IP y descarte de eventos inválidos. Solo los miembros de la agencia leen sus datos.
+
+### Tracking (sin analytics de terceros)
+
+- Cliente liviano en `src/lib/tracking/`: genera o recupera el visitante, acumula eventos y los envía en lotes con `navigator.sendBeacon` cada ~10 s y al ocultar la página.
+- Tiempo por escena del tour y por plano medido solo con la pestaña visible.
+- "tour_complete" = vio al menos el 80% de las escenas y acumuló al menos 60 s en el tour (configurable en un solo archivo).
+- Visitas repetidas: sesiones distintas por visitante y propiedad.
+
+### Unión del historial con el lead
+
+- Al enviar el formulario o pedir visita se crea o actualiza el lead con el visitante y queda asociado todo su historial previo.
+- WhatsApp: el mensaje precargado incluye "Ref. XXXX" (codigo_ref). Al tocar el botón se crea un lead provisorio con ese código y el visitante. En el panel, un buscador por código muestra el historial completo.
+- Links personalizados: `/v/[codigo]` registra el tracked_link en el visitante y redirige a la ficha. Si el prospecto después deja datos, se une solo.
+
+### Pedido de visita (nuevo llamado principal)
+
+- Al completar el tour aparece "Pedir visita presencial": formulario de 4 preguntas como máximo (forma de pago, plazo, necesita vender, franja horaria) más nombre y teléfono. También accesible desde la ficha.
+- WhatsApp queda como opción secundaria.
+
+### Puntaje
+
+- Reglas transparentes en `src/lib/scoring.ts` con los pesos en un solo objeto (terminó el tour, tiempo total, vio planos, visitas repetidas, pidió visita, forma de pago definida, plazo inmediato o corto…). Se recalcula con cada evento relevante.
+- Se guarda el desglose para mostrar el "por qué" en el panel (ej.: "Terminó el tour, 2 visitas, crédito, compra en 1 a 3 meses").
+- Tests unitarios del scoring.
+
+### Panel
+
+- Leads ordenados por puntaje, con nivel en color, estado editable, notas, filtro por propiedad y nivel, y búsqueda por código de referencia.
+- Detalle del lead: datos, respuestas de calificación, desglose del puntaje y línea de tiempo de actividad.
+- Por propiedad: vistas, tours iniciados y completados, tiempo promedio, planos vistos, pedidos de visita y conversión.
+- Dashboard: leads calientes de la semana arriba de todo.
+- "Generar link de pre-visita": nombre y teléfono del prospecto; genera el link y lo copia o lo abre en WhatsApp con un mensaje listo. En el lead se ve si lo abrió y qué recorrió.
+
+### Privacidad
+
+- Página `/privacidad` con aviso conforme a la Ley 25.326 de Protección de Datos Personales: qué se registra, para qué, quién lo ve y cómo pedir la baja.
+- Aviso breve y no invasivo en la primera visita, y casilla de consentimiento en el formulario y en el pedido de visita. Criterio aplicado: ver DECISIONES.md.
+
+### Datos de ejemplo
+
+- El seed genera visitantes y eventos realistas de las últimas 3 semanas y unos 15 leads repartidos entre frío, tibio y caliente, con historiales creíbles, algunos pedidos de visita y un par de links personalizados. El panel tiene que verse lleno y convincente para una demo. Todo marcado como demo para que el botón de borrado lo elimine.
+
+### Tests de punta a punta
+
+- Recorrer el tour completo, pedir visita, verificar que el lead aparece con puntaje e historial en el panel, y el flujo de link personalizado.

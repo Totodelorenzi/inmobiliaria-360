@@ -82,3 +82,20 @@ Una línea por decisión: fecha · qué · por qué.
 - 2026-09-27 · Navegadores de Playwright dentro del proyecto (`PLAYWRIGHT_BROWSERS_PATH=0` vía tests/e2e/.env) · regla de aislamiento: nada fuera de la carpeta del proyecto.
 - 2026-09-27 · E2E en iPhone 15 (WebKit) y escritorio (Chromium), con etiquetas @sin-datos / @con-datos / @admin que se activan solas según .env.local o `E2E_BASE_URL` · los mismos tests corren en local sin base, en local con Supabase y contra producción.
 - 2026-09-27 · Accesibilidad verificada con axe (WCAG 2.1 A/AA, sin problemas graves ni críticos) dentro de los E2E · cumple la exigencia de la spec y detecta regresiones.
+
+## Cambio de alcance: pre-visita y calificación (2026-10-06)
+
+- 2026-10-06 · Migraciones nuevas en vez de editar las existentes: 0005 (tipos, tablas y valores nuevos del enum origen_lead) y 0006 (restricciones que usan esos valores) · las anteriores ya están cerradas y versionadas; Postgres no deja usar un valor de enum recién agregado en la misma transacción.
+- 2026-10-06 · Visitante en cookie first-party `v360` (httpOnly, emitida por el servidor) + cookie legible `v360_ref` con solo el código corto · el id no queda expuesto a JavaScript; el navegador solo necesita el código para el mensaje de WhatsApp.
+- 2026-10-06 · Código de referencia por visitante (4 caracteres sin ambiguos, único por inmobiliaria) que se copia al lead · el "Ref. XXXX" ya existe antes del click de WhatsApp y el mismo código identifica a la persona en todos los canales.
+- 2026-10-06 · Un lead por visitante e inmobiliaria (índice único parcial) · "se crea o actualiza" sin duplicados; el canal de origen queda como el primero que usó.
+- 2026-10-06 · El link de pre-visita crea de antemano el visitante y el lead (nombre y teléfono del prospecto); al abrir `/v/[codigo]` el navegador adopta ese visitante (y si tenía historial anónimo previo, se le reasigna) · todo lo que recorra queda en el lead sin pasos extra y "se une solo" si después deja datos. Se agrega `visitor_id` a tracked_links.
+- 2026-10-06 · Sesión = id en sessionStorage que se renueva tras 30 min sin actividad (columna `sesion_id` en visitor_events) · "visitas repetidas" = sesiones distintas por propiedad, sin adivinar por horarios.
+- 2026-10-06 · Eventos, leads y pedidos de visita se escriben solo desde el servidor con la clave secreta, después de validar; `anon` pierde el insert sobre leads · cumple "el público no lee ni escribe estas tablas" y la base sigue blindada aunque alguien use la publishable key a mano.
+- 2026-10-06 · Límite de tasa en memoria por instancia (por IP y por visitante), tope de 50 eventos por lote y descarte de eventos inválidos (propiedad, escena o plano que no corresponden) · sin dependencias nuevas; si hiciera falta un límite global entre instancias, se pasa a un KV.
+- 2026-10-06 · Puntaje en TypeScript puro (`src/lib/scoring.ts`), usado por el servidor y por el seed; se guardan score, nivel y desglose en el lead · una sola fuente de verdad, testeable.
+- 2026-10-06 · "tour_complete" se evalúa en el navegador con los umbrales de `src/lib/tracking/config.ts` · ahí está el tiempo visible real; el servidor solo lo valida contra la propiedad.
+- 2026-10-06 · Pedido de visita en alquiler: no se pregunta forma de pago ni "necesita vender" (no aplican); sí plazo de mudanza y franja · columnas nullable.
+- 2026-10-06 · Estadísticas por propiedad con una función SQL `security invoker` (RLS aplica) · se agrega en la base en vez de traer miles de eventos al servidor.
+- 2026-10-06 · `/api/whatsapp` se reemplaza por el evento `whatsapp_click` de `/api/eventos` · una sola puerta de entrada para el tracking.
+- 2026-10-06 · Privacidad (Ley 25.326): tracking propio, anónimo y first-party, sin terceros; aviso informativo en la primera visita; el historial se asocia a datos personales solo cuando la persona los deja con la casilla de consentimiento marcada (se guarda la fecha); se respeta Global Privacy Control (no se registra nada); cualquiera puede borrar su historial desde /privacidad. El texto legal es una base razonable: conviene que lo revise un abogado.

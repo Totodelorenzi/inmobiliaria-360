@@ -2,9 +2,11 @@
 
 Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
-**Próximo paso:** BLOQUEO A: esperar que el usuario complete SETUP-CUENTAS pasos 1 y 2 (verificar con `npx supabase projects list`). Después, etapa 8.
+**Próximo paso:** Etapa 2 (ampliación): migraciones del modelo de pre-visita (visitors, visitor_events, visit_requests, tracked_links, columnas nuevas de leads), RLS y tests PGlite. Después, etapa 6 (Pre-visita y calificación).
 
 **Cómo verificar:** `npm run typecheck`, `npm run lint`, `npm test` (unitarios + base con PGlite), `npm run build`, `npm run test:e2e` (Playwright; con el build hecho).
+
+> 2026-10-06: cambio de alcance a "pre-visita digital" (ver docs/SPEC.md). Se agregó la etapa 6 y se renumeraron las siguientes: el seed pasó de 6 a 7, calidad local de 7 a 8, y así hasta la entrega (12).
 
 ## Arranque
 
@@ -15,23 +17,30 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 ## Etapas
 
 - [x] 1. Base: dependencias, carpetas, clientes Supabase, `env.ts`, `proxy.ts`, layout, sistema de diseño (tokens, fuentes, componentes en src/components/ui).
-- [x] 2. Base de datos: migraciones (esquema, RLS, Storage) en supabase/migrations, 26 tests PGlite en tests/db, tipos a mano.
-- [x] 3. Web pública: inicio, listados con filtros en la URL, ficha, consulta, WhatsApp, OG, sitemap, robots, 404. Probado sin datos; falta probar con datos reales (etapa 8).
-- [x] 4. Visores: tour 360° (Pannellum) y planos con zoom/paneo táctil. Falta probarlos con datos reales (etapa 8).
-- [x] 5. Panel /admin: acceso, dashboard, propiedades (listado + editor en 5 pasos con autoguardado), fotos, tour con editor de hotspots, planos con puntos, consultas + CSV, configuración con vista previa, usuarios, ayuda. Falta probarlo con Supabase real (etapa 8).
-- [x] 6. Seed (`npm run seed`), `npm run crear-admin` y botón "Borrar datos de ejemplo" en el dashboard. Imágenes probadas con `npm run seed -- --solo-imagenes`; la carga en Supabase se prueba en la etapa 8.
-- [x] 7. Calidad local: typecheck, lint y build sin warnings; 27 unitarios + 27 de base (RLS) + 14 E2E @sin-datos en iPhone y escritorio. Los E2E @con-datos y @admin ya están escritos y corren solos al haber Supabase.
+- [~] 2. Base de datos: migraciones (esquema, RLS, Storage, búsqueda) en supabase/migrations, 27 tests PGlite en tests/db, tipos a mano.
+  - [ ] Modelo de pre-visita: visitors, visitor_events, visit_requests, tracked_links, columnas nuevas de leads, RLS (el público no lee ni escribe) y tests.
+- [x] 3. Web pública: inicio, listados con filtros en la URL, ficha, consulta, WhatsApp, OG, sitemap, robots, 404. Falta probar con datos reales (etapa 9).
+- [x] 4. Visores: tour 360° (Pannellum) y planos con zoom/paneo táctil. Falta probarlos con datos reales (etapa 9).
+- [x] 5. Panel /admin: acceso, dashboard, propiedades (listado + editor en 5 pasos con autoguardado), fotos, tour con editor de hotspots, planos con puntos, consultas + CSV, configuración con vista previa, usuarios, ayuda. Falta probarlo con Supabase real (etapa 9).
+- [ ] 6. Pre-visita y calificación:
+  - [ ] Tracking propio (`src/lib/tracking/`): lotes con sendBeacon, tiempo visible por escena y plano, sesiones, tour completo configurable.
+  - [ ] Route handlers `/api/eventos` y `/v/[codigo]` con validación y límite de tasa; unión del historial con el lead; código de referencia en WhatsApp.
+  - [ ] Pedido de visita presencial (CTA principal en ficha y al completar el tour).
+  - [ ] Puntaje (`src/lib/scoring.ts`) con desglose y tests.
+  - [ ] Panel: leads por puntaje con nivel, estado y notas; detalle con línea de tiempo; estadísticas por propiedad; leads calientes en el dashboard; generar link de pre-visita.
+  - [ ] Privacidad: /privacidad (Ley 25.326), aviso de primera visita, casilla de consentimiento.
+- [~] 7. Seed (`npm run seed`), `npm run crear-admin` y botón "Borrar datos de ejemplo". Hecho: propiedades, fotos, tours y planos (imágenes probadas con `--solo-imagenes`). Falta: visitantes, eventos de 3 semanas, ~15 leads, pedidos de visita y links de ejemplo.
+- [~] 8. Calidad local: typecheck, lint y build sin warnings; 27 unitarios + 27 de base + 14 E2E @sin-datos en iPhone y escritorio. Falta: E2E de tour completo, pedido de visita, lead con puntaje e historial en el panel, y link personalizado.
   - [ ] BLOQUEO A: Supabase configurado (SETUP-CUENTAS pasos 1 y 2).
-- [ ] 8. Supabase real: link, db push, Storage, seed, admin, tipos generados, tests.
+- [ ] 9. Supabase real: link, db push, Storage, seed, admin, tipos generados, tests.
   - [ ] BLOQUEO B: repo en GitHub y Vercel logueado (SETUP-CUENTAS pasos 3 y 4).
-- [ ] 9. Deploy en Vercel (y SETUP-CUENTAS paso 5).
-- [ ] 10. Calidad en producción: Playwright, Lighthouse ≥90, RLS real, secretos.
-- [ ] 11. Entrega: README y resumen final.
+- [ ] 10. Deploy en Vercel (y SETUP-CUENTAS paso 5).
+- [ ] 11. Calidad en producción: Playwright, Lighthouse ≥90, RLS real, secretos.
+- [ ] 12. Entrega: README y resumen final.
 
 ## Pendientes técnicos
 
-- Probar con datos reales apenas haya Supabase: panel completo (login, subida de fotos/360°/PDF, hotspots, invitaciones), inicio, filtros, ficha, mapa, consulta, OG, tour (hotspots, giroscopio en iPhone) y planos (pellizco).
-- Límite de consultas por IP en /api/whatsapp y el formulario (hoy: trampa anti-bots + validación).
+- Probar con datos reales apenas haya Supabase: panel completo (login, subida de fotos/360°/PDF, hotspots, invitaciones), inicio, filtros, ficha, mapa, consulta, OG, tour (hotspots, giroscopio en iPhone), planos (pellizco) y todo el circuito de pre-visita.
 
 ## Pendientes del usuario
 
