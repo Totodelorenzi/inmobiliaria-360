@@ -57,9 +57,11 @@ test.describe("web pública", { tag: "@con-datos" }, () => {
 
   test("formulario de consulta guarda el lead", async ({ page }) => {
     await page.goto(`/propiedad/${SEED.casaVenta}`);
-    const form = page.getByRole("complementary", { name: "Consultá por esta propiedad" });
+    const form = page.getByRole("complementary", { name: "¿Te interesa? Coordiná una visita" });
+    await form.getByText("Prefiero dejar una consulta por escrito").click();
     await form.getByLabel("Nombre").fill("Prueba automática");
-    await form.getByLabel("Teléfono").fill("11 2233-4455");
+    await form.getByLabel("Teléfono").fill("11 0000-4455");
+    await form.getByRole("checkbox").check();
     await form.getByRole("button", { name: "Enviar consulta" }).click();
     await expect(page.getByText("¡Gracias por tu consulta!")).toBeVisible();
   });
