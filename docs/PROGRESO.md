@@ -2,7 +2,7 @@
 
 Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
-**Próximo paso:** que el usuario complete `ADMIN_EMAIL` en .env.local (sigue en PLACEHOLDER) → `npm run crear-admin` y E2E @admin. En paralelo: BLOQUEO B (GitHub + Vercel, etapa 10).
+**Próximo paso:** esperar que el usuario confirme el proyecto de Vercel (`totodelorenzis-projects/inmobiliaria-360`) → conectar GitHub y primer deploy. Y que complete `ADMIN_EMAIL` en .env.local → `npm run crear-admin` + E2E @admin.
 
 **Cómo verificar:** `npm run typecheck`, `npm run lint`, `npm test` (unitarios + base con PGlite), `npm run build`, `npm run test:e2e` (Playwright; con el build hecho).
 
@@ -38,8 +38,11 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
   - [x] Seed cargado (Horizonte Propiedades, 9 propiedades, 60 visitantes, 15 leads) y tipos generados desde la base.
   - [x] Tests: 44 unitarios + 34 de base + 34 E2E con datos reales (iPhone y escritorio). Los E2E limpian lo que crean.
   - [ ] Crear admin (`npm run crear-admin`, falta ADMIN_EMAIL) y correr los E2E @admin.
-  - [ ] BLOQUEO B: repo en GitHub y Vercel logueado (SETUP-CUENTAS pasos 3 y 4).
-- [ ] 10. Deploy en Vercel (y SETUP-CUENTAS paso 5).
+  - [x] BLOQUEO B: repo en GitHub (privado, `main` subido) y Vercel logueado (totodelorenzi).
+- [~] 10. Deploy en Vercel:
+  - [x] Proyecto nuevo `inmobiliaria-360` creado y vinculado (prj_1fGFLUcUCKpfpcBjf9DGSZrpC4dy); variables de Supabase en Production y Preview.
+  - [ ] Confirmación del usuario → conectar el repo de GitHub → primer deploy → verificar la web.
+  - [ ] SETUP-CUENTAS paso 5 (URLs en Supabase Auth) con la URL de producción.
 - [ ] 11. Calidad en producción: Playwright, Lighthouse ≥90, RLS real, secretos.
 - [ ] 12. Entrega: README y resumen final.
 
@@ -49,5 +52,6 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
 ## Pendientes del usuario
 
-- Decidir qué hacer con 2 cambios sueltos en `C:\Users\Mi PC\obraiq-temp` que probablemente dejó la sesión anterior: `.claude/settings.local.json` (modificado) y `supabase/.temp/` (sin versionar). No se tocaron.
-- SETUP-CUENTAS pasos 1 a 4 (en paralelo).
+- Completar `ADMIN_EMAIL` en .env.local (sigue en PLACEHOLDER).
+- Confirmar el proyecto de Vercel antes del primer deploy.
+- obraiq-temp: se borró `supabase/.temp/` (caché de la CLI creada al arrancar esta obra, sin project-ref). `.claude/settings.local.json` es un archivo de ObraIQ al que esa sesión le sumó permisos: no se tocó (se puede revertir con `git checkout` en ese repo si el usuario quiere).
