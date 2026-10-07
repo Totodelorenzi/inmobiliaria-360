@@ -77,6 +77,26 @@ describe("público (anónimo)", () => {
     }
     await assert.rejects(como(db, "anon", (tx) => tx.query("select * from estadisticas_propiedades(now() - interval '30 days')")), RLS);
   });
+
+  test("una tabla o función nueva sin grants explícitos no queda expuesta", async () => {
+    await db.transaction(async (tx) => {
+      await tx.exec(`
+        create table public.olvidada (id int generated always as identity);
+        create function public.olvidada_fn() returns int language sql as 'select 1';
+      `);
+      const { rows } = await tx.query<{ rol: string; tabla: boolean; secuencia: boolean; funcion: boolean }>(`
+        select r as rol,
+          has_table_privilege(r, 'public.olvidada', 'select,insert,update,delete') as tabla,
+          has_sequence_privilege(r, 'public.olvidada_id_seq', 'usage,select,update') as secuencia,
+          has_function_privilege(r, 'public.olvidada_fn()', 'execute') as funcion
+        from unnest(array['anon', 'authenticated']) r`);
+      assert.deepEqual(rows, [
+        { rol: "anon", tabla: false, secuencia: false, funcion: false },
+        { rol: "authenticated", tabla: false, secuencia: false, funcion: false },
+      ]);
+      await tx.rollback();
+    });
+  });
 });
 
 describe("miembros de una agencia", () => {

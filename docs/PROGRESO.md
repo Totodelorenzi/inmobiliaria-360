@@ -2,7 +2,7 @@
 
 Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
-**Próximo paso:** BLOQUEO A: que el usuario complete SETUP-CUENTAS pasos 1 y 2 (verificar con `npx supabase projects list`). Después, etapa 9 (Supabase real) y correr los E2E @con-datos y @admin.
+**Próximo paso:** que el usuario complete `ADMIN_EMAIL` en .env.local (sigue en PLACEHOLDER) → `npm run crear-admin` y E2E @admin. En paralelo: BLOQUEO B (GitHub + Vercel, etapa 10).
 
 **Cómo verificar:** `npm run typecheck`, `npm run lint`, `npm test` (unitarios + base con PGlite), `npm run build`, `npm run test:e2e` (Playwright; con el build hecho).
 
@@ -31,8 +31,13 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
   - [x] Privacidad: /privacidad (Ley 25.326), aviso de primera visita, casilla de consentimiento, borrar el propio historial.
 - [x] 7. Seed (`npm run seed`), `npm run crear-admin` y botón "Borrar datos de ejemplo": propiedades, fotos, tours y planos + 3 semanas de actividad (60 visitantes, ~330 eventos, 15 leads frío/tibio/caliente, 5 pedidos de visita, 2 links). Probado con `--solo-imagenes` y con PGlite; la carga real va en la etapa 9.
 - [x] 8. Calidad local: typecheck, lint y build sin warnings; 44 unitarios + 33 de base (RLS, integridad, seed) + 44 E2E por dispositivo (iPhone y escritorio): 14 corren sin base; los de web pública, pre-visita (tour completo, pedido de visita, lead con puntaje e historial, link personalizado) y panel se activan solos con Supabase y credenciales.
-  - [ ] BLOQUEO A: Supabase configurado (SETUP-CUENTAS pasos 1 y 2).
-- [ ] 9. Supabase real: link, db push, Storage, seed, admin, tipos generados, tests.
+  - [x] BLOQUEO A: Supabase configurado (proyecto `inmobiliaria-360`, ref uwoepqxslqdffuaczzbk, São Paulo; CLI logueada).
+- [~] 9. Supabase real:
+  - [x] Link, db push (8 migraciones: se sumaron 0007 permisos por defecto y 0008 ajustes del asesor), Storage verificado.
+  - [x] Seguridad verificada contra la base real (RLS, grants, API con publishable key, asesor sin problemas).
+  - [x] Seed cargado (Horizonte Propiedades, 9 propiedades, 60 visitantes, 15 leads) y tipos generados desde la base.
+  - [x] Tests: 44 unitarios + 34 de base + 34 E2E con datos reales (iPhone y escritorio). Los E2E limpian lo que crean.
+  - [ ] Crear admin (`npm run crear-admin`, falta ADMIN_EMAIL) y correr los E2E @admin.
   - [ ] BLOQUEO B: repo en GitHub y Vercel logueado (SETUP-CUENTAS pasos 3 y 4).
 - [ ] 10. Deploy en Vercel (y SETUP-CUENTAS paso 5).
 - [ ] 11. Calidad en producción: Playwright, Lighthouse ≥90, RLS real, secretos.

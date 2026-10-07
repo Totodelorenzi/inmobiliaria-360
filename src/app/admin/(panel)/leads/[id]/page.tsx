@@ -137,7 +137,7 @@ export default async function LeadPage({ params }: PageProps<"/admin/leads/[id]"
                 )}
                 <div>
                   <dt className="text-muted">Horario</dt>
-                  <dd className="font-semibold">{FRANJAS[pedido.franja_preferida]}</dd>
+                  <dd className="font-semibold">{FRANJAS[pedido.franja_preferida as keyof typeof FRANJAS] ?? pedido.franja_preferida}</dd>
                 </div>
               </dl>
               {lead.pedidos.length > 1 && <p className="mt-3 text-xs text-muted">Pidió visita {lead.pedidos.length} veces.</p>}

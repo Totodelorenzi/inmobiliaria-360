@@ -105,3 +105,15 @@ Una línea por decisión: fecha · qué · por qué.
 - 2026-10-06 · "Borrar datos de ejemplo" también elimina leads, links y visitantes demo (con la clave secreta, tras verificar rol admin) · el equipo no tiene permiso de borrar visitantes.
 - 2026-10-06 · Actividad de ejemplo generada por una función pura y determinística (semilla fija) con 15 personas guionadas (4 calientes, 5 tibias, 6 frías) + 45 visitantes anónimos; el puntaje sale del mismo `scoring.ts` · la demo cuenta historias creíbles ("terminó el tour, 3 visitas, crédito") y se testea sin base.
 - 2026-10-06 · Teléfonos de ejemplo con prefijo 0000 y emails @example.com · no existen: nadie recibe mensajes por probar la demo.
+
+## Supabase real (etapa 9, 2026-10-07)
+
+- 2026-10-07 · Migración 0007: se apagan los permisos por defecto de `public` para anon y authenticated (tablas, secuencias y funciones) y el execute global a PUBLIC de las funciones nuevas · el proyecto se creó con "Automatically expose new tables": sin esto, una tabla o función futura sin grants explícitos quedaría abierta. Test en tests/db.
+- 2026-10-07 · Migración 0008 (asesor de Supabase): se quita el execute público de `public.rls_auto_enable()` (la crea "Enable automatic RLS"; el event trigger sigue funcionando, verificado) e índices para `leads.visitor_id` y `tracked_links.creado_por` · el asesor quedó en "No issues found".
+- 2026-10-07 · Verificación contra la base real: 13 tablas con RLS y políticas; anon sin ningún permiso sobre leads, visitors, visitor_events, visit_requests, tracked_links ni agency_members (probado también por la API con la publishable key: 401 en lectura y escritura, Storage rechaza subidas anónimas).
+- 2026-10-07 · Tipos generados con `supabase gen types` reemplazan a los escritos a mano · `franja_preferida` es text con check en la base, así que el panel la traduce con respaldo al valor crudo.
+- 2026-10-07 · `LINKS_SITIO` pasa a `src/components/sitio/links.ts` · importado desde un módulo "use client", un componente de servidor recibe una referencia y no el array (rompía la build con datos).
+- 2026-10-07 · Cookies del visitante con `Secure` según el protocolo real (`x-forwarded-proto`, que Next completa) y no según NODE_ENV · con `next start` en http, Safari no guardaba ni leía la cookie y el "Ref." de WhatsApp quedaba vacío. En Vercel (https) siguen siendo Secure.
+- 2026-10-07 · Visor de planos: si la imagen ya cargó antes de hidratar (caché), se lee al montar · onLoad no se dispara y quedaba "Cargando plano…" para siempre.
+- 2026-10-07 · Ficha: el ícono de cada característica va dentro del `<dt>` y la galería es enfocable con teclado · axe marcaba la lista de definiciones mal formada y una zona desplazable sin acceso por teclado.
+- 2026-10-07 · Los E2E borran lo que crean: al terminar cada test esperan los envíos de eventos y borran los visitantes de sus cookies y de las respuestas del servidor, con sus leads y links (nunca `es_demo`) · la base es la misma que ve el cliente: la demo no se ensucia con cada corrida.

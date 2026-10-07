@@ -43,6 +43,8 @@ export function Galeria({ fotos, titulo, propertyId }: { fotos: Foto[]; titulo: 
         onScroll={(e) => verFoto(Math.round(e.currentTarget.scrollLeft / anchoFoto()))}
         className="flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] md:gap-1"
         aria-label={`Fotos de ${titulo}`}
+        // Enfocable: con teclado se recorren las fotos con las flechas.
+        tabIndex={0}
       >
         {fotos.map((foto, i) => (
           <li key={foto.id} className="aspect-[4/3] w-full shrink-0 snap-start bg-surface md:w-[calc(50%-2px)]">

@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-import { hayDatos, revisarAccesibilidad } from "./utiles";
+import { expect, hayDatos, revisarAccesibilidad, test } from "./utiles";
 
 test.describe("rutas y seguridad básicas", { tag: "@sin-datos" }, () => {
   test("el panel exige iniciar sesión", async ({ page }) => {

@@ -1,5 +1,5 @@
 import "server-only";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { calcularPuntaje, resumirEventos, type Calificacion } from "@/lib/scoring";
 import type { createAdminClient } from "@/lib/supabase/admin";
 import type { EventoCliente, TipoEvento, Utm } from "@/lib/tracking/eventos";
@@ -30,7 +30,10 @@ function fallar(contexto: string, error: { message: string }): never {
 /** Deja las cookies del visitante (httpOnly el id; legible el código). */
 export async function guardarCookies(v: Pick<Visitante, "id" | "codigo_ref">) {
   const jar = await cookies();
-  const secure = process.env.NODE_ENV === "production";
+  // Según el protocolo real (Next completa x-forwarded-proto): en http (next start local) una cookie
+  // Secure no se guarda ni se lee en Safari, y el "Ref." de WhatsApp quedaría vacío.
+  const proto = (await headers()).get("x-forwarded-proto")?.split(",")[0].trim();
+  const secure = proto ? proto === "https" : process.env.NODE_ENV === "production";
   jar.set(COOKIE_VISITANTE, v.id, { httpOnly: true, sameSite: "lax", secure, maxAge: UN_ANIO, path: "/" });
   jar.set(COOKIE_REF, v.codigo_ref, { httpOnly: false, sameSite: "lax", secure, maxAge: UN_ANIO, path: "/" });
 }

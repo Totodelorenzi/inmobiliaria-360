@@ -4,7 +4,7 @@ import { Container } from "@/components/ui/states";
 import type { Agencia } from "@/lib/data/sitio";
 import { whatsappLink } from "@/lib/format";
 import { FacebookIcon, InstagramIcon, WhatsappIcon } from "./iconos-marca";
-import { LINKS_SITIO } from "./menu-movil";
+import { LINKS_SITIO } from "./links";
 
 const linkClase = "inline-flex min-h-11 items-center gap-2 hover:underline [&_svg]:size-5 [&_svg]:shrink-0";
 

@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Container } from "@/components/ui/states";
 import type { Agencia } from "@/lib/data/sitio";
 import { BotonWhatsapp } from "./boton-whatsapp";
-import { LINKS_SITIO, MenuMovil } from "./menu-movil";
+import { LINKS_SITIO } from "./links";
+import { MenuMovil } from "./menu-movil";
 
 export function Logo({ agencia, className }: { agencia: Agencia; className?: string }) {
   return agencia.logo_url ? (

@@ -138,6 +138,12 @@ function LienzoPlano({
         >
           {/* eslint-disable-next-line @next/next/no-img-element -- plano ya optimizado al subirlo */}
           <img
+            // Si la imagen (en caché) terminó antes de hidratar, onLoad/onError ya no se disparan: se lee al montar.
+            ref={(img) => {
+              if (natural || error || !img?.complete) return;
+              if (img.naturalWidth) setNatural({ ancho: img.naturalWidth, alto: img.naturalHeight });
+              else setError(true);
+            }}
             src={plano.url}
             alt={`Plano: ${plano.nombre}`}
             draggable={false}

@@ -5,12 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { buttonStyles } from "@/components/ui/button";
-
-export const LINKS_SITIO = [
-  { href: "/alquiler", label: "Alquiler" },
-  { href: "/venta", label: "Venta" },
-  { href: "/emprendimientos", label: "Emprendimientos" },
-] as const;
+import { LINKS_SITIO } from "./links";
 
 export function MenuMovil() {
   const pathname = usePathname();

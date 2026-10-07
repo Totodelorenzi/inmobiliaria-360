@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-import { revisarAccesibilidad, SEED } from "./utiles";
+import { expect, revisarAccesibilidad, SEED, test } from "./utiles";
 
 test.describe("web pública", { tag: "@con-datos" }, () => {
   test("inicio: buscador, secciones y tarjetas", async ({ page }) => {
@@ -14,9 +13,10 @@ test.describe("web pública", { tag: "@con-datos" }, () => {
 
   test("buscar desde el inicio lleva al listado filtrado", async ({ page }) => {
     await page.goto("/");
-    await page.getByText("Venta", { exact: true }).first().click();
-    await page.getByRole("searchbox", { name: /barrio, calle o tipo/i }).fill("vicente lopez");
-    await page.getByRole("button", { name: "Buscar" }).click();
+    const buscador = page.getByRole("search");
+    await buscador.locator("label", { hasText: "Venta" }).click(); // "Venta 5": el texto lleva el contador
+    await buscador.getByRole("searchbox", { name: /barrio, calle o tipo/i }).fill("vicente lopez");
+    await buscador.getByRole("button", { name: "Buscar" }).click();
     await expect(page).toHaveURL(/\/venta\?q=vicente/);
     await expect(page.getByRole("link", { name: /Casa con galería y jardín/ })).toBeVisible();
   });
@@ -59,8 +59,9 @@ test.describe("web pública", { tag: "@con-datos" }, () => {
     await page.goto(`/propiedad/${SEED.casaVenta}`);
     const form = page.getByRole("complementary", { name: "¿Te interesa? Coordiná una visita" });
     await form.getByText("Prefiero dejar una consulta por escrito").click();
-    await form.getByLabel("Nombre").fill("Prueba automática");
-    await form.getByLabel("Teléfono").fill("11 0000-4455");
+    // Por rol (solo visibles): el formulario de "Pedir visita", cerrado, también tiene Nombre y Teléfono.
+    await form.getByRole("textbox", { name: /^Nombre/ }).fill("Prueba automática");
+    await form.getByRole("textbox", { name: /^Teléfono/ }).fill("11 0000-4455");
     await form.getByRole("checkbox").check();
     await form.getByRole("button", { name: "Enviar consulta" }).click();
     await expect(page.getByText("¡Gracias por tu consulta!")).toBeVisible();

@@ -218,14 +218,15 @@ export default async function FichaPropiedad({ params }: PageProps<"/propiedad/[
               {ficha
                 .filter((item) => item.valor)
                 .map((item) => (
-                  <div key={item.label} className="flex items-center gap-3 rounded-xl bg-surface p-3">
-                    <span className="text-brand-ink [&_svg]:size-6" aria-hidden>
-                      {item.icono}
-                    </span>
-                    <div className="min-w-0">
-                      <dt className="text-xs text-muted">{item.label}</dt>
-                      <dd className="font-semibold">{item.valor}</dd>
-                    </div>
+                  // Dentro de <dl>, cada <div> solo puede tener <dt> y <dd>: el ícono va dentro del <dt>.
+                  <div key={item.label} className="relative flex min-w-0 flex-col justify-center rounded-xl bg-surface p-3 pl-12">
+                    <dt className="text-xs text-muted">
+                      <span className="absolute top-1/2 left-3 -translate-y-1/2 text-brand-ink [&_svg]:size-6" aria-hidden>
+                        {item.icono}
+                      </span>
+                      {item.label}
+                    </dt>
+                    <dd className="font-semibold">{item.valor}</dd>
                   </div>
                 ))}
             </dl>

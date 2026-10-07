@@ -1,5 +1,5 @@
-import { expect, test, type Browser, type Page, type TestInfo } from "@playwright/test";
-import { revisarAccesibilidad, SEED } from "./utiles";
+import type { Browser, Page, TestInfo } from "@playwright/test";
+import { anotarVisitante, expect, revisarAccesibilidad, SEED, test } from "./utiles";
 
 async function entrarAlPanel(page: Page) {
   await page.goto("/admin/login");
@@ -21,9 +21,10 @@ test.describe("pre-visita en la web pública", { tag: "@con-datos" }, () => {
     await page.goto(`/propiedad/${SEED.casaVenta}`);
     // La primera vista crea el visitante y deja la cookie con el código.
     await expect.poll(async () => (await context.cookies()).some((c) => c.name === "v360_ref")).toBe(true);
-    const popup = page.waitForEvent("popup");
+    // El popup abortado no conserva la URL (chrome-error://, o vacía en WebKit): se mira el pedido a wa.me.
+    const pedido = context.waitForEvent("request", (r) => r.url().startsWith("https://wa.me/"));
     await page.getByRole("link", { name: "Consultar por WhatsApp" }).first().click();
-    expect(decodeURIComponent((await popup).url())).toMatch(/Ref\. [A-Z0-9]{4,6}/);
+    expect(decodeURIComponent((await pedido).url())).toMatch(/Ref\. [A-Z0-9]{4,6}/);
   });
 
   test("pedido de visita: valida antes de enviar", async ({ page }) => {
@@ -82,6 +83,7 @@ test.describe("circuito completo de pre-visita", { tag: "@admin" }, () => {
     await dialogo.getByRole("button", { name: "Pedir visita" }).click();
     await expect(dialogo.getByText("¡Listo! Te vamos a contactar para coordinar la visita.")).toBeVisible();
     const codigo = (await dialogo.locator("strong.font-mono").textContent())!.trim();
+    await anotarVisitante(visitante.context());
     await visitante.context().close();
 
     // 3. En el panel: lead con puntaje, porqué y línea de tiempo.
@@ -125,6 +127,7 @@ test.describe("circuito completo de pre-visita", { tag: "@admin" }, () => {
     await expect(prospecto).toHaveURL(/\/propiedad\/[^/]+\?utm_source=link_previsita/);
     await expect(prospecto.getByRole("heading", { level: 1 })).toBeVisible();
     await prospecto.waitForTimeout(3000);
+    await anotarVisitante(prospecto.context());
     await prospecto.context().close();
 
     await page.reload();
