@@ -2,7 +2,7 @@
 
 import { Copy, ExternalLink, EyeOff, House, MoreHorizontal, Pencil, Rocket, Star, StarOff, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonStyles } from "@/components/ui/button";
 import { borrarDatosDeEjemplo, cambiarEstado, duplicarPropiedad, eliminarPropiedad } from "@/lib/admin/acciones";
@@ -13,13 +13,15 @@ import { BotonConfirmar, Hoja, MostrarAviso, useAccion } from "./acciones-ui";
 
 const fecha = new Intl.DateTimeFormat("es-AR", { day: "numeric", month: "short" });
 
-export function ListaPropiedades({ propiedades }: { propiedades: PropiedadListado[] }) {
+/** Siempre montada (con `vacio` cuando no hay resultados): el aviso de "Propiedad eliminada." sobrevive al borrar la última. */
+export function ListaPropiedades({ propiedades, vacio }: { propiedades: PropiedadListado[]; vacio: ReactNode }) {
   const { ejecutar, pendiente, aviso } = useAccion();
   const [menu, setMenu] = useState<PropiedadListado | null>(null);
 
   return (
     <div className="flex flex-col gap-3" aria-busy={pendiente}>
       <MostrarAviso aviso={aviso} />
+      {propiedades.length === 0 && vacio}
       <ul className="flex flex-col gap-3">
         {propiedades.map((p) => (
           <li key={p.id} className="flex gap-3 rounded-(--radius-card) border border-border bg-bg p-3">

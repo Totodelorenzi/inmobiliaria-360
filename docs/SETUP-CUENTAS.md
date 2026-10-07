@@ -126,18 +126,10 @@ Con el proyecto abierto, en el menú de la izquierda (abajo de todo) entrá a **
 
 ---
 
-## Paso 5: Direcciones de acceso en Supabase (después del primer deploy)
+## Paso 5: Direcciones de acceso en Supabase (ya hecho por código)
 
-**Cuándo:** cuando te pase la URL de producción de Vercel (etapa 9). Antes no hace falta. Hasta completarlo, en la web publicada no van a funcionar los mails de recuperación de contraseña ni las invitaciones.
+La Site URL (`https://inmobiliaria-360-kohl.vercel.app`), las Redirect URLs, el registro cerrado y las reglas de contraseña se configuraron desde `supabase/config.toml` con `npx supabase config push`. No hace falta tocar nada en el panel de Supabase.
 
-1. En https://supabase.com/dashboard abrí el proyecto `inmobiliaria-360`.
-2. Menú de la izquierda: **Authentication** → **URL Configuration**.
-3. **Site URL:** borrá lo que haya, pegá la URL que te voy a pasar (por ejemplo `https://inmobiliaria-360.vercel.app`) y clic en **Save**.
-4. **Redirect URLs:** clic en **Add URL** y agregá, una por una, las líneas exactas que te voy a pasar en ese momento (la de producción, la de las vistas previas y `http://localhost:3000/**`). Guardá.
-5. Menú de la izquierda: **Authentication** → **Sign In / Providers**. Desactivá **Allow new users to sign up** y guardá. Los agentes van a entrar solo por invitación desde el panel.
+**Cómo verificar (opcional):** en https://supabase.com/dashboard → proyecto `inmobiliaria-360` → **Authentication** → **URL Configuration** se ven la Site URL y las 3 Redirect URLs.
 
-**Cómo verificar:** en URL Configuration se ven la Site URL y todas las Redirect URLs guardadas; en Sign In / Providers el registro de usuarios nuevos quedó apagado.
-
-> Nota: el servicio de mails que trae Supabase por defecto tiene un límite bajo por hora y solo envía a los mails de los miembros de tu organización de Supabase. Si hace falta para las invitaciones o la recuperación de contraseña, te paso los pasos para configurar un servicio de mails aparte.
-
-**Avisame:** `listo paso 5`
+> Mails: el servicio que trae Supabase por defecto solo envía a los mails de los miembros de tu organización de Supabase y no permite usar las plantillas en español. Recuperar tu contraseña funciona. Para **invitar agentes** hace falta un servicio de mails propio (por ejemplo Resend, gratis hasta cierto volumen): cuando lo quieras, te paso los pasos.

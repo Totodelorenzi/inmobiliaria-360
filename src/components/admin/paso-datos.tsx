@@ -92,6 +92,7 @@ export function PasoDatos({ propiedad: p }: { propiedad: Tables<"properties"> })
   const [avance, setAvance] = useState(p.avance_obra_pct ?? 0);
   const [amenities, setAmenities] = useState<string[]>(p.amenities);
   const [otraAmenity, setOtraAmenity] = useState("");
+  const monedaElegida = useRef(false);
 
   const guardar = useCallback(async () => {
     clearTimeout(timer.current);
@@ -155,6 +156,15 @@ export function PasoDatos({ propiedad: p }: { propiedad: Tables<"properties"> })
     marcar("amenities", lista.join(","));
   }
 
+  // Alquileres en pesos y ventas en dólares (lo habitual en Argentina), salvo que ya se haya elegido la moneda a mano.
+  function cambiarOperacion(operacion: string) {
+    const moneda = formRef.current?.elements.namedItem("moneda") as HTMLSelectElement | null;
+    const sugerida = operacion === "alquiler" ? "ARS" : "USD";
+    if (!moneda || monedaElegida.current || moneda.value === sugerida) return;
+    moneda.value = sugerida;
+    marcar("moneda", sugerida);
+  }
+
   const leer = (campo: string) => (formRef.current?.elements.namedItem(campo) as HTMLInputElement | null)?.value ?? "";
   const err = (campo: CampoDatos) => errores[campo];
   const mesEntrega = p.fecha_entrega?.slice(0, 7) ?? "";
@@ -190,7 +200,7 @@ export function PasoDatos({ propiedad: p }: { propiedad: Tables<"properties"> })
 
       <Panel titulo="Operación y tipo">
         <div className="flex flex-col gap-4">
-          <Opciones nombre="operacion" legend="Operación" opciones={OPERACION_LABEL} valor={p.operacion} />
+          <Opciones nombre="operacion" legend="Operación" opciones={OPERACION_LABEL} valor={p.operacion} onCambio={cambiarOperacion} />
           <Field label="Tipo de propiedad" error={err("tipo")}>
             {(a) => (
               <Select {...a} name="tipo" defaultValue={p.tipo}>
@@ -213,7 +223,7 @@ export function PasoDatos({ propiedad: p }: { propiedad: Tables<"properties"> })
           <div className="grid grid-cols-[6rem_1fr] gap-3">
             <Field label="Moneda">
               {(a) => (
-                <Select {...a} name="moneda" defaultValue={p.moneda}>
+                <Select {...a} name="moneda" defaultValue={p.moneda} onChange={() => (monedaElegida.current = true)}>
                   <option value="ARS">$ (pesos)</option>
                   <option value="USD">USD</option>
                 </Select>

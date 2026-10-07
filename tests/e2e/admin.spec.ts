@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { expect, test } from "./utiles";
+import { expect, test, TITULO_PRUEBA } from "./utiles";
 
 const FOTO = "tests/e2e/fixtures/foto.jpg";
 
@@ -19,12 +19,13 @@ test.describe("panel de administración", { tag: "@admin" }, () => {
     await page.getByLabel("Email").fill(process.env.ADMIN_EMAIL!);
     await page.getByLabel("Contraseña").fill("no-es-la-clave-123");
     await page.getByRole("button", { name: "Entrar" }).click();
-    await expect(page.getByRole("alert")).toContainText("Email o contraseña incorrectos");
+    // Filtrado: Next también tiene un role="alert" (el anunciador de rutas, vacío).
+    await expect(page.getByRole("alert").filter({ hasText: "Email o contraseña incorrectos" })).toBeVisible();
   });
 
   test("alta completa de una propiedad y verla publicada", async ({ page }, info) => {
     test.setTimeout(180_000);
-    const titulo = `Prueba E2E ${info.project.name} ${Date.now()}`;
+    const titulo = `${TITULO_PRUEBA} ${info.project.name} ${Date.now()}`;
     await entrar(page);
 
     // Paso 1: datos (autoguardado)
@@ -33,10 +34,11 @@ test.describe("panel de administración", { tag: "@admin" }, () => {
     await page.getByText("Alquiler", { exact: true }).click();
     await page.getByLabel(/Título del aviso/).fill(titulo);
     await page.getByLabel("Precio", { exact: true }).fill("650.000");
-    await page.getByLabel("Barrio").fill("Palermo");
-    await page.getByLabel("Ciudad").fill("CABA");
-    await page.getByLabel("Ambientes").fill("2");
-    await page.getByLabel("Ciudad").blur();
+    // exact: la ayuda de "Mostrar la dirección exacta" también menciona el barrio.
+    await page.getByLabel("Barrio", { exact: true }).fill("Palermo");
+    await page.getByLabel("Ciudad", { exact: true }).fill("CABA");
+    await page.getByLabel("Ambientes", { exact: true }).fill("2");
+    await page.getByLabel("Ciudad", { exact: true }).blur();
     await expect(page.getByText("Cambios guardados")).toBeVisible();
 
     // Paso 2: fotos
@@ -48,7 +50,7 @@ test.describe("panel de administración", { tag: "@admin" }, () => {
     await page.getByRole("link", { name: /Publicar/ }).first().click();
     await page.getByRole("button", { name: "Publicar" }).click();
     await expect(page.getByText("¡Publicada! Ya se ve en la web.")).toBeVisible();
-    const enlace = await page.getByRole("link", { name: "Ver en la web" }).getAttribute("href");
+    const enlace = await page.getByRole("link", { name: "Ver en la web", exact: true }).getAttribute("href");
 
     // Se ve en la web pública
     await page.goto(new URL(enlace!).pathname);

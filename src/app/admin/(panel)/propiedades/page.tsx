@@ -85,27 +85,28 @@ export default async function PropiedadesPage({ searchParams }: PageProps<"/admi
         ))}
       </nav>
 
-      {propiedades.length > 0 ? (
-        <ListaPropiedades propiedades={propiedades} />
-      ) : (
-        <EmptyState
-          title={conFiltros ? "No hay propiedades con estos filtros" : "Todavía no cargaste propiedades"}
-          description={conFiltros ? "Probá con otra búsqueda." : "Cargá la primera: con fotos 360° o planos ya podés salir a ofrecerla."}
-          action={
-            conFiltros ? (
-              <Link href="/admin/propiedades" className="font-semibold text-brand-ink underline">
-                Ver todas
-              </Link>
-            ) : (
-              <form action={crearBorrador}>
-                <Button type="submit" variant="accent">
-                  <Plus className="size-5" aria-hidden /> Cargar propiedad
-                </Button>
-              </form>
-            )
-          }
-        />
-      )}
+      <ListaPropiedades
+        propiedades={propiedades}
+        vacio={
+          <EmptyState
+            title={conFiltros ? "No hay propiedades con estos filtros" : "Todavía no cargaste propiedades"}
+            description={conFiltros ? "Probá con otra búsqueda." : "Cargá la primera: con fotos 360° o planos ya podés salir a ofrecerla."}
+            action={
+              conFiltros ? (
+                <Link href="/admin/propiedades" className="font-semibold text-brand-ink underline">
+                  Ver todas
+                </Link>
+              ) : (
+                <form action={crearBorrador}>
+                  <Button type="submit" variant="accent">
+                    <Plus className="size-5" aria-hidden /> Cargar propiedad
+                  </Button>
+                </form>
+              )
+            }
+          />
+        }
+      />
     </Pagina>
   );
 }

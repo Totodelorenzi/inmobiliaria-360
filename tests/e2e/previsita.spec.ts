@@ -1,5 +1,5 @@
-import type { Browser, Page, TestInfo } from "@playwright/test";
-import { anotarVisitante, expect, revisarAccesibilidad, SEED, test } from "./utiles";
+import type { Page } from "@playwright/test";
+import { anotarVisitante, expect, revisarAccesibilidad, SEED, test, visitanteNuevo } from "./utiles";
 
 async function entrarAlPanel(page: Page) {
   await page.goto("/admin/login");
@@ -7,12 +7,6 @@ async function entrarAlPanel(page: Page) {
   await page.getByLabel("Contraseña").fill(process.env.ADMIN_PASSWORD!);
   await page.getByRole("button", { name: "Entrar" }).click();
   await expect(page).toHaveURL(/\/admin$/);
-}
-
-/** Navegador nuevo = visitante nuevo (sin cookies de pre-visita), con el mismo dispositivo del proyecto. */
-async function visitanteNuevo(browser: Browser, info: TestInfo) {
-  const contexto = await browser.newContext(info.project.use);
-  return contexto.newPage();
 }
 
 test.describe("pre-visita en la web pública", { tag: "@con-datos" }, () => {
@@ -67,7 +61,8 @@ test.describe("circuito completo de pre-visita", { tag: "@admin" }, () => {
     const cantidad = await ambientes.count();
     for (let i = 0; i < cantidad; i++) {
       await ambientes.nth(i).click();
-      await expect(visitante.getByText(/^Cargando/)).toHaveCount(0, { timeout: 30_000 });
+      // Por rol (solo visibles): Pannellum deja su propio "Cargando…" oculto en la página.
+      await expect(visitante.getByRole("status").filter({ hasText: /^Cargando/ })).toHaveCount(0, { timeout: 30_000 });
       await visitante.waitForTimeout(Math.ceil(66_000 / cantidad));
     }
     await expect(visitante.getByText("¡Recorriste toda la propiedad!")).toBeVisible({ timeout: 20_000 });
