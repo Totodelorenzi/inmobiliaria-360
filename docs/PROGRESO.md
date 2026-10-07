@@ -2,7 +2,7 @@
 
 Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
-**Próximo paso:** etapa 11 (calidad en producción): E2E completos contra https://inmobiliaria-360-kohl.vercel.app, Lighthouse mobile ≥90, revisión final de RLS y secretos.
+**Próximo paso:** medir Lighthouse mobile con PageSpeed Insights (inicio y ficha) cuando haya cupo o desde el navegador del usuario; si Performance <90, atacar el LCP. Después, etapa 12 (README y resumen final).
 
 **Cómo verificar:** `npm run typecheck`, `npm run lint`, `npm test` (unitarios + base con PGlite), `npm run build`, `npm run test:e2e` (Playwright; con el build hecho).
 
@@ -43,7 +43,10 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
   - [x] Proyecto nuevo `inmobiliaria-360` creado y vinculado (prj_1fGFLUcUCKpfpcBjf9DGSZrpC4dy); variables de Supabase en Production y Preview.
   - [x] Repo de GitHub conectado (deploy automático en cada push a main); web verificada: todas las páginas responden.
   - [x] Supabase Auth por código (`supabase config push`): Site URL, redirects, registro cerrado, contraseñas. Plantillas en español pendientes de SMTP propio (opcional).
-- [ ] 11. Calidad en producción: Playwright, Lighthouse ≥90, RLS real, secretos.
+- [~] 11. Calidad en producción:
+  - [x] Playwright contra producción: 42/42 (iPhone y escritorio, sin reintentos), sin restos en la base.
+  - [x] RLS real verificada (anónimo no lee ni escribe datos privados; asesor de Supabase sin problemas). Secretos: historial limpio.
+  - [~] Lighthouse mobile (local, PC lenta): Accesibilidad 98–100, Buenas prácticas 100, SEO 100; Performance 62–84 según calibración (LCP real observado 1,0–1,7 s). Falta la medición de referencia en PageSpeed Insights (cupo de la API agotado el 2026-10-07).
 - [ ] 12. Entrega: README y resumen final.
 
 ## Pendientes técnicos
