@@ -15,10 +15,10 @@ export const TITULO_MODO: Record<Modo, string> = {
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
-export async function Listado({ modo, searchParams }: { modo: Modo; searchParams: Promise<SearchParams> }) {
+export async function Listado({ modo, sitio, searchParams }: { modo: Modo; sitio: string; searchParams: Promise<SearchParams> }) {
   // searchParams primero: la ruta queda dinámica aunque se compile sin Supabase configurado.
   const filtros = parseFiltros(await searchParams, modo);
-  const agencia = await getAgencia();
+  const agencia = await getAgencia(sitio);
   if (!agencia) return null;
   const [{ items, total }, barrios] = await Promise.all([
     getListado(agencia.id, modo, filtros),

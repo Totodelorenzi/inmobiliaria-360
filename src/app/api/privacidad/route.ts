@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { getAgencia } from "@/lib/data/sitio";
+import { getAgenciaDelPedido } from "@/lib/data/sitio";
 import { isSupabaseConfigured } from "@/lib/env";
 import { COOKIE_REF, COOKIE_VISITANTE, idDeCookie } from "@/lib/previsita/servidor";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -11,7 +11,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export async function POST() {
   const id = await idDeCookie();
   if (id && isSupabaseConfigured()) {
-    const agencia = await getAgencia();
+    const agencia = await getAgenciaDelPedido();
     if (agencia) {
       const { error } = await createAdminClient().from("visitors").delete().eq("id", id).eq("agency_id", agencia.id);
       if (error) return Response.json({ ok: false }, { status: 500 });

@@ -3,7 +3,7 @@
 import { CalendarCheck, CircleCheck, X } from "lucide-react";
 import Link from "next/link";
 import { useActionState, useRef, type ReactNode } from "react";
-import { pedirVisita, type EstadoPedido } from "@/app/(sitio)/propiedad/[slug]/acciones";
+import { pedirVisita, type EstadoPedido } from "@/app/s/[sitio]/(sitio)/propiedad/[slug]/acciones";
 import { Button, buttonStyles, type ButtonSize, type ButtonVariant } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
 import { FORMA_PAGO_LABEL, FRANJAS, PLAZO_LABEL } from "@/lib/previsita/validacion";

@@ -133,3 +133,36 @@ La Site URL (`https://inmobiliaria-360-kohl.vercel.app`), las Redirect URLs, el 
 **Cómo verificar (opcional):** en https://supabase.com/dashboard → proyecto `inmobiliaria-360` → **Authentication** → **URL Configuration** se ven la Site URL y las 3 Redirect URLs.
 
 > Mails: el servicio que trae Supabase por defecto solo envía a los mails de los miembros de tu organización de Supabase y no permite usar las plantillas en español. Recuperar tu contraseña funciona. Para **invitar agentes** hace falta un servicio de mails propio (por ejemplo Resend, gratis hasta cierto volumen): cuando lo quieras, te paso los pasos.
+
+---
+
+## Paso 6: Dominio de la plataforma (cuando lo compres)
+
+Ejemplo: `inmo360.com.ar`. Con él, cada inmobiliaria tiene su web en `umbral.inmo360.com.ar` (o en su dominio propio) y el panel de todas queda en `app.inmo360.com.ar`. Mientras tanto, la demo se ve en `https://inmobiliaria-360-kohl.vercel.app/?agencia=horizonte`.
+
+**6.1 Comprar el dominio.** Un `.com.ar` en NIC Argentina (nic.ar) o un `.com` en cualquier registrador.
+
+**6.2 Conectarlo a Vercel**
+
+1. Entrá a https://vercel.com → proyecto `inmobiliaria-360` → **Settings** → **Domains**.
+2. Clic en **Add**, escribí `inmo360.com.ar` (tu dominio) y confirmá.
+3. Repetí con `*.inmo360.com.ar` (con el asterisco adelante: así funcionan todos los subdominios).
+4. Vercel te va a pedir usar sus servidores de nombres: `ns1.vercel-dns.com` y `ns2.vercel-dns.com`.
+5. En NIC Argentina (o donde compraste): entrá a tu dominio → **Delegaciones** (o "Nameservers") → reemplazá los que haya por esos dos → **Guardar**.
+
+**Cómo verificar:** después de unos minutos (a veces hasta 48 horas), en Vercel → Domains los dos dominios dicen **Valid Configuration**.
+
+**Avisame:** `listo dominio: <tu dominio>`. Yo cargo `DOMINIO_BASE` en Vercel, actualizo Supabase y vuelvo a publicar.
+
+**6.3 Supabase (lo hago yo por código; esto es para verificar o hacerlo a mano)**
+
+1. En https://supabase.com/dashboard abrí el proyecto `inmobiliaria-360`.
+2. Menú de la izquierda: **Authentication** → **URL Configuration**.
+3. **Site URL:** `https://app.inmo360.com.ar` (con tu dominio) → **Save**. Es el panel: todos los mails llevan ahí.
+4. **Redirect URLs:** clic en **Add URL** → `https://app.inmo360.com.ar/**` → **Save**. Las que ya están se pueden dejar.
+
+**Cómo verificar:** en URL Configuration se ven la Site URL nueva y la Redirect URL agregada.
+
+**6.4 Mails en español (opcional)**
+
+El servicio de mails que trae Supabase no permite cambiar las plantillas y solo envía a los miembros de tu organización de Supabase. Para invitar agentes y dueños de inmobiliarias de verdad, hace falta un servicio de mails propio (por ejemplo Resend). Cuando quieras, te paso los pasos; una vez configurado, yo subo las plantillas en español (`supabase/templates/`), que ya llevan al panel.

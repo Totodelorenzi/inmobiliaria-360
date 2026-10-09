@@ -7,7 +7,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { slugify, slugDisponible } from "@/lib/admin/propiedad";
 import { borrarCarpetaPropiedad, type Bucket } from "@/lib/admin/storage";
-import { getAgencyId, isSupabaseConfigured } from "@/lib/env";
+import { isSupabaseConfigured } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { cargarActividad, type PropiedadCreada } from "./seed/actividad.ts";
 import { AGENCIA, AGENCIA_DEMO_ID, PROPIEDADES, panoramasUsadas } from "./seed/datos.ts";
@@ -71,13 +71,12 @@ async function main() {
   }
 
   // 1. Inmobiliaria
-  const agencyId = getAgencyId() ?? AGENCIA_DEMO_ID;
+  const agencyId = AGENCIA_DEMO_ID;
   const { data: existente, error: errorAgencia } = await db.from("agencies").select("id, nombre").eq("id", agencyId).maybeSingle();
   if (errorAgencia) throw new Error(`No se pudo leer la base: ${errorAgencia.message}. ¿Corriste las migraciones (npx supabase db push)?`);
   if (existente) {
     log(`Inmobiliaria existente: ${existente.nombre} (no se modifica)`);
   } else {
-    if (getAgencyId()) throw new Error(`AGENCY_ID=${agencyId} no existe en la base.`);
     const logo = await subir("fotos", `${agencyId}/agencia/logo.png`, await img.logoPng(img.svgLogo(AGENCIA.nombre, AGENCIA.color_primario!)), "image/png");
     const { error } = await db.from("agencies").insert({ ...AGENCIA, id: agencyId, logo_url: logo });
     if (error) throw new Error(`No se pudo crear la inmobiliaria: ${error.message}`);
@@ -97,7 +96,8 @@ async function main() {
   }
 
   // 3. Propiedades
-  const { data: slugsUsados } = await db.from("properties").select("slug");
+  // Los slugs son únicos por inmobiliaria.
+  const { data: slugsUsados } = await db.from("properties").select("slug").eq("agency_id", agencyId);
   const usados = new Set((slugsUsados ?? []).map((s) => s.slug));
   const panoramasTour = new Map<string, Promise<img.Imagen>>();
   const tourDe = (id: string) => {

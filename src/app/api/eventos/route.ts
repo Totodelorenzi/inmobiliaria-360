@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { getAgencia } from "@/lib/data/sitio";
+import { getAgenciaDelPedido } from "@/lib/data/sitio";
 import { isSupabaseConfigured } from "@/lib/env";
 import { Limitador } from "@/lib/previsita/limite";
 import { actualizarLeadDelVisitante, asegurarVisitante, guardarLead, marcarActividad, recalcularLead, registrarEventos } from "@/lib/previsita/servidor";
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
   if (!validado || validado.lote.eventos.length === 0) return sinContenido();
 
   try {
-    const agencia = await getAgencia();
+    const agencia = await getAgenciaDelPedido();
     if (!agencia) return sinContenido();
     const db = createAdminClient();
     const tieneCookie = Boolean(request.cookies.get("v360")?.value);

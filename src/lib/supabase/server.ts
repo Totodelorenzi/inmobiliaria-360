@@ -29,19 +29,23 @@ export async function createClient() {
   });
 }
 
-/** Tag de caché de todo lo que muestra la web pública. El admin lo invalida al publicar cambios. */
+/** Tag de caché de todo lo que muestran las webs públicas (para invalidar la plataforma entera). */
 export const TAG_SITIO = "sitio";
+/** Tag de lo que muestra la web de una inmobiliaria: el panel lo invalida al publicar cambios. */
+export const tagSitio = (agencyId: string) => `sitio:${agencyId}`;
+/** Tag de los datos de las inmobiliarias (marca, dominios): cambia al configurar una o al crearla. */
+export const TAG_AGENCIAS = "agencias";
 
 /**
  * Cliente anónimo sin cookies para la web pública. RLS aplica.
  * Con `cache`, las lecturas quedan en la caché de datos de Next con el tag del sitio.
  */
-export function createPublicClient({ cache = true }: { cache?: boolean } = {}) {
+export function createPublicClient({ cache = true, tags = [] }: { cache?: boolean; tags?: string[] } = {}) {
   const { supabaseUrl, supabasePublishableKey } = getPublicEnv();
   return createSupabaseClient<Database>(supabaseUrl, supabasePublishableKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     global: cache
-      ? { fetch: (input, init) => fetch(input, { ...init, next: { tags: [TAG_SITIO], revalidate: 3600 } }) }
+      ? { fetch: (input, init) => fetch(input, { ...init, next: { tags: [TAG_SITIO, ...tags], revalidate: 3600 } }) }
       : undefined,
   });
 }

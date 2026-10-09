@@ -285,6 +285,53 @@ describe("integridad", () => {
   });
 });
 
+describe("varias inmobiliarias", () => {
+  const insertarPropiedad = (agencia: string, slug: string) =>
+    `insert into properties (agency_id, titulo, slug, operacion, tipo) values ('${agencia}', 'X', '${slug}', 'venta', 'casa')`;
+
+  test("dos inmobiliarias pueden usar el mismo slug; dentro de una, no", async () => {
+    await db.transaction(async (tx) => {
+      await tx.exec(insertarPropiedad(ID.agenciaA, "depto-palermo"));
+      await tx.exec(insertarPropiedad(ID.agenciaB, "depto-palermo"));
+      await assert.rejects(tx.exec(insertarPropiedad(ID.agenciaA, "depto-palermo")), /duplicate key/);
+      await tx.rollback();
+    });
+  });
+
+  test("el admin edita la marca de su inmobiliaria, pero no su subdominio ni su dominio", async () => {
+    await como(db, "adminA", async (tx) => {
+      assert.equal((await tx.query("update agencies set nombre = 'Nueva A' where id = $1", [ID.agenciaA])).affectedRows, 1);
+      await assert.rejects(tx.query("update agencies set subdominio = 'robado' where id = $1", [ID.agenciaA]), RLS);
+    });
+    await assert.rejects(como(db, "adminA", (tx) => tx.query("update agencies set dominio_propio = 'x.com.ar' where id = $1", [ID.agenciaA])), RLS);
+  });
+
+  test("subdominio y dominio propio: únicos y con formato válido", async () => {
+    const probar = (sql: string) => como(db, "servicio", (tx) => tx.query(sql));
+    for (const sub of ["app", "www", "Mayus", "a", "-guion", "doble--guion", "con.punto"]) {
+      await assert.rejects(probar(`update agencies set subdominio = '${sub}' where id = '${ID.agenciaA}'`), /check constraint/, sub);
+    }
+    await assert.rejects(probar(`update agencies set subdominio = 'agencia-b' where id = '${ID.agenciaA}'`), /duplicate key/);
+    for (const dominio of ["https://x.com", "www.x.com", "sinpunto", "X.COM"]) {
+      await assert.rejects(probar(`update agencies set dominio_propio = '${dominio}' where id = '${ID.agenciaA}'`), /check constraint/, dominio);
+    }
+    await probar(`update agencies set dominio_propio = 'inmobiliaria-a.com.ar' where id = '${ID.agenciaA}'`);
+  });
+
+  test("superadmins: cada uno solo ve su propia fila y nadie se da de alta solo", async () => {
+    await db.transaction(async (tx) => {
+      await tx.exec(`insert into platform_admins (user_id) values ('${ID.adminA}')`);
+      await tx.query("select set_config('request.jwt.claims', $1, true)", [JSON.stringify({ sub: ID.adminA, role: "authenticated" })]);
+      await tx.exec("set local role authenticated");
+      assert.equal(await contar(tx, "select * from platform_admins"), 1);
+      await tx.rollback();
+    });
+    assert.equal(await como(db, "adminB", (tx) => contar(tx, "select * from platform_admins")), 0);
+    await assert.rejects(como(db, "adminB", (tx) => tx.query(`insert into platform_admins (user_id) values ('${ID.adminB}')`)), RLS);
+    await assert.rejects(como(db, "anon", (tx) => tx.query("select * from platform_admins")), RLS);
+  });
+});
+
 describe("storage", () => {
   const subir = (bucket: string, ruta: string) =>
     `insert into storage.objects (bucket_id, name) values ('${bucket}', '${ruta}')`;

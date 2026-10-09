@@ -1,8 +1,9 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { getSiteUrl, isSupabaseConfigured } from "@/lib/env";
+import { isSupabaseConfigured } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
+import { urlDelPanel } from "@/lib/tenancy";
 
 export type EstadoForm = { error?: string; mensaje?: string; email?: string };
 
@@ -42,7 +43,8 @@ export async function pedirRecuperacion(_prev: EstadoForm, formData: FormData): 
 
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${getSiteUrl()}/admin/auth/confirm?next=/admin/nueva-clave`,
+    // Siempre al panel central, entre desde donde entre la persona.
+    redirectTo: `${urlDelPanel()}/admin/auth/confirm?next=/admin/nueva-clave`,
   });
   if (error && /rate limit|too many|seconds/i.test(error.message)) {
     return { error: "Ya te mandamos un mail hace muy poco. Esperá unos minutos antes de pedir otro.", email };

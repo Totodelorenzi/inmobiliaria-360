@@ -4,7 +4,7 @@
 
 El producto es una herramienta de **pre-visita digital** para inmobiliarias y constructoras. No solo muestra propiedades: filtra y califica a los interesados. El comprador recorre fotos, planos y tour 360° antes de pedir una visita presencial; la herramienta registra su comportamiento y le entrega al vendedor leads calificados, con historial y puntaje, para que invierta su tiempo solo en quienes ya conocen la propiedad y tienen intención concreta.
 
-> "Contexto" a "Calidad": especificación original (sección 5 de docs/PROMPT-ORIGINAL.md). "Pre-visita y calificación": cambio de alcance del 2026-10-06. Cambios de criterio: docs/DECISIONES.md.
+> "Contexto" a "Calidad": especificación original (sección 5 de docs/PROMPT-ORIGINAL.md). "Pre-visita y calificación": cambio de alcance del 2026-10-06. "Plataforma multi-inmobiliaria": cambio del 2026-10-09. Cambios de criterio: docs/DECISIONES.md.
 
 **Contexto:** web para inmobiliarias de Argentina, cada una con su web propia con propiedades en alquiler y venta, incluidas propiedades en construcción o en pozo. Diferencial: tour virtual 360° armado con panorámicas que saca la inmobiliaria (una por ambiente, cámara 360 o panorámica de celular), y planos navegables para propiedades en construcción. Objetivo: que la inmobiliaria solo tenga que cargar fotos 360° o planos y salir a ofrecer la propiedad.
 
@@ -16,9 +16,9 @@ El producto es una herramienta de **pre-visita digital** para inmobiliarias y co
 
 ## Modelo de datos
 
-- **agencies:** id, nombre, logo_url, color_primario, whatsapp, email, telefono, direccion, instagram, facebook, created_at.
+- **agencies:** id, nombre, subdominio (único), dominio_propio (opcional, único), logo_url, color_primario, whatsapp, email, telefono, direccion, instagram, facebook, created_at.
 - **agency_members:** user_id, agency_id, rol ('admin' | 'agente').
-- **properties:** id, agency_id, titulo, slug (único), operacion ('alquiler'|'venta'), tipo (departamento, casa, PH, local, terreno, oficina, cochera), estado_obra ('terminada'|'en_construccion'|'en_pozo'), fecha_entrega, avance_obra_pct, precio, moneda ('ARS'|'USD'), expensas, acepta_financiacion, detalle_financiacion, apto_credito, direccion, mostrar_direccion_exacta, barrio, ciudad, lat, lng, ambientes, dormitorios, banos, superficie_total, superficie_cubierta, cochera, amenities (text[]), descripcion, destacada, publicada, es_demo (para el borrado de datos de ejemplo), created_at, updated_at.
+- **properties:** id, agency_id, titulo, slug (único por inmobiliaria), operacion ('alquiler'|'venta'), tipo (departamento, casa, PH, local, terreno, oficina, cochera), estado_obra ('terminada'|'en_construccion'|'en_pozo'), fecha_entrega, avance_obra_pct, precio, moneda ('ARS'|'USD'), expensas, acepta_financiacion, detalle_financiacion, apto_credito, direccion, mostrar_direccion_exacta, barrio, ciudad, lat, lng, ambientes, dormitorios, banos, superficie_total, superficie_cubierta, cochera, amenities (text[]), descripcion, destacada, publicada, es_demo (para el borrado de datos de ejemplo), created_at, updated_at.
 - **property_photos:** id, property_id, url, thumb_url, orden, es_principal.
 - **tour_scenes:** id, property_id, nombre_ambiente, panorama_url, thumb_url, orden, yaw_inicial, pitch_inicial.
 - **tour_hotspots:** id, scene_id, target_scene_id, yaw, pitch, texto.
@@ -114,3 +114,31 @@ TypeScript, ESLint y build sin errores ni warnings; Playwright en iPhone y escri
 ### Tests de punta a punta
 
 - Recorrer el tour completo, pedir visita, verificar que el lead aparece con puntaje e historial en el panel, y el flujo de link personalizado.
+
+## Plataforma multi-inmobiliaria (cambio 2026-10-09)
+
+### Arquitectura
+
+- Una sola aplicación y una sola base para todas las inmobiliarias. La web pública y el panel están separados.
+- **Web pública** de cada inmobiliaria en `<subdominio>.<DOMINIO_BASE>` o en su dominio propio. La inmobiliaria se detecta por el host en `proxy.ts`, que reescribe a `/s/<sitio>/...`: la caché de Next (páginas, datos, imagen para compartir, sitemap, robots) queda separada por inmobiliaria. Las rutas `/s/...` no se pueden pedir desde afuera.
+- Host que no corresponde a ninguna inmobiliaria: página neutra de la plataforma (404 en rutas de sitio).
+- **Panel central** en `app.<DOMINIO_BASE>` para todas. `/admin` desde el dominio de una inmobiliaria redirige al panel.
+- **Hosts de prueba** (localhost, vistas previas `*.vercel.app` y la URL `*.vercel.app` de producción mientras no haya `DOMINIO_BASE`): la inmobiliaria se elige con `?agencia=<subdominio>` (queda en una cookie). En un dominio real el parámetro se ignora.
+- Cookie de visitante por host (sin atributo `domain`): nunca se comparte entre inmobiliarias.
+
+### Panel
+
+- Selector de inmobiliaria para quien tiene varias membresías. La activa se guarda en una cookie y se valida en el servidor en cada pedido contra `agency_members`; RLS es la barrera final.
+- "Ver en la web", "Ver el sitio" y los links de pre-visita usan el dominio real de la inmobiliaria (dominio propio o subdominio), tomado de la base.
+- **Plataforma** (superadmin, tabla `platform_admins`): alta de inmobiliarias (nombre, subdominio validado y único, color, WhatsApp, mail del dueño que recibe la invitación como admin) y dominio propio con instrucciones de DNS. Con `VERCEL_API_TOKEN` y `VERCEL_PROJECT_ID`, el dominio se agrega al proyecto de Vercel por la API.
+
+### Auth y mails
+
+- La Site URL de Supabase Auth es el panel central: todos los mails (invitación, recuperar contraseña) llevan al panel.
+
+### Tests
+
+- Dos inmobiliarias de prueba: cada host muestra solo su web, aunque tengan el mismo slug.
+- Usuario con dos membresías cambia de inmobiliaria y ve sus datos.
+- Usuario de A no opera sobre B aunque manipule la cookie o la API.
+- `/admin` desde el dominio de una inmobiliaria redirige al panel central.

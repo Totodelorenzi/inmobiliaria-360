@@ -109,7 +109,8 @@ test.describe("circuito completo de pre-visita", { tag: "@admin" }, () => {
     await hoja.getByLabel("Nombre del prospecto").fill(nombre);
     await hoja.getByRole("button", { name: "Generar link" }).click();
     const url = (await hoja.locator("p.font-mono").textContent())!.trim();
-    expect(url).toMatch(/\/v\/[a-z0-9]{8}$/);
+    // Con dominio real termina en el código; en hosts de prueba lleva además ?agencia=<subdominio>.
+    expect(url).toMatch(/\/v\/[a-z0-9]{8}(\?agencia=[a-z0-9-]+)?$/);
     const leadHref = await hoja.getByRole("link", { name: "Ver el lead" }).getAttribute("href");
 
     // Antes de abrirlo

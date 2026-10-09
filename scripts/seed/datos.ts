@@ -4,12 +4,14 @@
  */
 import type { TablesInsert } from "@/types/database";
 
-/** Id fijo de la inmobiliaria de ejemplo (el seed la crea si no hay AGENCY_ID). */
+/** Id fijo de la inmobiliaria de ejemplo (el seed la crea si no existe). */
 export const AGENCIA_DEMO_ID = "a9c0e3a1-5b1e-4c7a-9f2e-3d6b8e1f0c11";
 
 export const AGENCIA: TablesInsert<"agencies"> = {
   id: AGENCIA_DEMO_ID,
   nombre: "Horizonte Propiedades",
+  // Web de prueba: <deploy>/?agencia=horizonte (o horizonte.<DOMINIO_BASE>).
+  subdominio: "horizonte",
   color_primario: "#1f4e5f",
   whatsapp: "5491100000000",
   email: "hola@horizonte.example",

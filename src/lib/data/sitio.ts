@@ -1,9 +1,11 @@
 import "server-only";
+import { cookies, headers } from "next/headers";
 import { cache } from "react";
-import { getAgencyId, isSupabaseConfigured } from "@/lib/env";
+import { isSupabaseConfigured } from "@/lib/env";
 import { normalizarBusqueda } from "@/lib/format";
 import { POR_PAGINA, type Filtros, type Modo } from "@/lib/filtros";
-import { createPublicClient } from "@/lib/supabase/server";
+import { createPublicClient, TAG_AGENCIAS, tagSitio } from "@/lib/supabase/server";
+import { COOKIE_PRUEBA, entornoActual, esClaveValida, resolverHost } from "@/lib/tenancy";
 import type { Tables } from "@/types/database";
 
 export type Agencia = Tables<"agencies">;
@@ -52,21 +54,30 @@ function fallar(contexto: string, error: { message: string }): never {
 }
 
 /**
- * La inmobiliaria de este sitio: la de AGENCY_ID o, si no se fijó, la primera creada.
- * null si Supabase todavía no está configurado o no hay ninguna cargada.
+ * La inmobiliaria de un sitio por su clave (subdominio o dominio propio, ver lib/tenancy).
+ * null si Supabase todavía no está configurado o la clave no corresponde a ninguna.
  */
-export const getAgencia = cache(async (): Promise<Agencia | null> => {
-  if (!isSupabaseConfigured()) return null;
-  const id = getAgencyId();
-  const query = createPublicClient().from("agencies").select("*");
-  const { data, error } = await (id ? query.eq("id", id) : query.order("created_at").limit(1)).maybeSingle();
+export const getAgencia = cache(async (clave: string): Promise<Agencia | null> => {
+  if (!isSupabaseConfigured() || !esClaveValida(clave)) return null;
+  const columna = clave.includes(".") ? "dominio_propio" : "subdominio";
+  const { data, error } = await createPublicClient({ tags: [TAG_AGENCIAS] }).from("agencies").select("*").eq(columna, clave).maybeSingle();
   if (error) fallar("los datos de la inmobiliaria", error);
   return data;
 });
 
+/**
+ * La inmobiliaria de un pedido a una ruta compartida (API, link de pre-visita, Server Action):
+ * se resuelve por el host con las mismas reglas que el proxy, nunca con datos que mande el cliente.
+ */
+export async function getAgenciaDelPedido(): Promise<Agencia | null> {
+  const [h, c] = await Promise.all([headers(), cookies()]);
+  const destino = resolverHost(h.get("host") ?? "", entornoActual(), c.get(COOKIE_PRUEBA)?.value);
+  return destino.tipo === "sitio" ? getAgencia(destino.clave) : null;
+}
+
 /** Consulta base de tarjetas publicadas de la agencia, con la foto principal primero. */
 function consultaTarjetas(agencyId: string, opciones: { contar?: boolean } = {}) {
-  return createPublicClient()
+  return createPublicClient({ tags: [tagSitio(agencyId)] })
     .from("properties")
     .select(CAMPOS_TARJETA, opciones.contar ? { count: "exact" } : undefined)
     .eq("agency_id", agencyId)
@@ -84,7 +95,7 @@ function aplicarModo(query: Consulta, modo: Modo) {
 }
 
 async function contar(agencyId: string, modo: Modo) {
-  let query = createPublicClient()
+  let query = createPublicClient({ tags: [tagSitio(agencyId)] })
     .from("properties")
     .select("id", { count: "exact", head: true })
     .eq("agency_id", agencyId)
@@ -134,7 +145,10 @@ export async function getListado(agencyId: string, modo: Modo, f: Filtros) {
   if (f.obra) query = query.eq("estado_obra", f.obra);
   if (f.tour) {
     // Solo las que tienen al menos una escena: filtro por los ids con tour.
-    const { data, error } = await createPublicClient().from("tour_scenes").select("property_id");
+    const { data, error } = await createPublicClient({ tags: [tagSitio(agencyId)] })
+      .from("tour_scenes")
+      .select("property_id, propiedad:properties!inner(agency_id)")
+      .eq("propiedad.agency_id", agencyId);
     if (error) fallar("los tours", error);
     query = query.in("id", [...new Set(data.map((e) => e.property_id))]);
   }
@@ -153,7 +167,7 @@ export async function getListado(agencyId: string, modo: Modo, f: Filtros) {
 
 /** Barrios con propiedades publicadas en ese modo, para el filtro. */
 export async function getBarrios(agencyId: string, modo: Modo) {
-  let query = createPublicClient()
+  let query = createPublicClient({ tags: [tagSitio(agencyId)] })
     .from("properties")
     .select("barrio")
     .eq("agency_id", agencyId)
@@ -173,7 +187,7 @@ export type PropiedadCompleta = Propiedad & {
 
 /** Ficha completa de una propiedad publicada de la agencia (null si no existe). */
 export const getPropiedad = cache(async (agencyId: string, slug: string): Promise<PropiedadCompleta | null> => {
-  const { data, error } = await createPublicClient()
+  const { data, error } = await createPublicClient({ tags: [tagSitio(agencyId)] })
     .from("properties")
     .select("*, fotos:property_photos(id, url, thumb_url, es_principal, orden), escenas:tour_scenes(count), planos:property_plans(count)")
     .eq("agency_id", agencyId)
@@ -202,7 +216,7 @@ export async function getRelacionadas(p: Pick<Propiedad, "id" | "agency_id" | "o
 
 /** Slugs publicados con fecha de modificación (sitemap y prerender). */
 export async function getSlugs(agencyId: string) {
-  const { data, error } = await createPublicClient()
+  const { data, error } = await createPublicClient({ tags: [tagSitio(agencyId)] })
     .from("properties")
     .select("slug, updated_at")
     .eq("agency_id", agencyId)
@@ -218,7 +232,7 @@ export type EscenaTour = Pick<
 
 /** Tour 360° de una propiedad publicada: escenas ordenadas con sus hotspots. */
 export const getTour = cache(async (agencyId: string, slug: string) => {
-  const { data, error } = await createPublicClient()
+  const { data, error } = await createPublicClient({ tags: [tagSitio(agencyId)] })
     .from("properties")
     .select(
       "id, slug, titulo, operacion, precio, moneda, planos:property_plans(count), " +
@@ -248,7 +262,7 @@ export type PlanoVisor = Pick<Tables<"property_plans">, "id" | "nombre" | "url" 
 
 /** Planos de una propiedad publicada con sus puntos. */
 export const getPlanos = cache(async (agencyId: string, slug: string) => {
-  const { data, error } = await createPublicClient()
+  const { data, error } = await createPublicClient({ tags: [tagSitio(agencyId)] })
     .from("properties")
     .select(
       "id, slug, titulo, escenas:tour_scenes(count), " +

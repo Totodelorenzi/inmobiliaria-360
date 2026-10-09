@@ -2,7 +2,7 @@
 
 Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
-**Próximo paso:** medir Lighthouse mobile con PageSpeed Insights (inicio y ficha) cuando haya cupo o desde el navegador del usuario; si Performance <90, atacar el LCP. Después, etapa 12 (README y resumen final).
+**Próximo paso:** deploy de la plataforma multi-inmobiliaria y E2E contra producción (demo: https://inmobiliaria-360-kohl.vercel.app/?agencia=horizonte). Pendientes: medir Lighthouse en PageSpeed Insights; cuando el usuario compre el dominio, SETUP-CUENTAS paso 6. Después, etapa 12 (README y resumen final).
 
 **Cómo verificar:** `npm run typecheck`, `npm run lint`, `npm test` (unitarios + base con PGlite), `npm run build`, `npm run test:e2e` (Playwright; con el build hecho).
 
@@ -47,6 +47,13 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
   - [x] Playwright contra producción: 42/42 (iPhone y escritorio, sin reintentos), sin restos en la base.
   - [x] RLS real verificada (anónimo no lee ni escribe datos privados; asesor de Supabase sin problemas). Secretos: historial limpio.
   - [~] Lighthouse mobile (local, PC lenta): Accesibilidad 98–100, Buenas prácticas 100, SEO 100; Performance 62–84 según calibración (LCP real observado 1,0–1,7 s). Falta la medición de referencia en PageSpeed Insights (cupo de la API agotado el 2026-10-07).
+- [~] 11b. Plataforma multi-inmobiliaria (2026-10-09):
+  - [x] Migración 0009: subdominio y dominio propio, slug único por inmobiliaria, platform_admins, el admin no cambia sus dominios. Aplicada en la base real (la demo es `horizonte`).
+  - [x] Proxy por host → `/s/[sitio]/...` (caché separada por inmobiliaria), panel central, hosts de prueba con `?agencia=`, `/s/*` bloqueado.
+  - [x] Panel: inmobiliaria activa validada, selector, links con el dominio real, sección Plataforma (alta de inmobiliarias + dominio propio + API de Vercel opcional).
+  - [x] Auth: mails siempre al panel central.
+  - [x] Tests: 47 unitarios, 38 de base, E2E completos en local (incluidos 4 de multi-inmobiliaria con dos inmobiliarias y el mismo slug).
+  - [ ] Deploy y E2E contra producción.
 - [ ] 12. Entrega: README y resumen final.
 
 ## Pendientes técnicos
@@ -56,4 +63,5 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 ## Pendientes del usuario
 
 - Opcional: SMTP propio (ej. Resend) para invitar agentes y usar los mails en español.
+- Cuando compre el dominio de la plataforma: SETUP-CUENTAS paso 6 (Vercel + Supabase + DOMINIO_BASE).
 - obraiq-temp: se borró `supabase/.temp/` (caché de la CLI creada al arrancar esta obra, sin project-ref). `.claude/settings.local.json` es un archivo de ObraIQ al que esa sesión le sumó permisos: no se tocó (se puede revertir con `git checkout` en ese repo si el usuario quiere).

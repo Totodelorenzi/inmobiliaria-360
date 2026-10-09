@@ -1,9 +1,6 @@
 import type { MetadataRoute } from "next";
-import { getSiteUrl } from "@/lib/env";
 
+// Panel central y página neutra de la plataforma: no se indexan. Cada inmobiliaria tiene su robots.txt.
 export default function robots(): MetadataRoute.Robots {
-  return {
-    rules: { userAgent: "*", allow: "/", disallow: ["/admin", "/api/"] },
-    sitemap: `${getSiteUrl()}/sitemap.xml`,
-  };
+  return { rules: { userAgent: "*", disallow: "/" } };
 }

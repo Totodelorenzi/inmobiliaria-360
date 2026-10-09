@@ -3,7 +3,7 @@
 import { CircleCheck, Send } from "lucide-react";
 import Link from "next/link";
 import { useActionState } from "react";
-import { enviarConsulta, type EstadoConsulta } from "@/app/(sitio)/propiedad/[slug]/acciones";
+import { enviarConsulta, type EstadoConsulta } from "@/app/s/[sitio]/(sitio)/propiedad/[slug]/acciones";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/field";
 

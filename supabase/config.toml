@@ -155,7 +155,9 @@ max_indexes = 5
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
-# URL de producción en Vercel. Se sube con: npx supabase config push
+# Panel central: todos los mails (invitación, recuperar contraseña) llevan acá, sea cual sea la
+# inmobiliaria. Hoy es la URL del deploy; con dominio propio pasa a https://app.<DOMINIO_BASE>
+# (y se suma esa dirección a additional_redirect_urls). Se sube con: npx supabase config push
 site_url = "https://inmobiliaria-360-kohl.vercel.app"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""

@@ -1,8 +1,8 @@
-import { ArrowRight, Search, Settings } from "lucide-react";
+import { ArrowRight, Search } from "lucide-react";
 import Link from "next/link";
 import { useId } from "react";
 import { buttonStyles } from "@/components/ui/button";
-import { Container, EmptyState } from "@/components/ui/states";
+import { Container } from "@/components/ui/states";
 import type { PropiedadTarjeta } from "@/lib/data/sitio";
 import { PropertyCard } from "./property-card";
 
@@ -116,21 +116,3 @@ export function BarraOperaciones({ total }: { total: { alquiler: number; venta: 
 }
 
 /** Se muestra mientras Supabase no esté configurado o no haya inmobiliaria cargada. */
-export function SitioEnConfiguracion() {
-  return (
-    <main className="flex flex-1 items-center py-16">
-      <Container className="max-w-xl">
-        <EmptyState
-          icon={<Settings aria-hidden />}
-          title="Sitio en configuración"
-          description="Todavía no hay una inmobiliaria cargada. Si sos el administrador, seguí la guía docs/SETUP-CUENTAS.md."
-          action={
-            <Link href="/admin" className={buttonStyles({ variant: "outline" })}>
-              Ir al panel
-            </Link>
-          }
-        />
-      </Container>
-    </main>
-  );
-}

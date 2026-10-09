@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   EnvError,
-  getAgencyId,
   getPublicEnv,
   getServerEnv,
   getSiteUrl,
@@ -16,7 +15,6 @@ const KEYS = [
   "NEXT_PUBLIC_SITE_URL",
   "NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL",
   "VERCEL_PROJECT_PRODUCTION_URL",
-  "AGENCY_ID",
 ];
 
 function withEnv(vars: Record<string, string>, fn: () => void) {
@@ -101,10 +99,4 @@ test("URL del sitio: explícita, de Vercel o localhost", () => {
     assert.equal(getSiteUrl(), "https://inmobiliaria-360.vercel.app");
   });
   withEnv({}, () => assert.equal(getSiteUrl(), "http://localhost:3000"));
-});
-
-test("AGENCY_ID vacío o PLACEHOLDER es null", () => {
-  withEnv({}, () => assert.equal(getAgencyId(), null));
-  withEnv({ AGENCY_ID: "PLACEHOLDER" }, () => assert.equal(getAgencyId(), null));
-  withEnv({ AGENCY_ID: " 7b0c " }, () => assert.equal(getAgencyId(), "7b0c"));
 });

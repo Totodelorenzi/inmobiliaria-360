@@ -1,11 +1,10 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { getSiteUrl } from "@/lib/env";
 import { normalizeHex } from "@/lib/color";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient, TAG_SITIO } from "@/lib/supabase/server";
+import { createClient, TAG_AGENCIAS, tagSitio } from "@/lib/supabase/server";
 import type { Enums, TablesUpdate } from "@/types/database";
+import { sumarPorEmail } from "./invitaciones";
 import { MENSAJE_SESION_VENCIDA, mensajeError, SESION_VENCIDA, sesionParaAccion, type Resultado, type Sesion } from "./sesion";
 
 // ---------------------------------------------------------------------------
@@ -70,7 +69,8 @@ export async function guardarAgencia(_prev: EstadoAgencia, formData: FormData): 
   const supabase = await createClient();
   const { error } = await supabase.from("agencies").update(cambios).eq("id", sesion.agencia.id);
   if (error) return { errores: { general: mensajeError(error, "No se pudo guardar la configuración.") } };
-  updateTag(TAG_SITIO);
+  updateTag(TAG_AGENCIAS);
+  updateTag(tagSitio(sesion.agencia.id));
   return { ok: true, mensaje: "¡Guardado! Los cambios ya se ven en la web." };
 }
 
@@ -93,31 +93,9 @@ export async function invitarUsuario(_prev: Resultado | null, formData: FormData
   const rol = (formData.get("rol") === "admin" ? "admin" : "agente") as Enums<"rol_miembro">;
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return { ok: false, error: "Escribí un email válido." };
 
-  const admin = createAdminClient();
-  let userId: string | undefined;
-  const { data, error } = await admin.auth.admin.inviteUserByEmail(email, {
-    redirectTo: `${getSiteUrl()}/admin/auth/confirm?next=/admin/nueva-clave`,
-  });
-  if (data?.user) userId = data.user.id;
-  else if (error && /already|registered|exists/i.test(error.message)) {
-    // Ya tiene cuenta (por ejemplo, de otra inmobiliaria): solo se la suma a esta.
-    const { data: lista } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-    userId = lista?.users.find((u) => u.email?.toLowerCase() === email)?.id;
-  } else if (error) {
-    return {
-      ok: false,
-      error: /rate limit/i.test(error.message)
-        ? "Se alcanzó el límite de mails por hora de Supabase. Probá más tarde (ver Ayuda)."
-        : "No se pudo enviar la invitación. Revisá el email y probá de nuevo.",
-    };
-  }
-  if (!userId) return { ok: false, error: "No se pudo crear el usuario." };
-
-  const { error: errorMiembro } = await admin
-    .from("agency_members")
-    .upsert({ user_id: userId, agency_id: ctx.sesion.agencia.id, rol }, { onConflict: "user_id,agency_id" });
-  if (errorMiembro) return { ok: false, error: mensajeError(errorMiembro, "No se pudo sumar el usuario a la inmobiliaria.") };
-  return { ok: true, mensaje: data?.user ? `Listo: le mandamos a ${email} un mail para crear su contraseña.` : `${email} ya tenía cuenta: ahora también tiene acceso a esta inmobiliaria.` };
+  const r = await sumarPorEmail(email, ctx.sesion.agencia.id, rol);
+  if (!r.ok) return r;
+  return { ok: true, mensaje: r.invitado ? `Listo: le mandamos a ${email} un mail para crear su contraseña.` : `${email} ya tenía cuenta: ahora también tiene acceso a esta inmobiliaria.` };
 }
 
 export async function cambiarRol(userId: string, rol: Enums<"rol_miembro">): Promise<Resultado> {

@@ -1,10 +1,10 @@
 "use server";
 
-import { getSiteUrl } from "@/lib/env";
 import { codigoLink } from "@/lib/previsita/codigos";
 import { crearVisitante, guardarLead } from "@/lib/previsita/servidor";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { urlEnSitio } from "@/lib/tenancy";
 import { Constants, type Enums } from "@/types/database";
 import { MENSAJE_SESION_VENCIDA, mensajeError, SESION_VENCIDA, sesionParaAccion, type Resultado } from "./sesion";
 
@@ -83,7 +83,7 @@ export async function crearLinkPrevisita(_prev: EstadoLink, formData: FormData):
       origen: "link_personalizado",
       datos: { nombre, telefono },
     });
-    return { ok: true, link: { url: `${getSiteUrl()}/v/${codigo}`, nombre, telefono, titulo: propiedad.titulo, leadId: lead.id } };
+    return { ok: true, link: { url: urlEnSitio(sesion.agencia, `/v/${codigo}`), nombre, telefono, titulo: propiedad.titulo, leadId: lead.id } };
   } catch (error) {
     console.error("[link pre-visita]", error instanceof Error ? error.message : error);
     return { ok: false, error: "No se pudo generar el link. Probá de nuevo." };

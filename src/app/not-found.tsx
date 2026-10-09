@@ -1,14 +1,18 @@
 import type { Metadata } from "next";
-import { NoEncontrado } from "@/components/sitio/estados";
-import SitioLayout from "./(sitio)/layout";
+import Link from "next/link";
+import { PaginaNeutra } from "@/components/plataforma/neutra";
+import { buttonStyles } from "@/components/ui/button";
 
-export const metadata: Metadata = { title: "Página no encontrada" };
+export const metadata: Metadata = { title: "Página no encontrada", robots: { index: false } };
 
-// 404 de URLs que no coinciden con ninguna ruta: misma estética que el sitio.
+// 404 fuera de la web de una inmobiliaria (cada una tiene el suyo, con su marca).
 export default function NotFound() {
   return (
-    <SitioLayout>
-      <NoEncontrado />
-    </SitioLayout>
+    <PaginaNeutra titulo="No encontramos esta página">
+      <p className="text-muted">Revisá la dirección. Si buscabas la web de una inmobiliaria, puede que todavía no esté publicada.</p>
+      <Link href="/" className={buttonStyles({ variant: "outline" })}>
+        Ir al inicio
+      </Link>
+    </PaginaNeutra>
   );
 }

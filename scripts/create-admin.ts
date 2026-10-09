@@ -1,12 +1,13 @@
 /**
- * Crea (o actualiza) el usuario administrador inicial con ADMIN_EMAIL de .env.local.
+ * Crea (o actualiza) el usuario administrador inicial con ADMIN_EMAIL de .env.local: superadmin de la
+ * plataforma (crea inmobiliarias) y admin de la inmobiliaria de ejemplo.
  * Si ADMIN_PASSWORD está vacía, genera una contraseña segura y la guarda en .env.local.
  *   npm run crear-admin
  */
 import { randomInt } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
-import { getAgencyId } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { AGENCIA_DEMO_ID } from "./seed/datos.ts";
 
 const ENV_LOCAL = new URL("../.env.local", import.meta.url);
 
@@ -44,8 +45,9 @@ async function main() {
   }
 
   const db = createAdminClient();
-  const agencyId =
-    getAgencyId() ?? (await db.from("agencies").select("id").order("created_at").limit(1).maybeSingle()).data?.id;
+  // La de ejemplo; si no existe, la primera creada.
+  const { data: demo } = await db.from("agencies").select("id").eq("id", AGENCIA_DEMO_ID).maybeSingle();
+  const agencyId = demo?.id ?? (await db.from("agencies").select("id").order("created_at").limit(1).maybeSingle()).data?.id;
   if (!agencyId) throw new Error("No hay ninguna inmobiliaria en la base. Corré primero: npm run seed");
 
   // Buscar si el usuario ya existe (la API no filtra por email: se recorren las páginas).
@@ -70,7 +72,9 @@ async function main() {
 
   const { error } = await db.from("agency_members").upsert({ user_id: userId, agency_id: agencyId, rol: "admin" }, { onConflict: "user_id,agency_id" });
   if (error) throw new Error(`No se pudo asignar la inmobiliaria: ${error.message}`);
-  console.log(`\nListo: ${email} es administrador. La contraseña está en .env.local (ADMIN_PASSWORD).`);
+  const { error: errorPlataforma } = await db.from("platform_admins").upsert({ user_id: userId }, { onConflict: "user_id" });
+  if (errorPlataforma) throw new Error(`No se pudo marcar como superadmin: ${errorPlataforma.message}`);
+  console.log(`\nListo: ${email} es administrador y superadmin de la plataforma. La contraseña está en .env.local (ADMIN_PASSWORD).`);
 }
 
 main().catch((error: unknown) => {

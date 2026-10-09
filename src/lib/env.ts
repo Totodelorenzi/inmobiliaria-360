@@ -111,9 +111,3 @@ export function getServerEnv(): ServerEnv {
 
   return { supabaseSecretKey: secret! };
 }
-
-/** ID de la inmobiliaria que muestra este sitio; null si no se fijó (se usa la única que haya). */
-export function getAgencyId(): string | null {
-  const id = process.env.AGENCY_ID;
-  return isBlank(id) || isPlaceholder(id) ? null : id.trim();
-}

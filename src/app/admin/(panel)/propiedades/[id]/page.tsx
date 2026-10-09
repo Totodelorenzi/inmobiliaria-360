@@ -14,7 +14,7 @@ import { buttonStyles } from "@/components/ui/button";
 import { getPropiedadEditor } from "@/lib/admin/datos";
 import { requisitosPublicacion, TITULO_BORRADOR } from "@/lib/admin/propiedad";
 import { requerirSesion } from "@/lib/admin/sesion";
-import { getSiteUrl } from "@/lib/env";
+import { urlEnSitio } from "@/lib/tenancy";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Editar propiedad" };
@@ -52,7 +52,7 @@ export default async function EditorPropiedad({ params, searchParams }: PageProp
     planos: p.planos.length > 0,
     publicar: p.publicada,
   };
-  const url = `${getSiteUrl()}/propiedad/${p.slug}`;
+  const url = urlEnSitio(sesion.agencia, `/propiedad/${p.slug}`);
 
   return (
     <Pagina>

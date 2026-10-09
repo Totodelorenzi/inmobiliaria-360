@@ -1,7 +1,6 @@
 // Generado desde la base real. Para regenerar después de una migración:
 //   npx supabase gen types typescript --linked --schema public > src/types/database.ts
 // (y volver a agregar este encabezado)
-
 export type Json =
   | string
   | number
@@ -23,12 +22,14 @@ export type Database = {
           color_primario: string
           created_at: string
           direccion: string | null
+          dominio_propio: string | null
           email: string | null
           facebook: string | null
           id: string
           instagram: string | null
           logo_url: string | null
           nombre: string
+          subdominio: string
           telefono: string | null
           whatsapp: string | null
         }
@@ -36,12 +37,14 @@ export type Database = {
           color_primario?: string
           created_at?: string
           direccion?: string | null
+          dominio_propio?: string | null
           email?: string | null
           facebook?: string | null
           id?: string
           instagram?: string | null
           logo_url?: string | null
           nombre: string
+          subdominio: string
           telefono?: string | null
           whatsapp?: string | null
         }
@@ -49,12 +52,14 @@ export type Database = {
           color_primario?: string
           created_at?: string
           direccion?: string | null
+          dominio_propio?: string | null
           email?: string | null
           facebook?: string | null
           id?: string
           instagram?: string | null
           logo_url?: string | null
           nombre?: string
+          subdominio?: string
           telefono?: string | null
           whatsapp?: string | null
         }
@@ -221,6 +226,21 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      platform_admins: {
+        Row: {
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       properties: {
         Row: {

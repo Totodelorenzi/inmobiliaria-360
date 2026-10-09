@@ -6,10 +6,12 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/states";
 import { getEstadoSesion } from "@/lib/admin/sesion";
 import { brandStyle } from "@/lib/color";
+import { urlEnSitio } from "@/lib/tenancy";
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const estado = await getEstadoSesion();
   if (estado.tipo === "sin-sesion") redirect("/admin/login");
+  if (estado.tipo === "sin-agencia" && estado.superadmin) redirect("/admin/plataforma");
   if (estado.tipo === "sin-agencia") {
     return (
       <main className="flex flex-1 items-center justify-center p-4">
@@ -29,10 +31,17 @@ export default async function PanelLayout({ children }: { children: React.ReactN
     );
   }
 
-  const { agencia, email, rol } = estado.sesion;
+  const { agencia, agencias, email, rol, superadmin } = estado.sesion;
   return (
     <div style={brandStyle(agencia.color_primario)} className="flex min-h-dvh flex-col lg:flex-row">
-      <NavPanel agencia={agencia.nombre} email={email} esAdmin={rol === "admin"} />
+      <NavPanel
+        agencia={{ id: agencia.id, nombre: agencia.nombre }}
+        agencias={agencias}
+        email={email}
+        esAdmin={rol === "admin"}
+        superadmin={superadmin}
+        urlSitio={urlEnSitio(agencia)}
+      />
       <main className="flex min-w-0 flex-1 flex-col pb-24 lg:pb-0">{children}</main>
     </div>
   );

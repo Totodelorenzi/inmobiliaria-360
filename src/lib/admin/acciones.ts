@@ -3,7 +3,7 @@
 import { updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient, TAG_SITIO } from "@/lib/supabase/server";
+import { createClient, tagSitio } from "@/lib/supabase/server";
 import type { TablesInsert } from "@/types/database";
 import {
   requisitosPublicacion,
@@ -18,11 +18,10 @@ import { borrarArchivos, borrarCarpetaPropiedad, copiarArchivo } from "./storage
 
 type Supa = Awaited<ReturnType<typeof createClient>>;
 
-/** Actualiza la web pública al instante si la propiedad está (o estuvo) publicada. */
+/** Actualiza al instante la web de su inmobiliaria si la propiedad está (o estuvo) publicada. */
 async function refrescarSitioSi(supabase: Supa, propertyId: string, forzar = false) {
-  if (forzar) return updateTag(TAG_SITIO);
-  const { data } = await supabase.from("properties").select("publicada").eq("id", propertyId).maybeSingle();
-  if (data?.publicada) updateTag(TAG_SITIO);
+  const { data } = await supabase.from("properties").select("publicada, agency_id").eq("id", propertyId).maybeSingle();
+  if (data && (forzar || data.publicada)) updateTag(tagSitio(data.agency_id));
 }
 
 async function contexto() {
@@ -67,24 +66,30 @@ export async function guardarDatos(id: string, entrada: Record<string, string>):
   const hayErrores = Object.keys(errores).length > 0;
   if (Object.keys(cambios).length === 0) return { ok: !hayErrores, errores };
 
-  const { data: actual, error: errorLectura } = await ctx.supabase.from("properties").select("publicada, slug").eq("id", id).maybeSingle();
+  const { data: actual, error: errorLectura } = await ctx.supabase.from("properties").select("publicada, slug, agency_id").eq("id", id).maybeSingle();
   if (errorLectura || !actual) return { ok: false, error: "No encontramos la propiedad. Recargá la página." };
 
   // El slug sigue al título mientras la propiedad no se publicó (después, los links no pueden cambiar).
   if (cambios.titulo && !actual.publicada) {
     const base = slugify(cambios.titulo);
-    const { data: usados } = await ctx.supabase.from("properties").select("slug").like("slug", `${base}%`).neq("id", id);
+    // Únicos por inmobiliaria: otra puede usar el mismo.
+    const { data: usados } = await ctx.supabase
+      .from("properties")
+      .select("slug")
+      .eq("agency_id", actual.agency_id)
+      .like("slug", `${base}%`)
+      .neq("id", id);
     cambios.slug = slugDisponible(base, (usados ?? []).map((u) => u.slug));
   }
 
   let { error } = await ctx.supabase.from("properties").update(cambios).eq("id", id);
   if (error?.code === "23505" && cambios.slug) {
-    // Chocó con un slug que no vemos (borrador de otra inmobiliaria): se agrega un sufijo al azar.
+    // Chocó con otro guardado al mismo tiempo: se agrega un sufijo al azar.
     cambios.slug = `${cambios.slug}-${crypto.randomUUID().slice(0, 4)}`;
     ({ error } = await ctx.supabase.from("properties").update(cambios).eq("id", id));
   }
   if (error) return { ok: false, errores, error: mensajeError(error, "No se pudieron guardar los cambios.") };
-  if (actual.publicada) updateTag(TAG_SITIO);
+  if (actual.publicada) updateTag(tagSitio(actual.agency_id));
   return { ok: !hayErrores, errores, slug: cambios.slug };
 }
 
@@ -193,7 +198,7 @@ export async function eliminarPropiedad(id: string): Promise<Resultado> {
   await borrarCarpetaPropiedad(ctx.supabase, p.agency_id, id);
   const { error } = await ctx.supabase.from("properties").delete().eq("id", id);
   if (error) return falla(error, "No se pudo eliminar la propiedad.");
-  if (p.publicada) updateTag(TAG_SITIO);
+  if (p.publicada) updateTag(tagSitio(p.agency_id));
   return { ok: true, mensaje: "Propiedad eliminada." };
 }
 
@@ -215,7 +220,7 @@ export async function borrarDatosDeEjemplo(): Promise<Resultado> {
   }
   const { error: errorBorrado } = await ctx.supabase.from("properties").delete().eq("agency_id", agencia).eq("es_demo", true);
   if (errorBorrado) return falla(errorBorrado, "No se pudieron borrar los datos de ejemplo.");
-  updateTag(TAG_SITIO);
+  updateTag(tagSitio(agencia));
   return { ok: true, mensaje: `Listo: se borraron ${demo.length} propiedades de ejemplo con sus leads y visitas.` };
 }
 

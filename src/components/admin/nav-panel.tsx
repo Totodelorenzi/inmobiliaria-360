@@ -1,14 +1,24 @@
 "use client";
 
-import { ChartColumn, CircleHelp, ExternalLink, House, Inbox, LayoutDashboard, LogOut, Menu, Settings, Users, X } from "lucide-react";
+import { Building2, ChartColumn, CircleHelp, ExternalLink, House, Inbox, LayoutDashboard, LogOut, Menu, Settings, Users, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRef } from "react";
 import { cerrarSesion } from "@/app/admin/(acceso)/acciones";
 import { buttonStyles } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { SelectorAgencia } from "./plataforma";
 
-type Props = { agencia: string; email: string; esAdmin: boolean };
+type Props = {
+  agencia: { id: string; nombre: string };
+  /** Todas las del usuario (con más de una aparece el selector). */
+  agencias: { id: string; nombre: string }[];
+  email: string;
+  esAdmin: boolean;
+  superadmin: boolean;
+  /** Web pública de la inmobiliaria activa, con su dominio real. */
+  urlSitio: string;
+};
 
 const PRINCIPALES = [
   { href: "/admin", label: "Inicio", Icono: LayoutDashboard },
@@ -16,7 +26,7 @@ const PRINCIPALES = [
   { href: "/admin/leads", label: "Leads", Icono: Inbox },
 ];
 
-function secundarios(esAdmin: boolean) {
+function secundarios(esAdmin: boolean, superadmin: boolean) {
   return [
     ...(esAdmin
       ? [
@@ -26,6 +36,7 @@ function secundarios(esAdmin: boolean) {
       : []),
     { href: "/admin/estadisticas", label: "Estadísticas", Icono: ChartColumn },
     { href: "/admin/ayuda", label: "Ayuda", Icono: CircleHelp },
+    ...(superadmin ? [{ href: "/admin/plataforma", label: "Plataforma", Icono: Building2 }] : []),
   ];
 }
 
@@ -41,10 +52,10 @@ function BotonSalir({ className }: { className?: string }) {
   );
 }
 
-export function NavPanel({ agencia, email, esAdmin }: Props) {
+export function NavPanel({ agencia, agencias, email, esAdmin, superadmin, urlSitio }: Props) {
   const pathname = usePathname();
   const masRef = useRef<HTMLDialogElement>(null);
-  const todos = [...PRINCIPALES, ...secundarios(esAdmin)];
+  const todos = [...PRINCIPALES, ...secundarios(esAdmin, superadmin)];
 
   const link = (item: (typeof todos)[number], extra?: string) => (
     <Link
@@ -64,12 +75,13 @@ export function NavPanel({ agencia, email, esAdmin }: Props) {
     <>
       {/* Escritorio: barra lateral */}
       <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col gap-1 border-r border-border bg-bg p-4 lg:flex">
-        <p className="mb-4 truncate px-3 font-display text-lg font-bold text-brand-ink">{agencia}</p>
+        <p className="mb-2 truncate px-3 font-display text-lg font-bold text-brand-ink">{agencia.nombre}</p>
+        <SelectorAgencia agencias={agencias} activa={agencia.id} className="mb-3 px-2" />
         <nav aria-label="Panel" className="flex flex-col gap-1">
           {todos.map((item) => link(item))}
         </nav>
         <div className="mt-auto flex flex-col gap-1 border-t border-border pt-4">
-          <a href="/" target="_blank" className="flex min-h-11 items-center gap-3 rounded-xl px-3 font-medium hover:bg-surface">
+          <a href={urlSitio} target="_blank" className="flex min-h-11 items-center gap-3 rounded-xl px-3 font-medium hover:bg-surface">
             <ExternalLink className="size-5" aria-hidden /> Ver el sitio
           </a>
           <p className="truncate px-3 text-xs text-muted">{email}</p>
@@ -79,8 +91,8 @@ export function NavPanel({ agencia, email, esAdmin }: Props) {
 
       {/* Celular: barra superior */}
       <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-bg px-4 lg:hidden">
-        <p className="min-w-0 flex-1 truncate font-display font-bold text-brand-ink">{agencia}</p>
-        <a href="/" target="_blank" className={buttonStyles({ variant: "ghost", size: "icon" })} aria-label="Ver el sitio (se abre en otra pestaña)">
+        <p className="min-w-0 flex-1 truncate font-display font-bold text-brand-ink">{agencia.nombre}</p>
+        <a href={urlSitio} target="_blank" className={buttonStyles({ variant: "ghost", size: "icon" })} aria-label="Ver el sitio (se abre en otra pestaña)">
           <ExternalLink className="size-5" aria-hidden />
         </a>
       </header>
@@ -124,8 +136,9 @@ export function NavPanel({ agencia, email, esAdmin }: Props) {
             <X aria-hidden />
           </button>
         </div>
+        <SelectorAgencia agencias={agencias} activa={agencia.id} className="mb-2" />
         <nav aria-label="Más opciones" className="flex flex-col gap-1" onClick={() => masRef.current?.close()}>
-          {secundarios(esAdmin).map((item) => link(item, "text-lg"))}
+          {secundarios(esAdmin, superadmin).map((item) => link(item, "text-lg"))}
         </nav>
         <div className="mt-2 border-t border-border pt-2">
           <BotonSalir className="text-lg" />

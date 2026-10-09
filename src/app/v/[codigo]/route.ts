@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { getAgencia } from "@/lib/data/sitio";
+import { getAgenciaDelPedido } from "@/lib/data/sitio";
 import { isSupabaseConfigured } from "@/lib/env";
 import { Limitador } from "@/lib/previsita/limite";
 import { guardarCookies, idDeCookie, marcarActividad, recalcularLead } from "@/lib/previsita/servidor";
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest, { params }: RouteContext<"/v/[co
   if (!porIp.permitir(ip)) return Response.redirect(inicio, 307);
 
   try {
-    const agencia = await getAgencia();
+    const agencia = await getAgenciaDelPedido();
     const db = createAdminClient();
     const { data: link } = await db
       .from("tracked_links")

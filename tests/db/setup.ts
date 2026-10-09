@@ -33,8 +33,8 @@ export const ID = {
 const FIXTURES = `
   insert into auth.users (id, email) values
     ('${ID.adminA}', 'admin@a.test'), ('${ID.agenteA}', 'agente@a.test'), ('${ID.adminB}', 'admin@b.test');
-  insert into public.agencies (id, nombre, whatsapp) values
-    ('${ID.agenciaA}', 'Agencia A', '5491100000001'), ('${ID.agenciaB}', 'Agencia B', '5491100000002');
+  insert into public.agencies (id, nombre, whatsapp, subdominio) values
+    ('${ID.agenciaA}', 'Agencia A', '5491100000001', 'agencia-a'), ('${ID.agenciaB}', 'Agencia B', '5491100000002', 'agencia-b');
   insert into public.agency_members (user_id, agency_id, rol) values
     ('${ID.adminA}', '${ID.agenciaA}', 'admin'), ('${ID.agenteA}', '${ID.agenciaA}', 'agente'),
     ('${ID.adminB}', '${ID.agenciaB}', 'admin');

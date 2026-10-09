@@ -14,9 +14,9 @@ import { BotonConfirmar, Hoja, MostrarAviso, useAccion } from "./acciones-ui";
 const fecha = new Intl.DateTimeFormat("es-AR", { day: "numeric", month: "short" });
 
 /** Siempre montada (con `vacio` cuando no hay resultados): el aviso de "Propiedad eliminada." sobrevive al borrar la última. */
-export function ListaPropiedades({ propiedades, vacio }: { propiedades: PropiedadListado[]; vacio: ReactNode }) {
+export function ListaPropiedades({ propiedades, vacio }: { propiedades: (PropiedadListado & { url: string })[]; vacio: ReactNode }) {
   const { ejecutar, pendiente, aviso } = useAccion();
-  const [menu, setMenu] = useState<PropiedadListado | null>(null);
+  const [menu, setMenu] = useState<(PropiedadListado & { url: string }) | null>(null);
 
   return (
     <div className="flex flex-col gap-3" aria-busy={pendiente}>
@@ -71,7 +71,7 @@ export function ListaPropiedades({ propiedades, vacio }: { propiedades: Propieda
         {menu && (
           <div className="flex flex-col gap-1">
             {menu.publicada && (
-              <a href={`/propiedad/${menu.slug}`} target="_blank" className={opcion}>
+              <a href={menu.url} target="_blank" className={opcion}>
                 <ExternalLink aria-hidden /> Ver en la web
               </a>
             )}

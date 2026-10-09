@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/ui/states";
 import { crearBorrador } from "@/lib/admin/acciones";
 import { getPropiedadesAdmin, type FiltroEstado } from "@/lib/admin/datos";
 import { requerirSesion } from "@/lib/admin/sesion";
+import { urlEnSitio } from "@/lib/tenancy";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Propiedades" };
@@ -86,7 +87,7 @@ export default async function PropiedadesPage({ searchParams }: PageProps<"/admi
       </nav>
 
       <ListaPropiedades
-        propiedades={propiedades}
+        propiedades={propiedades.map((p) => ({ ...p, url: urlEnSitio(sesion.agencia, `/propiedad/${p.slug}`) }))}
         vacio={
           <EmptyState
             title={conFiltros ? "No hay propiedades con estos filtros" : "Todavía no cargaste propiedades"}
