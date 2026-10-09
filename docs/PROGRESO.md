@@ -58,6 +58,7 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
 ## Pendientes técnicos
 
+- La imagen para compartir (OG) pesa ~1 MB: WhatsApp suele no mostrar vistas previas de más de ~300 KB. Bajarla (JPEG/menos resolución de la foto) antes de la entrega.
 - Probar con datos reales apenas haya Supabase: panel completo (login, subida de fotos/360°/PDF, hotspots, invitaciones), inicio, filtros, ficha, mapa, consulta, OG, tour (hotspots, giroscopio en iPhone), planos (pellizco) y todo el circuito de pre-visita.
 
 ## Pendientes del usuario

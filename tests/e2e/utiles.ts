@@ -10,9 +10,17 @@ export { expect };
  * Limpieza: cada navegador de prueba queda registrado como visitante, y algunos tests dejan leads o
  * propiedades. Al terminar cada test, aunque falle, se borra exactamente lo suyo: los visitantes de
  * sus cookies `v360` y de las respuestas del servidor (con sus leads y links) y las propiedades
- * "Prueba E2E <dispositivo> …" con sus archivos. Nunca toca datos de ejemplo; sin clave secreta no hace nada.
+ * propiedades que creó (por su título único) con sus archivos. Nunca toca datos de ejemplo; sin clave
+ * secreta no hace nada. Solo lo de ESTE test: otros del mismo dispositivo pueden correr en paralelo.
  */
-export const TITULO_PRUEBA = "Prueba E2E";
+const propiedades = new Set<string>();
+
+/** Título único para una propiedad de prueba; se borra al terminar el test aunque falle. */
+export function tituloDePrueba(dispositivo: string) {
+  const titulo = `Prueba E2E ${dispositivo} ${Date.now()}`;
+  propiedades.add(titulo);
+  return titulo;
+}
 const visitantes = new Set<string>();
 const contextos = new Set<BrowserContext>();
 let envios: Promise<unknown>[] = [];
@@ -47,7 +55,7 @@ export async function visitanteNuevo(browser: Browser, info: TestInfo) {
   return contexto.newPage();
 }
 
-async function limpiar(dispositivo: string) {
+async function limpiar() {
   // Salir de las páginas dispara el envío de lo pendiente (pagehide); se espera a cada envío:
   // uno que llegue después del borrado crearía otro visitante.
   for (const contexto of contextos) for (const pagina of contexto.pages()) await pagina.goto("about:blank").catch(() => null);
@@ -72,14 +80,12 @@ async function limpiar(dispositivo: string) {
     }
     fallar("visitors", (await db.from("visitors").delete().in("id", ids).eq("es_demo", false)).error);
   }
-  // Solo las de este dispositivo: el otro corre en paralelo su propia alta.
-  const { data: propiedades, error } = await db
-    .from("properties")
-    .select("id, agency_id")
-    .like("titulo", `${TITULO_PRUEBA} ${dispositivo} %`)
-    .eq("es_demo", false);
+  const titulos = [...propiedades];
+  propiedades.clear();
+  if (!titulos.length) return;
+  const { data: creadas, error } = await db.from("properties").select("id, agency_id").in("titulo", titulos).eq("es_demo", false);
   fallar("properties", error);
-  for (const p of propiedades ?? []) {
+  for (const p of creadas ?? []) {
     await borrarCarpetaPropiedad(db, p.agency_id, p.id);
     fallar("properties", (await db.from("properties").delete().eq("id", p.id)).error);
   }
@@ -87,10 +93,10 @@ async function limpiar(dispositivo: string) {
 
 export const test = base.extend<{ limpieza: void }>({
   limpieza: [
-    async ({ context }, use, info) => {
+    async ({ context }, use) => {
       seguir(context);
       await use();
-      await limpiar(info.project.name);
+      await limpiar();
     },
     { auto: true },
   ],

@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { expect, test, TITULO_PRUEBA } from "./utiles";
+import { expect, test, tituloDePrueba } from "./utiles";
 
 const FOTO = "tests/e2e/fixtures/foto.jpg";
 
@@ -25,7 +25,7 @@ test.describe("panel de administración", { tag: "@admin" }, () => {
 
   test("alta completa de una propiedad y verla publicada", async ({ page }, info) => {
     test.setTimeout(180_000);
-    const titulo = `${TITULO_PRUEBA} ${info.project.name} ${Date.now()}`;
+    const titulo = tituloDePrueba(info.project.name);
     await entrar(page);
 
     // Paso 1: datos (autoguardado)

@@ -10,7 +10,7 @@ export function generateStaticParams() {
 
 const escapar = (texto: string) => texto.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-export async function GET(_request: Request, { params }: RouteContext<"/s/[sitio]/sitemap.xml">) {
+export async function GET(_request: Request, { params }: RouteContext<"/s/[sitio]/mapa-del-sitio">) {
   const agencia = await getAgencia((await params).sitio);
   if (!agencia) return new Response("No encontrado", { status: 404 });
   const fijas = ["/", "/alquiler", "/venta", "/emprendimientos"].map((ruta) => ({

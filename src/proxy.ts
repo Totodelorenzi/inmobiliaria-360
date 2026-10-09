@@ -5,6 +5,9 @@ import { COOKIE_PRUEBA, entornoActual, PARAM_PRUEBA, resolverHost, urlDelPanel }
 /** Rutas que atienden todas las inmobiliarias sin reescribir (ellas mismas resuelven el sitio por el host). */
 const RUTAS_COMPARTIDAS = ["/api/", "/v/", "/buscar"];
 
+/** Archivos de cada sitio con nombre interno neutro: Next trata distinto las carpetas sitemap.xml y robots.txt. */
+const INTERNAS: Record<string, string> = { "/sitemap.xml": "/mapa-del-sitio", "/robots.txt": "/reglas-robots" };
+
 /**
  * Multi-inmobiliaria: decide por el host qué web mostrar y la reescribe a /s/<sitio>/..., así cada
  * página se cachea con su inmobiliaria en la ruta. El panel solo responde en su host central.
@@ -40,7 +43,7 @@ export function proxy(request: NextRequest) {
 
   const respuesta = RUTAS_COMPARTIDAS.some((r) => pathname === r || pathname.startsWith(r))
     ? NextResponse.next()
-    : NextResponse.rewrite(new URL(`/s/${destino.clave}${pathname === "/" ? "" : pathname}${search}`, request.url));
+    : NextResponse.rewrite(new URL(`/s/${destino.clave}${INTERNAS[pathname] ?? (pathname === "/" ? "" : pathname)}${search}`, request.url));
   if (destino.prueba && pedida) {
     respuesta.cookies.set(COOKIE_PRUEBA, destino.clave, { path: "/", sameSite: "lax", httpOnly: true, maxAge: 60 * 60 * 24 * 30 });
   }

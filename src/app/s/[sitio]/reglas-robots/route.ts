@@ -7,7 +7,7 @@ export function generateStaticParams() {
   return [];
 }
 
-export async function GET(_request: Request, { params }: RouteContext<"/s/[sitio]/robots.txt">) {
+export async function GET(_request: Request, { params }: RouteContext<"/s/[sitio]/reglas-robots">) {
   const agencia = await getAgencia((await params).sitio);
   const reglas = agencia
     ? `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\n\nSitemap: ${urlEnSitio(agencia, "/sitemap.xml")}\n`
