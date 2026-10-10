@@ -92,3 +92,8 @@
     }
   }
 }
+
+/* Aviso de privacidad ya cerrado (ver ScriptAvisoPrivacidad): oculto desde el primer cuadro. */
+html[data-aviso-privacidad="visto"] #aviso-privacidad {
+  display: none;
+}

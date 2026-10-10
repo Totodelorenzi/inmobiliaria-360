@@ -8,6 +8,21 @@ import { descartarPendientes } from "@/lib/tracking/cliente";
 import { cn } from "@/lib/utils";
 
 const CLAVE = "v360_aviso_privacidad";
+
+/**
+ * Corre antes de pintar (va en el HTML, antes del aviso): si ya se cerró, el CSS lo oculta desde el
+ * primer cuadro. Así el aviso puede venir en el HTML del servidor (pinta enseguida, sin esperar al
+ * JavaScript) sin parpadear para quien ya lo vio.
+ */
+export function ScriptAvisoPrivacidad() {
+  return (
+    <script
+      dangerouslySetInnerHTML={{
+        __html: `try{if(localStorage.getItem("${CLAVE}"))document.documentElement.dataset.avisoPrivacidad="visto"}catch(e){}`,
+      }}
+    />
+  );
+}
 const sinSuscripcion = () => () => {};
 function avisoPendiente() {
   try {
@@ -19,7 +34,8 @@ function avisoPendiente() {
 
 /** Aviso breve y no invasivo de la primera visita (se cierra una vez y no vuelve). */
 export function AvisoPrivacidad({ posicion = "abajo" }: { posicion?: "abajo" | "arriba" }) {
-  const pendiente = useSyncExternalStore(sinSuscripcion, avisoPendiente, () => false);
+  // En el servidor (y al hidratar) se muestra; en el cliente, solo si no se cerró antes.
+  const pendiente = useSyncExternalStore(sinSuscripcion, avisoPendiente, () => true);
   const [cerrado, setCerrado] = useState(false);
   if (!pendiente || cerrado) return null;
 
@@ -32,6 +48,7 @@ export function AvisoPrivacidad({ posicion = "abajo" }: { posicion?: "abajo" | "
 
   return (
     <aside
+      id="aviso-privacidad"
       aria-label="Aviso de privacidad"
       className={cn(
         "fixed inset-x-3 z-40 mx-auto flex max-w-md items-start gap-3 rounded-2xl border border-border bg-bg p-3 text-sm text-fg shadow-xl md:right-auto md:left-4",

@@ -1,5 +1,6 @@
 import { DraftingCompass, HardHat, House, MapPin, Rotate3d } from "lucide-react";
 import Link from "next/link";
+import { preload } from "react-dom";
 import { Badge } from "@/components/ui/badge";
 import type { PropiedadTarjeta } from "@/lib/data/sitio";
 import { badgeObra, formatExpensas, formatM2, formatPrecio, formatUbicacion, OPERACION_LABEL, plural } from "@/lib/format";
@@ -13,6 +14,9 @@ export function PropertyCard({ p, prioridad = false }: { p: PropiedadTarjeta; pr
     p.banos && plural(p.banos, "baño"),
     formatM2(p.superficie_total),
   ].filter(Boolean) as string[];
+
+  // La primera tarjeta suele ser el LCP del inicio: se pide desde el <head>, antes de leer el cuerpo.
+  if (prioridad && p.foto) preload(p.foto.thumb_url ?? p.foto.url, { as: "image", fetchPriority: "high" });
 
   return (
     <article className="group relative flex h-full flex-col overflow-hidden rounded-(--radius-card) border border-border bg-bg shadow-(--shadow-card) transition hover:shadow-lg has-[a:focus-visible]:outline-3 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-focus">

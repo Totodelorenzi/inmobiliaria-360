@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
-import { AvisoPrivacidad } from "@/components/sitio/privacidad";
+import { AvisoPrivacidad, ScriptAvisoPrivacidad } from "@/components/sitio/privacidad";
 import { brandStyle } from "@/lib/color";
 import { getAgencia } from "@/lib/data/sitio";
 import { urlEnSitio } from "@/lib/tenancy";
@@ -20,6 +20,7 @@ export default async function VisorLayout({ children, params }: LayoutProps<"/s/
   return (
     <div style={brandStyle(agencia.color_primario)} className="fixed inset-0 overflow-hidden bg-black text-white">
       {children}
+      <ScriptAvisoPrivacidad />
       <AvisoPrivacidad posicion="arriba" />
     </div>
   );

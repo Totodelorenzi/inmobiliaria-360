@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
-import { AvisoPrivacidad } from "@/components/sitio/privacidad";
+import { AvisoPrivacidad, ScriptAvisoPrivacidad } from "@/components/sitio/privacidad";
 import { SiteFooter } from "@/components/sitio/site-footer";
 import { SiteHeader } from "@/components/sitio/site-header";
 import { brandStyle, normalizeHex } from "@/lib/color";
@@ -42,6 +42,7 @@ export default async function SitioLayout({ children, params }: LayoutProps<"/s/
         {children}
       </main>
       <SiteFooter agencia={agencia} />
+      <ScriptAvisoPrivacidad />
       <AvisoPrivacidad />
     </div>
   );

@@ -18,6 +18,7 @@ import {
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { preload } from "react-dom";
 import type { ReactNode } from "react";
 import { BotonWhatsapp } from "@/components/sitio/boton-whatsapp";
 import { FormConsulta } from "@/components/sitio/form-consulta";
@@ -94,6 +95,15 @@ export default async function FichaPropiedad({ params }: PageProps<"/s/[sitio]/p
   const mapa = ubicacionPublica(p.id, p.lat, p.lng, p.mostrar_direccion_exacta);
   const mensajeWhatsapp = `¡Hola! Me interesa "${p.titulo}" (${precio}). ${url}`;
   const relacionadas = await getRelacionadas(p);
+  // La primera foto es el LCP de la ficha: se pide desde el <head> con el mismo srcset que la galería.
+  const portada = p.fotos[0];
+  if (portada) {
+    preload(portada.url, {
+      as: "image",
+      fetchPriority: "high",
+      ...(portada.thumb_url && { imageSrcSet: `${portada.thumb_url} 800w, ${portada.url} 2400w`, imageSizes: "(min-width: 768px) 50vw, 100vw" }),
+    });
+  }
 
   const ficha: { icono: ReactNode; label: string; valor: string | null }[] = [
     { icono: <Building />, label: "Tipo", valor: TIPO_LABEL[p.tipo] },

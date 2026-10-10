@@ -27,7 +27,7 @@ export function NoEncontrado() {
 
 export function ListadoCargando() {
   return (
-    <Container className="py-6 sm:py-8" aria-busy>
+    <Container className="min-h-dvh py-6 sm:py-8" aria-busy>
       <p className="sr-only" role="status">
         Cargando propiedades…
       </p>
@@ -48,7 +48,7 @@ export function ListadoCargando() {
 
 export function FichaCargando() {
   return (
-    <div aria-busy>
+    <div className="min-h-dvh" aria-busy>
       <p className="sr-only" role="status">
         Cargando la propiedad…
       </p>
