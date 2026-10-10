@@ -1,12 +1,13 @@
-import { randomUUID } from "node:crypto";
 import type { Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "../../src/types/database";
-import { expect, test } from "./utiles";
+import { borrarAgenciaDePrueba, borrarUsuarioDePrueba, crearAgenciaDePrueba, exigirAgenciaDePrueba } from "./proteccion";
+import { corrida, expect, test } from "./utiles";
 
 /**
  * Varias inmobiliarias en hosts reales: <subdominio>.<E2E_DOMINIO_BASE> y el panel en app.…
- * Crea dos inmobiliarias de prueba con una propiedad del mismo slug y dos usuarios; al final las borra.
+ * Crea dos inmobiliarias de prueba (es_test) con una propiedad del mismo slug y dos usuarios de prueba;
+ * al final las borra a través de la protección (proteccion.ts).
  */
 const base = process.env.E2E_DOMINIO_BASE ?? "";
 const protocolo = /localhost/.test(base) ? "http" : "https";
@@ -18,7 +19,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const claveSecreta = process.env.SUPABASE_SECRET_KEY ?? "";
 const admin = () => createClient<Database>(supabaseUrl, claveSecreta, { auth: { persistSession: false } });
 
-const sufijo = randomUUID().slice(0, 6);
+const sufijo = corrida();
 const agencia = (letra: string) => ({ sub: `e2e-${letra}-${sufijo}`, nombre: `E2E ${letra.toUpperCase()} ${sufijo}`, titulo: `Depto de ${letra.toUpperCase()} ${sufijo}`, id: "", propiedad: "" });
 const A = agencia("a");
 const B = agencia("b");
@@ -42,9 +43,8 @@ test.describe("varias inmobiliarias", { tag: "@multi" }, () => {
   test.beforeAll(async () => {
     const db = admin();
     for (const ag of [A, B]) {
-      const { data, error } = await db.from("agencies").insert({ nombre: ag.nombre, subdominio: ag.sub, color_primario: "#334455" }).select("id").single();
-      if (error) throw error;
-      ag.id = data.id;
+      ag.id = await crearAgenciaDePrueba(db, ag.sub, ag.nombre);
+      await exigirAgenciaDePrueba(db, ag.id);
       const { data: p, error: e2 } = await db
         .from("properties")
         .insert({ agency_id: ag.id, titulo: ag.titulo, slug: SLUG, operacion: "venta", tipo: "departamento", publicada: true, precio: 100000, moneda: "USD", barrio: "Palermo" })
@@ -68,8 +68,8 @@ test.describe("varias inmobiliarias", { tag: "@multi" }, () => {
 
   test.afterAll(async () => {
     const db = admin();
-    await db.from("agencies").delete().in("id", [A.id, B.id].filter(Boolean));
-    for (const u of [enAmbas, soloA]) if (u.id) await db.auth.admin.deleteUser(u.id);
+    for (const ag of [A, B]) if (ag.id) await borrarAgenciaDePrueba(db, ag.id);
+    for (const u of [enAmbas, soloA]) if (u.id) await borrarUsuarioDePrueba(db, u.id);
   });
 
   test("cada host muestra solo su web, aunque las propiedades tengan el mismo slug", async ({ page }) => {

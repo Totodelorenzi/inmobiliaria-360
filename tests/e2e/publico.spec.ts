@@ -1,4 +1,4 @@
-import { expect, revisarAccesibilidad, SEED, test } from "./utiles";
+import { expect, revisarAccesibilidad, SEED, test, unico } from "./utiles";
 
 test.describe("web pública", { tag: "@con-datos" }, () => {
   test("inicio: buscador, secciones y tarjetas", async ({ page }) => {
@@ -55,12 +55,12 @@ test.describe("web pública", { tag: "@con-datos" }, () => {
     expect(r.headers()["content-type"]).toContain("image/png");
   });
 
-  test("formulario de consulta guarda el lead", async ({ page }) => {
+  test("formulario de consulta guarda el lead", async ({ page }, info) => {
     await page.goto(`/propiedad/${SEED.casaVenta}`);
     const form = page.getByRole("complementary", { name: "¿Te interesa? Coordiná una visita" });
     await form.getByText("Prefiero dejar una consulta por escrito").click();
     // Por rol (solo visibles): el formulario de "Pedir visita", cerrado, también tiene Nombre y Teléfono.
-    await form.getByRole("textbox", { name: /^Nombre/ }).fill("Prueba automática");
+    await form.getByRole("textbox", { name: /^Nombre/ }).fill(`Consulta E2E ${unico(info)}`);
     await form.getByRole("textbox", { name: /^Teléfono/ }).fill("11 0000-4455");
     await form.getByRole("checkbox").check();
     await form.getByRole("button", { name: "Enviar consulta" }).click();

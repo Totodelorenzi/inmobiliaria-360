@@ -12,12 +12,16 @@ const porVisitante = new Limitador(30, 60_000);
 const nuevosPorIp = new Limitador(20, 3_600_000);
 
 const sinContenido = () => new Response(null, { status: 204 });
+// "bot/" (Googlebot/2.1, bingbot/2.0…) y no "bot" a secas: hay celulares reales marca Cubot.
+const ROBOTS = /bot\/|crawler|spider|Chrome-Lighthouse|HeadlessChrome|Google-InspectionTool|facebookexternalhit|WhatsApp\/|Slackbot/i;
 
 /** Recibe lotes de eventos del navegador (sendBeacon). Nunca bloquea al usuario: ante cualquier problema, 204. */
 export async function POST(request: NextRequest) {
   if (!isSupabaseConfigured()) return sinContenido();
   // Global Privacy Control: el navegador pidió no ser rastreado.
   if (request.headers.get("sec-gpc") === "1") return sinContenido();
+  // Robots y herramientas de medición (Lighthouse, PageSpeed, vistas previas): no son visitas.
+  if (ROBOTS.test(request.headers.get("user-agent") ?? "")) return sinContenido();
 
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "local";
   if (!porIp.permitir(ip)) return new Response(null, { status: 429 });

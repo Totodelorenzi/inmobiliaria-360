@@ -1,12 +1,12 @@
 import type { Page } from "@playwright/test";
-import { expect, test, tituloDePrueba } from "./utiles";
+import { adminDePrueba, expect, test, unico } from "./utiles";
 
 const FOTO = "tests/e2e/fixtures/foto.jpg";
 
 async function entrar(page: Page) {
   await page.goto("/admin/login");
-  await page.getByLabel("Email").fill(process.env.ADMIN_EMAIL!);
-  await page.getByLabel("Contraseña").fill(process.env.ADMIN_PASSWORD!);
+  await page.getByLabel("Email").fill(adminDePrueba().email);
+  await page.getByLabel("Contraseña").fill(adminDePrueba().clave);
   await page.getByRole("button", { name: "Entrar" }).click();
   await expect(page).toHaveURL(/\/admin$/);
 }
@@ -16,7 +16,7 @@ test.describe("panel de administración", { tag: "@admin" }, () => {
 
   test("contraseña incorrecta: mensaje claro", async ({ page }) => {
     await page.goto("/admin/login");
-    await page.getByLabel("Email").fill(process.env.ADMIN_EMAIL!);
+    await page.getByLabel("Email").fill(adminDePrueba().email);
     await page.getByLabel("Contraseña").fill("no-es-la-clave-123");
     await page.getByRole("button", { name: "Entrar" }).click();
     // Filtrado: Next también tiene un role="alert" (el anunciador de rutas, vacío).
@@ -25,7 +25,7 @@ test.describe("panel de administración", { tag: "@admin" }, () => {
 
   test("alta completa de una propiedad y verla publicada", async ({ page }, info) => {
     test.setTimeout(180_000);
-    const titulo = tituloDePrueba(info.project.name);
+    const titulo = `Prueba E2E ${unico(info)}`;
     await entrar(page);
 
     // Paso 1: datos (autoguardado)

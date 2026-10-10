@@ -1,10 +1,10 @@
 import type { Page } from "@playwright/test";
-import { anotarVisitante, expect, revisarAccesibilidad, SEED, test, visitanteNuevo } from "./utiles";
+import { adminDePrueba, expect, revisarAccesibilidad, SEED, test, unico, visitanteNuevo } from "./utiles";
 
 async function entrarAlPanel(page: Page) {
   await page.goto("/admin/login");
-  await page.getByLabel("Email").fill(process.env.ADMIN_EMAIL!);
-  await page.getByLabel("Contraseña").fill(process.env.ADMIN_PASSWORD!);
+  await page.getByLabel("Email").fill(adminDePrueba().email);
+  await page.getByLabel("Contraseña").fill(adminDePrueba().clave);
   await page.getByRole("button", { name: "Entrar" }).click();
   await expect(page).toHaveURL(/\/admin$/);
 }
@@ -51,7 +51,7 @@ test.describe("circuito completo de pre-visita", { tag: "@admin" }, () => {
 
   test("recorre el tour completo, pide visita y el lead aparece con puntaje e historial", async ({ page, browser }, info) => {
     test.setTimeout(300_000);
-    const nombre = `E2E Visita ${info.project.name} ${Date.now()}`;
+    const nombre = `E2E Visita ${unico(info)}`;
     const visitante = await visitanteNuevo(browser, info);
 
     // 1. Tour completo: todas las escenas y más de 60 s visibles (ver src/lib/tracking/config.ts).
@@ -78,7 +78,6 @@ test.describe("circuito completo de pre-visita", { tag: "@admin" }, () => {
     await dialogo.getByRole("button", { name: "Pedir visita" }).click();
     await expect(dialogo.getByText("¡Listo! Te vamos a contactar para coordinar la visita.")).toBeVisible();
     const codigo = (await dialogo.locator("strong.font-mono").textContent())!.trim();
-    await anotarVisitante(visitante.context());
     await visitante.context().close();
 
     // 3. En el panel: lead con puntaje, porqué y línea de tiempo.
@@ -101,7 +100,7 @@ test.describe("circuito completo de pre-visita", { tag: "@admin" }, () => {
 
   test("link de pre-visita: se genera, el prospecto lo abre y se ve en su lead", async ({ page, browser }, info) => {
     test.setTimeout(180_000);
-    const nombre = `E2E Link ${info.project.name} ${Date.now()}`;
+    const nombre = `E2E Link ${unico(info)}`;
     await entrarAlPanel(page);
     await page.goto("/admin/leads");
     await page.getByRole("button", { name: "Generar link de pre-visita" }).first().click();
@@ -123,7 +122,6 @@ test.describe("circuito completo de pre-visita", { tag: "@admin" }, () => {
     await expect(prospecto).toHaveURL(/\/propiedad\/[^/]+\?utm_source=link_previsita/);
     await expect(prospecto.getByRole("heading", { level: 1 })).toBeVisible();
     await prospecto.waitForTimeout(3000);
-    await anotarVisitante(prospecto.context());
     await prospecto.context().close();
 
     await page.reload();

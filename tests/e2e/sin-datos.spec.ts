@@ -25,10 +25,11 @@ test.describe("rutas y seguridad básicas", { tag: "@sin-datos" }, () => {
   test("página inexistente responde 404", async ({ page }) => {
     const respuesta = await page.goto("/esta-pagina-no-existe");
     expect(respuesta?.status()).toBe(404);
-    if (hayDatos()) await expect(page.getByRole("heading", { name: "No encontramos esta página" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "No encontramos esta página" })).toBeVisible();
   });
 
   test("robots.txt bloquea el panel y apunta al sitemap", async ({ request }) => {
+    test.skip(!hayDatos(), "Sin inmobiliaria de prueba no hay sitio (el robots.txt bloquea todo)");
     const robots = await (await request.get("/robots.txt")).text();
     expect(robots).toContain("Disallow: /admin");
     expect(robots).toMatch(/Sitemap: .*\/sitemap\.xml/);
@@ -43,9 +44,10 @@ test.describe("rutas y seguridad básicas", { tag: "@sin-datos" }, () => {
     expect(r.headers()["location"]).toMatch(/\/venta\?q=palermo$/);
   });
 
-  test("sin Supabase muestra el aviso de configuración", async ({ page }) => {
-    test.skip(hayDatos(), "Supabase está configurado");
-    await page.goto("/");
-    await expect(page.getByRole("heading", { name: "Sitio en configuración" })).toBeVisible();
+  test("una dirección sin inmobiliaria muestra la página neutra", async ({ page }) => {
+    test.skip(hayDatos(), "Hay inmobiliaria de prueba");
+    const respuesta = await page.goto("/");
+    expect(respuesta?.status()).toBe(404);
+    await expect(page.getByRole("heading", { name: "No encontramos esta página" })).toBeVisible();
   });
 });

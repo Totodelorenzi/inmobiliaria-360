@@ -24,6 +24,7 @@ export type Database = {
           direccion: string | null
           dominio_propio: string | null
           email: string | null
+          es_test: boolean
           facebook: string | null
           id: string
           instagram: string | null
@@ -39,6 +40,7 @@ export type Database = {
           direccion?: string | null
           dominio_propio?: string | null
           email?: string | null
+          es_test?: boolean
           facebook?: string | null
           id?: string
           instagram?: string | null
@@ -54,6 +56,7 @@ export type Database = {
           direccion?: string | null
           dominio_propio?: string | null
           email?: string | null
+          es_test?: boolean
           facebook?: string | null
           id?: string
           instagram?: string | null

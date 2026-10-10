@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { defineConfig, devices } from "@playwright/test";
 
 // Variables de .env.local (credenciales del admin, URL de Supabase). No pisa las ya definidas.
@@ -11,8 +12,16 @@ try {
 const remoto = Boolean(process.env.E2E_BASE_URL);
 const baseURL = process.env.E2E_BASE_URL ?? "http://localhost:3100";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-const conDatos = remoto || (supabaseUrl !== "" && !supabaseUrl.includes("PLACEHOLDER"));
-const conAdmin = conDatos && Boolean(process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD);
+const claveSecreta = process.env.SUPABASE_SECRET_KEY ?? "";
+
+/**
+ * Regla (ver CLAUDE.md): los tests que escriben lo hacen solo en una inmobiliaria de prueba propia de
+ * la corrida (e2e-<corrida>, es_test), con una copia de la demo y un admin de prueba
+ * (tests/e2e/global-setup.ts). Sin la clave secreta no se puede crear: corren solo los @sin-datos.
+ */
+process.env.E2E_CORRIDA ??= randomUUID().replace(/-/g, "").slice(0, 8);
+const sitioDePrueba = `e2e-${process.env.E2E_CORRIDA}`;
+const conDatos = supabaseUrl !== "" && !supabaseUrl.includes("PLACEHOLDER") && claveSecreta !== "" && !claveSecreta.includes("PLACEHOLDER");
 
 /**
  * Multi-inmobiliaria. En local, el servidor corre con DOMINIO_BASE=prueba.localhost:3100: cada web en
@@ -20,10 +29,10 @@ const conAdmin = conDatos && Boolean(process.env.ADMIN_EMAIL && process.env.ADMI
  * Contra producción, E2E_DOMINIO_BASE habilita esos tests cuando haya un dominio real.
  */
 process.env.E2E_DOMINIO_BASE ??= remoto ? "" : "prueba.localhost:3100";
-/** El resto de los tests mira la web de ejemplo: en los hosts de prueba se elige con esta cookie. */
-const sitioDePrueba = {
+/** En los hosts de prueba, la web que miran los tests se elige con esta cookie: la de la corrida. */
+const estadoInicial = {
   cookies: [
-    { name: "sitio_prueba", value: "horizonte", domain: new URL(baseURL).hostname, path: "/", expires: -1, httpOnly: true, secure: false, sameSite: "Lax" as const },
+    { name: "sitio_prueba", value: sitioDePrueba, domain: new URL(baseURL).hostname, path: "/", expires: -1, httpOnly: true, secure: false, sameSite: "Lax" as const },
   ],
   origins: [],
 };
@@ -35,11 +44,13 @@ export default defineConfig({
   retries: remoto ? 1 : 0,
   workers: 2,
   reporter: [["list"]],
-  // Sin base real solo corre lo que no necesita datos; sin credenciales, se saltea el panel.
-  grepInvert: !conDatos ? /@con-datos|@admin/ : !conAdmin ? /@admin/ : undefined,
+  globalSetup: "./tests/e2e/global-setup.ts",
+  globalTeardown: "./tests/e2e/global-teardown.ts",
+  // Sin la clave secreta (no hay inmobiliaria de prueba) solo corre lo que no necesita datos.
+  grepInvert: !conDatos ? /@con-datos|@admin|@multi|@demo/ : undefined,
   use: {
     baseURL,
-    storageState: sitioDePrueba,
+    storageState: estadoInicial,
     locale: "es-AR",
     timezoneId: "America/Argentina/Buenos_Aires",
     trace: "retain-on-failure",

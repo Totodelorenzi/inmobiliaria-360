@@ -42,6 +42,14 @@
 - Actualizá docs/PROGRESO.md en cada commit, así si la sesión se corta, la próxima retoma leyendo CLAUDE.md y docs/PROGRESO.md.
 - Secretos: nunca en el repo. La secret/service role key de Supabase y la contraseña del admin solo en `.env.local` y en las variables de Vercel. Nunca en código de cliente.
 
+### Tests contra la base real (regla obligatoria)
+
+- La base de Supabase es una sola (local y producción usan la misma). Ningún test escribe en la demo (`horizonte`) ni en una inmobiliaria real.
+- Todo test que escribe opera solo en la inmobiliaria de prueba de su corrida (`es_test = true`, subdominio `e2e-<corrida>`), que `tests/e2e/global-setup.ts` crea con una copia de la demo y `global-teardown.ts` borra entera. Los tests del panel entran con el admin de prueba de la corrida, nunca con el admin real.
+- Toda escritura o borrado de limpieza pasa por `tests/e2e/proteccion.ts`, que aborta si el destino no es de prueba (tiene su test en `tests/unit/proteccion-e2e.test.ts`). No borrar archivos de Storage por URL desde los tests: las copias apuntan a archivos de la demo.
+- Datos con identificadores únicos por corrida (`unico(info)` en `tests/e2e/utiles.ts`): tests en paralelo no se pisan.
+- Los tests de solo lectura pueden mirar la demo (`tests/e2e/demo.spec.ts`) con `Sec-GPC: 1` y sin formularios: no registran visitas.
+
 ## Documentación (docs/)
 
 - `PROGRESO.md`: checklist de etapas y próximo paso.
