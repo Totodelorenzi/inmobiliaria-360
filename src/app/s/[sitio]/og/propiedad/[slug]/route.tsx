@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import sharp from "sharp";
 import { normalizeHex } from "@/lib/color";
 import { getAgencia, getPropiedad } from "@/lib/data/sitio";
 import { formatPrecio, formatUbicacion, OPERACION_LABEL } from "@/lib/format";
@@ -13,14 +14,27 @@ export function generateStaticParams() {
   return [];
 }
 
-/** Descarga la foto como data URL (solo JPEG o PNG, que es lo que soporta el generador). */
+/**
+ * El generador entrega PNG (~1 MB con foto) y WhatsApp no muestra vistas previas pesadas:
+ * se pasa a JPEG 1200×630 de ~100–200 KB.
+ */
+async function aJpeg(imagen: ImageResponse) {
+  const png = Buffer.from(await imagen.arrayBuffer());
+  const jpg = await sharp(png).jpeg({ quality: 78, mozjpeg: true }).toBuffer();
+  return new Response(new Uint8Array(jpg), { headers: { "Content-Type": "image/jpeg" } });
+}
+
+/** Descarga la foto (WebP o JPEG), la recorta a 1200×630 y la pasa a JPEG: el generador no lee WebP. */
 async function fotoComoDataUrl(url: string | undefined) {
   if (!url) return null;
   try {
     const res = await fetch(url);
-    const tipo = res.headers.get("content-type") ?? "";
-    if (!res.ok || !/image\/(jpeg|png)/.test(tipo)) return null;
-    return `data:${tipo};base64,${Buffer.from(await res.arrayBuffer()).toString("base64")}`;
+    if (!res.ok || !/^image\//.test(res.headers.get("content-type") ?? "")) return null;
+    const jpg = await sharp(Buffer.from(await res.arrayBuffer()))
+      .resize(size.width, size.height, { fit: "cover" })
+      .jpeg({ quality: 82 })
+      .toBuffer();
+    return `data:image/jpeg;base64,${jpg.toString("base64")}`;
   } catch {
     return null;
   }
@@ -34,22 +48,24 @@ export async function GET(_request: Request, { params }: RouteContext<"/s/[sitio
   const brand = normalizeHex(agencia?.color_primario) ?? "#1f3a5f";
 
   if (!agencia || !p) {
-    return new ImageResponse(
-      (
-        <div style={{ display: "flex", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", background: brand, color: "white", fontSize: 64, fontWeight: 700 }}>
-          {agencia?.nombre ?? "Propiedades"}
-        </div>
+    return aJpeg(
+      new ImageResponse(
+        (
+          <div style={{ display: "flex", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", background: brand, color: "white", fontSize: 64, fontWeight: 700 }}>
+            {agencia?.nombre ?? "Propiedades"}
+          </div>
+        ),
+        size,
       ),
-      size,
     );
   }
 
-  const foto = await fotoComoDataUrl(p.fotos[0]?.thumb_url ?? p.fotos[0]?.url);
+  const foto = await fotoComoDataUrl(p.fotos[0]?.url ?? p.fotos[0]?.thumb_url ?? undefined);
   const etiquetas = [OPERACION_LABEL[p.operacion], p.cantidadEscenas > 0 && "Tour 360°", p.cantidadPlanos > 0 && "Planos"].filter(
     Boolean,
   ) as string[];
 
-  return new ImageResponse(
+  return aJpeg(new ImageResponse(
     (
       <div style={{ display: "flex", width: "100%", height: "100%", position: "relative", background: brand }}>
         {foto && (
@@ -96,5 +112,5 @@ export async function GET(_request: Request, { params }: RouteContext<"/s/[sitio
       </div>
     ),
     size,
-  );
+  ));
 }

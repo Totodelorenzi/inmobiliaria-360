@@ -10,7 +10,7 @@ type DominiosAgencia = Parameters<typeof urlEnSitio>[0];
  * dominio de la inmobiliaria: WhatsApp y las redes las piden sin cookies.
  */
 export function metadataCompartir(agencia: DominiosAgencia, slug: string, titulo: string, descripcion: string, ruta: string): Metadata {
-  const imagen = { url: urlEnSitio(agencia, `/og/propiedad/${slug}`), ...OG_SIZE, alt: titulo };
+  const imagen = { url: urlEnSitio(agencia, `/og/propiedad/${slug}`), ...OG_SIZE, alt: titulo, type: "image/jpeg" };
   return {
     alternates: { canonical: urlEnSitio(agencia, ruta) },
     openGraph: { type: "website", url: urlEnSitio(agencia, ruta), title: titulo, description: descripcion, images: [imagen] },

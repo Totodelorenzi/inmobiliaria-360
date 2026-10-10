@@ -49,10 +49,15 @@ test.describe("web pública", { tag: "@con-datos" }, () => {
     await revisarAccesibilidad(page, [".leaflet-container"]);
   });
 
-  test("imagen para compartir generada", async ({ request }) => {
-    const r = await request.get(`/og/propiedad/${SEED.conTour}`);
+  test("imagen para compartir: JPG liviano que WhatsApp muestra", async ({ page, request }) => {
+    // La URL de og:image, tal como la pide WhatsApp: sin cookies y con su user agent.
+    await page.goto(`/propiedad/${SEED.conTour}`);
+    const url = await page.locator('meta[property="og:image"]').getAttribute("content");
+    expect(await page.locator('meta[property="og:image:type"]').getAttribute("content")).toBe("image/jpeg");
+    const r = await request.get(url!, { headers: { Cookie: "", "User-Agent": "WhatsApp/2.24.1 A" } });
     expect(r.ok()).toBe(true);
-    expect(r.headers()["content-type"]).toContain("image/png");
+    expect(r.headers()["content-type"]).toBe("image/jpeg");
+    expect((await r.body()).length).toBeLessThan(300_000);
   });
 
   test("formulario de consulta guarda el lead", async ({ page }, info) => {
