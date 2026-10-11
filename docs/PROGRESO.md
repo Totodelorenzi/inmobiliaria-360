@@ -2,7 +2,7 @@
 
 Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
-**Próximo paso:** bajar el peso de la imagen OG (<300 KB para WhatsApp) y medir Lighthouse en PageSpeed Insights; cuando el usuario compre el dominio, SETUP-CUENTAS paso 6. Después, etapa 12 (README y resumen final). Demo: https://inmobiliaria-360-kohl.vercel.app/?agencia=horizonte
+**Próximo paso:** entrega hecha (README y resumen). Lo que sigue depende del usuario: dominio de la plataforma (SETUP-CUENTAS paso 6) y Resend (paso 7). Mejoras de velocidad pendientes: miniaturas 400 px WebP y panorámica de 4096 px para celular. Demo: https://inmobiliaria-360-kohl.vercel.app/?agencia=horizonte
 
 **Cómo verificar:** `npm run typecheck`, `npm run lint`, `npm test` (unitarios + base con PGlite), `npm run build`, `npm run test:e2e` (Playwright; con el build hecho).
 
@@ -61,7 +61,9 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
   - [x] Auth: mails siempre al panel central.
   - [x] Tests: 47 unitarios, 38 de base, E2E completos en local (incluidos 4 de multi-inmobiliaria con dos inmobiliarias y el mismo slug).
   - [x] Deploy y E2E contra producción: 42/42 (los 8 de multi-inmobiliaria se activan con dominio real). Admin inicial marcado como superadmin.
-- [ ] 12. Entrega: README y resumen final.
+- [x] 11c. Seguridad de los tests en producción (2026-10-09): inmobiliaria de prueba por corrida (es_test), protección en la limpieza con test, ids únicos, test de solo lectura sobre la demo, regla en CLAUDE.md. Verificado: la demo no cambia con una corrida completa.
+- [x] 11d. Imagen para compartir en JPG 1200×630 (~65 KB), verificada como la pide WhatsApp.
+- [x] 12. Entrega: README en español y resumen final (2026-10-11). E2E: 48/48 local, 44/44 producción.
 
 ## Pendientes técnicos
 
