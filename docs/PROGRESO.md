@@ -46,7 +46,14 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 - [~] 11. Calidad en producción:
   - [x] Playwright contra producción: 42/42 (iPhone y escritorio, sin reintentos), sin restos en la base.
   - [x] RLS real verificada (anónimo no lee ni escribe datos privados; asesor de Supabase sin problemas). Secretos: historial limpio.
-  - [~] Lighthouse mobile (local, PC lenta): Accesibilidad 98–100, Buenas prácticas 100, SEO 100; Performance 62–84 según calibración (LCP real observado 1,0–1,7 s). Falta la medición de referencia en PageSpeed Insights (cupo de la API agotado el 2026-10-07).
+  - [~] Lighthouse mobile (2026-10-11, demo en producción, Lighthouse 12 en esta PC con CPU 2× calibrada; la API de PageSpeed sin clave no tiene cupo):
+    | Página | Rendimiento | Accesibilidad | Buenas prácticas | SEO | LCP real observado | CLS |
+    |---|---|---|---|---|---|---|
+    | Inicio | 72–86 | 100 | 100 | 100 | 1,2–2,0 s | 0 |
+    | Ficha | 73–83 | 100 | 100 | 100 | 1,0–1,3 s | 0 (antes 0,24 en la primera carga) |
+    | Tour | 74–80 (antes 50–80) | 100 | 100 | 100 | 1,4–1,8 s | 0,002 |
+    | Privacidad (referencia, mismo esqueleto) | 97 | 100 | 100 | 100 | 0,9 s | 0 |
+    Corregido: salto del pie en la ficha, aviso de privacidad pintado tarde en el tour, foto principal precargada (Load Delay 1,7 s → 0,25 s). Pendiente para llegar a 90 en inicio/ficha/tour: miniaturas de 400 px en WebP para las tarjetas y panorámica liviana (4096 px) para celular (requiere regenerar imágenes). Medición oficial: pagespeed.web.dev desde el navegador o API de PageSpeed con clave.
 - [x] 11b. Plataforma multi-inmobiliaria (2026-10-09):
   - [x] Migración 0009: subdominio y dominio propio, slug único por inmobiliaria, platform_admins, el admin no cambia sus dominios. Aplicada en la base real (la demo es `horizonte`).
   - [x] Proxy por host → `/s/[sitio]/...` (caché separada por inmobiliaria), panel central, hosts de prueba con `?agencia=`, `/s/*` bloqueado.

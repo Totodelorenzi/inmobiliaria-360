@@ -159,3 +159,11 @@ Una línea por decisión: fecha · qué · por qué.
 - 2026-10-09 · Sin limpieza por test: al borrar la inmobiliaria de prueba caen en cascada propiedades, leads, visitantes y eventos · más simple que seguir cada visitante, y sin carreras con los envíos tardíos.
 - 2026-10-09 · Un test de solo lectura sobre la demo con `Sec-GPC: 1` (el servidor no registra visitas) que además verifica que ninguna respuesta haya creado un visitante.
 - 2026-10-09 · `/api/eventos` ignora robots y herramientas de medición (Googlebot, Lighthouse/PageSpeed, vistas previas de WhatsApp y Facebook…) · no son visitas y ensuciaban las estadísticas. Se usa `bot/` y no `bot` a secas para no descartar celulares reales (marca Cubot).
+
+## Velocidad e imagen para compartir (2026-10-09 / 2026-10-11)
+
+- 2026-10-09 · Imagen OG en JPEG (sharp sobre el PNG del generador), 1200×630, ~55–75 KB; la foto de fondo sale de la grande recortada · WhatsApp no muestra vistas previas pesadas (el PNG pesaba 1 MB). `sharp` pasa a dependencia explícita (ya venía instalada con Next).
+- 2026-10-11 · Aviso de privacidad renderizado en el servidor; un script inline previo lo oculta (CSS) a quien ya lo cerró · en el tour era el LCP y aparecía recién después del JavaScript; sin parpadeo para quien vuelve.
+- 2026-10-11 · Pantallas de carga con `min-h-dvh` · al generar una ficha por primera vez, el pie aparecía y saltaba (CLS 0,24).
+- 2026-10-11 · Precarga (`preload` de react-dom) de la foto de la primera tarjeta del inicio y de la portada de la ficha, con su srcset · se pide desde el `<head>` (Load Delay 1,7 s → 0,25 s).
+- 2026-10-11 · Medición con Lighthouse local calibrado (CPU 2×) porque la API de PageSpeed sin clave no tiene cupo · resultados en PROGRESO. El esqueleto del sitio da 97 (privacidad); el resto lo explican las fotos y la panorámica: próximos pasos anotados (miniaturas 400 px WebP, panorámica de 4096 px para celular).
