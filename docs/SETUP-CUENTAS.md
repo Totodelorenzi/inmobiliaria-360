@@ -163,6 +163,63 @@ Ejemplo: `inmo360.com.ar`. Con él, cada inmobiliaria tiene su web en `umbral.in
 
 **Cómo verificar:** en URL Configuration se ven la Site URL nueva y la Redirect URL agregada.
 
-**6.4 Mails en español (opcional)**
+**6.4 Mails:** para invitar dueños y agentes de verdad, seguí el paso 7.
 
-El servicio de mails que trae Supabase no permite cambiar las plantillas y solo envía a los miembros de tu organización de Supabase. Para invitar agentes y dueños de inmobiliarias de verdad, hace falta un servicio de mails propio (por ejemplo Resend). Cuando quieras, te paso los pasos; una vez configurado, yo subo las plantillas en español (`supabase/templates/`), que ya llevan al panel.
+---
+
+## Paso 7: Mails con Resend (después del paso 6)
+
+**Para qué:** el servicio de mails que trae Supabase solo manda a los miembros de tu cuenta de Supabase y no permite los mails en español. Con Resend, las invitaciones y "olvidé mi contraseña" llegan a cualquier persona, en español y desde tu dominio. El plan gratis alcanza de sobra al principio (3.000 mails por mes, 100 por día).
+
+**7.1 Crear la cuenta**
+
+1. Entrá a https://resend.com y hacé clic en **Get Started**.
+2. Registrate con tu cuenta de Google o GitHub y confirmá el mail si te lo pide.
+
+**7.2 Verificar tu dominio** (le demuestra a los proveedores de mail que los mensajes son tuyos y no van a spam)
+
+1. En Resend, menú de la izquierda: **Domains** → **Add Domain**.
+2. Escribí tu dominio (ej. `inmo360.com.ar`). En **Region** elegí **São Paulo (sa-east-1)** si aparece. Clic en **Add**.
+3. Resend te muestra una tabla con 3 o 4 registros DNS (tipo **MX** y **TXT**). Dejá esa pestaña abierta.
+4. En otra pestaña, entrá a https://vercel.com → arriba **Domains** (o tu proyecto → Settings → Domains) → clic en tu dominio → **DNS Records**.
+5. Por cada fila de Resend, clic en **Add** en Vercel y copiá exactamente:
+   - **Name:** lo que dice Resend en *Name* (por ejemplo `send` o `resend._domainkey`), **sin** tu dominio al final.
+   - **Type:** MX o TXT, igual que en Resend.
+   - **Value:** el valor completo de Resend (usá el botón de copiar; los TXT son largos).
+   - **Priority** (solo en el MX): el número que muestra Resend (normalmente 10).
+6. Volvé a Resend y hacé clic en **Verify DNS Records**.
+
+**Cómo verificar:** en Resend → Domains, tu dominio dice **Verified** (puede tardar desde minutos hasta unas horas; si dice *Pending*, esperá y volvé a apretar Verify).
+
+**7.3 Crear la clave**
+
+1. En Resend: **API Keys** → **Create API Key**.
+2. **Name:** `Supabase`. **Permission:** *Sending access*. **Domain:** tu dominio. Clic en **Add**.
+3. Copiá la clave (empieza con `re_`). **Se muestra una sola vez** y no la pegues en el chat.
+
+**7.4 Cargarla en Supabase**
+
+1. https://supabase.com/dashboard → proyecto `inmobiliaria-360` → **Authentication** → **Emails** → pestaña **SMTP Settings**.
+2. Activá **Enable Custom SMTP** y completá:
+   - **Sender email:** `no-responder@tudominio` (con tu dominio).
+   - **Sender name:** el nombre de la plataforma (ej. `Inmo360`).
+   - **Host:** `smtp.resend.com`
+   - **Port:** `465`
+   - **Username:** `resend`
+   - **Password:** la clave que copiaste en 7.3.
+3. Clic en **Save**.
+4. Menú **Authentication** → **Rate Limits** → en *Rate limit for sending emails* poné `30` (por hora) → **Save**. Con el servicio de Supabase era 2 por hora.
+
+**Cómo verificar:** en SMTP Settings queda *Custom SMTP* activado con `smtp.resend.com`.
+
+**7.5 Plantillas en español**
+
+**Avisame:** `listo resend`. Yo activo por código las plantillas en español (`supabase/templates/`): invitación y recuperar contraseña, con el botón que lleva al panel. No hace falta tocar nada más.
+
+Si preferís hacerlo a mano: **Authentication** → **Emails** → **Templates**. En *Invite user* poné el asunto `Te invitaron al panel de la inmobiliaria` y pegá en el cuerpo el contenido del archivo `supabase/templates/invitacion.html`; en *Reset password*, el asunto `Cambiá tu contraseña` y el contenido de `supabase/templates/recuperar.html`. Guardá cada una.
+
+**7.6 Prueba final**
+
+1. En el panel → **Usuarios** → invitá un mail tuyo que no sea el de admin.
+2. Tiene que llegar un mail en español, de `no-responder@tudominio`, con un botón que abre el panel (`app.tudominio`) para crear la contraseña.
+3. Si no llega en unos minutos, mirá en Resend → **Emails** si figura enviado o con error, y pasame lo que dice.
