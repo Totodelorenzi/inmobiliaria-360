@@ -19,6 +19,8 @@ Mientras la plataforma no tenga dominio propio, cada web se ve con `?agencia=<su
 - Ese usuario es administrador de la inmobiliaria demo y **superadmin de la plataforma** (sección *Plataforma* del panel).
 - Para cambiar la contraseña: usá "¿Olvidaste tu contraseña?" en el login, o reemplazá `ADMIN_PASSWORD` en `.env.local` y corré `npm run crear-admin`.
 
+**Usuario para presentaciones:** `DEMO_EMAIL` / `DEMO_PASSWORD` en `.env.local`. Es agente de la inmobiliaria demo: ve inicio, propiedades, leads (puntaje, historial, pedidos de visita) y estadísticas, pero no configuración ni usuarios. Se crea o se resetea con `npm run crear-usuario-demo`. Antes de una presentación, `npm run demo:actualizar-fechas` trae la actividad de ejemplo al presente (si no, "Leads calientes de la semana" puede salir vacío). Si la base está pausada por inactividad (plan gratis, 7 días sin uso), hay que reactivarla desde supabase.com antes.
+
 ## Calidad (al 2026-10-11)
 
 - **Tests automáticos:** 51 unitarios y 38 de base de datos (seguridad por fila, aislamiento entre inmobiliarias, datos de ejemplo) en verde. De punta a punta (Playwright, iPhone y computadora): 48/48 en local y 44/44 contra producción (los 4 tests de multi-inmobiliaria por subdominio se activan en producción cuando haya dominio real).

@@ -2,7 +2,7 @@
 
 Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
-**Próximo paso:** entrega hecha (README y resumen). Lo que sigue depende del usuario: dominio de la plataforma (SETUP-CUENTAS paso 6) y Resend (paso 7). Mejoras de velocidad pendientes: miniaturas 400 px WebP y panorámica de 4096 px para celular. Demo: https://inmobiliaria-360-kohl.vercel.app/?agencia=horizonte
+**Próximo paso:** el usuario reactiva el proyecto de Supabase (pausado por inactividad el 2026-10-19) → `npm run crear-usuario-demo` y `npm run demo:actualizar-fechas`, verificar el login del usuario de demo. Después: dominio (SETUP-CUENTAS paso 6) y Resend (paso 7).
 
 **Cómo verificar:** `npm run typecheck`, `npm run lint`, `npm test` (unitarios + base con PGlite), `npm run build`, `npm run test:e2e` (Playwright; con el build hecho).
 
@@ -64,6 +64,7 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 - [x] 11c. Seguridad de los tests en producción (2026-10-09): inmobiliaria de prueba por corrida (es_test), protección en la limpieza con test, ids únicos, test de solo lectura sobre la demo, regla en CLAUDE.md. Verificado: la demo no cambia con una corrida completa.
 - [x] 11d. Imagen para compartir en JPG 1200×630 (~65 KB), verificada como la pide WhatsApp.
 - [x] 12. Entrega: README en español y resumen final (2026-10-11). E2E: 48/48 local, 44/44 producción.
+- [~] 13. Usuario de demo para presentaciones (2026-10-19): scripts `crear-usuario-demo` y `demo:actualizar-fechas` listos y probados (PGlite); falta correrlos cuando se reactive Supabase.
 
 ## Pendientes técnicos
 

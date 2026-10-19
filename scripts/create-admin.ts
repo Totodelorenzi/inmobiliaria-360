@@ -4,33 +4,9 @@
  * Si ADMIN_PASSWORD está vacía, genera una contraseña segura y la guarda en .env.local.
  *   npm run crear-admin
  */
-import { randomInt } from "node:crypto";
-import { readFile, writeFile } from "node:fs/promises";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { generarClave, guardarEnEnvLocal } from "./seed/clave.ts";
 import { AGENCIA_DEMO_ID } from "./seed/datos.ts";
-
-const ENV_LOCAL = new URL("../.env.local", import.meta.url);
-
-/** 20 caracteres sin ambiguos (0/O, 1/l), siempre con letras y números. */
-function generarClave() {
-  const letras = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
-  const numeros = "23456789";
-  const todos = letras + numeros;
-  const chars = [letras[randomInt(letras.length)], numeros[randomInt(numeros.length)]];
-  while (chars.length < 20) chars.push(todos[randomInt(todos.length)]);
-  for (let i = chars.length - 1; i > 0; i--) {
-    const j = randomInt(i + 1);
-    [chars[i], chars[j]] = [chars[j], chars[i]];
-  }
-  return chars.join("");
-}
-
-async function guardarEnEnvLocal(nombre: string, valor: string) {
-  const actual = await readFile(ENV_LOCAL, "utf8");
-  const linea = `${nombre}=${valor}`;
-  const regex = new RegExp(`^${nombre}=.*$`, "m");
-  await writeFile(ENV_LOCAL, regex.test(actual) ? actual.replace(regex, linea) : `${actual.trimEnd()}\n${linea}\n`);
-}
 
 async function main() {
   const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
