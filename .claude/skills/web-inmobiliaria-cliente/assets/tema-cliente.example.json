@@ -1,0 +1,47 @@
+{
+  "_nota": "Estructura de referencia con valores ficticios. Cada cliente define los suyos en el plan de diseño; no copies estos valores como default. Si el panel ya maneja el switch del 360, recorrido.activo se lee de ahí.",
+  "cliente": "slug-del-cliente",
+  "perfil": "local-generalista",
+  "color": {
+    "marca": "#1F5F8B",
+    "marcaContraste": "#FFFFFF",
+    "tinta": "#1B1F24",
+    "tintaSuave": "#55606C",
+    "fondo": "#FFFFFF",
+    "superficie": "#F2F4F6",
+    "borde": "#D5DBE1",
+    "foco": "#1F5F8B",
+    "estado": {
+      "disponible": "#2D6A4F",
+      "reservada": "#9A5B00",
+      "vendida": "#5F6670"
+    }
+  },
+  "tipografia": {
+    "display": { "familia": "Figtree", "pesos": [600, 700] },
+    "texto": { "familia": "Figtree", "pesos": [400, 500, 600] },
+    "ratioEscala": 1.2,
+    "cuerpoPx": 17
+  },
+  "radios": { "control": 8, "medio": 4 },
+  "espaciado": [4, 8, 12, 16, 24, 32, 48, 64, 96],
+  "fotos": { "tarjeta": "4:3", "heroEscritorio": "16:9", "heroMobile": "4:5" },
+  "movimiento": { "duracionMs": 200, "momentoFirma": "entrada-al-recorrido" },
+  "recorrido": { "activo": false, "umbralCompletoPct": 80 },
+  "contacto": {
+    "whatsappPorDefecto": "549XXXXXXXXXX",
+    "zonaHoraria": "America/Argentina/Buenos_Aires"
+  },
+  "modulos": {
+    "proximosIngresos": false,
+    "fraseAsesor": false,
+    "audioGuia": false,
+    "compararPorAmbiente": false,
+    "paginasBarrio": false,
+    "historiasClientes": false,
+    "informeMercado": false,
+    "busquedaLenguajeNatural": false,
+    "mapaDibujoZona": false,
+    "conversionMoneda": false
+  }
+}

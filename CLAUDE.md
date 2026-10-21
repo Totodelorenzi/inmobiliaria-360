@@ -57,3 +57,9 @@
 - `DECISIONES.md`: decisiones técnicas (qué y por qué).
 - `SETUP-CUENTAS.md`: guía para que el usuario configure Supabase, GitHub y Vercel.
 - `PROMPT-ORIGINAL.md`: el encargo completo (etapas, bloqueos, entrega final).
+
+## Webs de clientes
+
+- Para crear, rediseñar, ampliar o auditar la web de cualquier cliente (inmobiliaria, constructora o administración de alquileres), usá siempre la skill web-inmobiliaria-cliente antes de tocar código.
+- Decisiones de diseño por cliente: docs/clientes/registro-diseno.md. Brief, referencias y entrega de cada cliente: docs/clientes/{slug}/.
+- La revisión visual se hace en el preview de Vercel de la rama, no en un servidor local.

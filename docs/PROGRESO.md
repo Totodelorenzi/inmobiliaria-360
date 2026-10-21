@@ -65,6 +65,7 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 - [x] 11d. Imagen para compartir en JPG 1200×630 (~65 KB), verificada como la pide WhatsApp.
 - [x] 12. Entrega: README en español y resumen final (2026-10-11). E2E: 48/48 local, 44/44 producción.
 - [x] 13. Usuario de demo para presentaciones (2026-10-19): `demo@inmobiliaria360.example` (agente de la demo, contraseña en .env.local) creado y probado en el panel publicado; actividad de ejemplo corrida al presente (4 leads calientes y 10 nuevos en la semana). Supabase se había pausado por inactividad: el usuario lo reactivó.
+- [x] 14. Skill `web-inmobiliaria-cliente` instalada en `.claude/skills/` (2026-10-20), sección "Webs de clientes" en CLAUDE.md y `docs/clientes/registro-diseno.md`. Relevamiento hecho: los choques entre la skill y la app (estado comercial, asesor por propiedad, rótulo por ambiente en fotos, tema por cliente, switch del 360, crédito de la plataforma) esperan decisión del usuario antes de tocar código o esquema.
 
 ## Pendientes técnicos
 
