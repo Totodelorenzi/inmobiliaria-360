@@ -63,7 +63,8 @@ test.describe("web pública", { tag: "@con-datos" }, () => {
 
   test("formulario de consulta guarda el lead", async ({ page }, info) => {
     await page.goto(`/propiedad/${SEED.casaVenta}`);
-    const form = page.getByRole("complementary", { name: "¿Te interesa? Coordiná una visita" });
+    // El título del panel cambia según el recorrido y el estado: se ubica por su ancla.
+    const form = page.locator("aside#consulta");
     await form.getByText("Prefiero dejar una consulta por escrito").click();
     // Por rol (solo visibles): el formulario de "Pedir visita", cerrado, también tiene Nombre y Teléfono.
     await form.getByRole("textbox", { name: /^Nombre/ }).fill(`Consulta E2E ${unico(info)}`);
