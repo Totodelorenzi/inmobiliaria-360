@@ -58,7 +58,7 @@ type Props = {
   whatsapp?: ReactNode;
 };
 
-/** Botón "Pedir visita presencial" con su formulario corto de calificación. */
+/** Botón "Coordinar visita" con su formulario corto de calificación. */
 export function PedirVisita({ propertyId, operacion, titulo, variant = "brand", size = "lg", fullWidth, className, children, whatsapp }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [estado, accion, enviando] = useActionState<EstadoPedido, FormData>(pedirVisita, { ok: false });
@@ -71,7 +71,7 @@ export function PedirVisita({ propertyId, operacion, titulo, variant = "brand", 
       <Button variant={variant} size={size} fullWidth={fullWidth} className={className} onClick={() => dialogRef.current?.showModal()} aria-haspopup="dialog">
         {children ?? (
           <>
-            <CalendarCheck className="size-5" aria-hidden /> Pedir visita presencial
+            <CalendarCheck className="size-5" aria-hidden /> Coordinar visita
           </>
         )}
       </Button>
@@ -83,7 +83,7 @@ export function PedirVisita({ propertyId, operacion, titulo, variant = "brand", 
         <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-border bg-bg px-5 py-3">
           <div className="min-w-0">
             <h2 id="titulo-pedir-visita" className="text-lg font-bold">
-              Pedir visita presencial
+              Coordinar visita
             </h2>
             <p className="truncate text-sm text-muted">{titulo}</p>
           </div>
@@ -100,7 +100,7 @@ export function PedirVisita({ propertyId, operacion, titulo, variant = "brand", 
         {estado.ok ? (
           <div role="status" className="flex flex-col items-center gap-3 p-6 text-center">
             <CircleCheck className="size-12 text-success" aria-hidden />
-            <p className="text-xl font-bold">¡Listo! Te vamos a contactar para coordinar la visita.</p>
+            <p className="text-xl font-bold">Visita pedida. Te escribimos para confirmar el día y el horario.</p>
             {estado.codigo && (
               <p className="text-muted">
                 Tu código de referencia es <strong className="font-mono text-fg">{estado.codigo}</strong>.
@@ -171,7 +171,7 @@ export function PedirVisita({ propertyId, operacion, titulo, variant = "brand", 
             </div>
 
             <Button type="submit" variant="brand" size="lg" fullWidth loading={enviando}>
-              {enviando ? "Enviando…" : "Pedir visita"}
+              {enviando ? "Enviando…" : "Pedir la visita"}
             </Button>
           </form>
         )}

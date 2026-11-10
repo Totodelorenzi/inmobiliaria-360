@@ -13,7 +13,7 @@ import { brandStyle, normalizeHex } from "@/lib/color";
 import type { Tables } from "@/types/database";
 import { Aviso, Panel } from "./ui";
 
-export function FormAgencia({ agencia }: { agencia: Tables<"agencies"> }) {
+export function FormAgencia({ agencia, linkNoContar }: { agencia: Tables<"agencies">; linkNoContar: string }) {
   const [estado, accion, guardando] = useActionState<EstadoAgencia, FormData>(guardarAgencia, {});
   const [color, setColor] = useState(agencia.color_primario);
   const [nombre, setNombre] = useState(agencia.nombre);
@@ -108,6 +108,37 @@ export function FormAgencia({ agencia }: { agencia: Tables<"agencies"> }) {
           </div>
         </Panel>
 
+        <Panel titulo="Web">
+          <div className="flex flex-col gap-4">
+            <label className="flex cursor-pointer items-start gap-3">
+              <input type="checkbox" name="recorrido_activo" defaultChecked={agencia.recorrido_activo} className="mt-0.5 size-5 shrink-0 accent-(--brand)" />
+              <span>
+                <span className="font-semibold">Mostrar el recorrido 360°</span>
+                <span className="block text-sm text-muted">
+                  Apagado: la web no muestra tours ni los menciona, y las fichas quedan completas con fotos y planos. Los tours cargados no se borran.
+                </span>
+              </span>
+            </label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Matrícula del corredor" error={e.matricula} hint="Tal como querés que aparezca, ej. CMCPSI 1234.">
+                {(a) => <Input {...a} name="matricula" defaultValue={agencia.matricula ?? ""} maxLength={120} />}
+              </Field>
+              <Field label="Horarios de atención" error={e.horarios} hint="Ej. Lunes a viernes de 9 a 18 h, sábados de 10 a 13 h.">
+                {(a) => <Input {...a} name="horarios" defaultValue={agencia.horarios ?? ""} maxLength={200} />}
+              </Field>
+            </div>
+          </div>
+        </Panel>
+
+        <Panel titulo="Tus visitas a la web">
+          <p className="text-sm">
+            Para que tus recorridos y los de tu equipo no se cuenten como interesados, abrí este link una vez en cada celular o computadora que usen:
+          </p>
+          <a href={linkNoContar} target="_blank" rel="noopener" className="mt-2 inline-flex min-h-11 items-center font-semibold break-all text-brand-ink underline">
+            No contar mis visitas
+          </a>
+        </Panel>
+
         <Button type="submit" variant="brand" size="lg" loading={guardando} disabled={subiendoLogo}>
           Guardar cambios
         </Button>
@@ -132,9 +163,9 @@ export function FormAgencia({ agencia }: { agencia: Tables<"agencies"> }) {
           </div>
           <div className="flex flex-col gap-2 p-4">
             <span className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-accent font-semibold text-accent-fg">
-              <Rotate3d className="size-5" aria-hidden /> Recorrer en 360°
+              <Rotate3d className="size-5" aria-hidden /> Hacer el recorrido
             </span>
-            <span className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand font-semibold text-brand-fg">Enviar consulta</span>
+            <span className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand font-semibold text-brand-fg">Coordinar visita</span>
             <span className="text-sm font-semibold text-brand-ink">Ver todas →</span>
           </div>
         </div>

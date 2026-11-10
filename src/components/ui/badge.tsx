@@ -8,6 +8,11 @@ const tones = {
   success: "bg-success-bg text-success",
   warning: "bg-warning-bg text-warning",
   danger: "bg-danger-bg text-danger",
+  /** Estado comercial: discretos, con los colores del tema (texto blanco, contraste AA). */
+  disponible: "bg-(--estado-disponible) text-white",
+  reservada: "bg-(--estado-reservada) text-white",
+  vendida: "bg-(--estado-vendida) text-white",
+  alquilada: "bg-(--estado-vendida) text-white",
   /** Sobre fotos. */
   overlay: "bg-black/70 text-white backdrop-blur-sm",
 } as const;

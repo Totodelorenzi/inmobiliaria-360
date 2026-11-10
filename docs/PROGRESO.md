@@ -2,7 +2,7 @@
 
 Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
-**Próximo paso:** lo que sigue depende del usuario: dominio de la plataforma (SETUP-CUENTAS paso 6) y Resend (paso 7). Antes de cada presentación: `npm run demo:actualizar-fechas` (y revisar que Supabase no esté pausado). Pendientes de velocidad: miniaturas 400 px WebP y panorámica 4096 px para celular.
+**Próximo paso:** etapa 15 en la rama `webs-de-clientes`, sin publicar. Falta: (1) aplicar la migración 0011 en Supabase (`npx supabase db push --linked`, requiere el OK del usuario porque toca la base de producción), (2) `npm run seed` opcional para que la demo tenga asesores y fotos rotuladas, (3) E2E contra la base, (4) merge a `main` y revisar el deploy. Siguen pendientes del usuario: dominio de la plataforma (SETUP-CUENTAS paso 6) y Resend (paso 7).
 
 **Cómo verificar:** `npm run typecheck`, `npm run lint`, `npm test` (unitarios + base con PGlite), `npm run build`, `npm run test:e2e` (Playwright; con el build hecho).
 
@@ -66,6 +66,13 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 - [x] 12. Entrega: README en español y resumen final (2026-10-11). E2E: 48/48 local, 44/44 producción.
 - [x] 13. Usuario de demo para presentaciones (2026-10-19): `demo@inmobiliaria360.example` (agente de la demo, contraseña en .env.local) creado y probado en el panel publicado; actividad de ejemplo corrida al presente (4 leads calientes y 10 nuevos en la semana). Supabase se había pausado por inactividad: el usuario lo reactivó.
 - [x] 14. Skill `web-inmobiliaria-cliente` instalada en `.claude/skills/` (2026-10-20), sección "Webs de clientes" en CLAUDE.md y `docs/clientes/registro-diseno.md`. Relevamiento hecho: los choques entre la skill y la app (estado comercial, asesor por propiedad, rótulo por ambiente en fotos, tema por cliente, switch del 360, crédito de la plataforma) esperan decisión del usuario antes de tocar código o esquema.
+
+- [~] 15. Webs de clientes con la skill (2026-11-09, rama `webs-de-clientes`):
+  - [x] Migración 0011 (aditiva): estado comercial, asesores y asesor por propiedad, ambiente de cada foto, switch del 360, matrícula, horarios y tema por inmobiliaria. 5 tests nuevos en PGlite (44 en total).
+  - [x] Web: tema y tipografías por cliente, crédito "Hecho con udevelop", ficha con pestañas y portada del recorrido, CTA según el avance del recorrido, asesor en la ficha y en el WhatsApp, estados reservada/vendida/alquilada, fotos por ambiente, switch del 360 en toda la web.
+  - [x] Panel: sección Asesores, estado y asesor en cada propiedad, ambiente en cada foto, switch del 360, matrícula y horarios, "No contar mis visitas", resumen del lead para el asesor.
+  - [x] `npm run tema -- <subdominio>` y seed con asesores. Typecheck, lint, build y 58 unitarios OK.
+  - [ ] Migración aplicada en la base real, E2E y merge a `main`.
 
 ## Pendientes técnicos
 

@@ -4,7 +4,6 @@ import {
   BedDouble,
   Building,
   Car,
-  DraftingCompass,
   HardHat,
   House,
   LayoutGrid,
@@ -12,34 +11,33 @@ import {
   Maximize,
   Percent,
   Receipt,
-  Rotate3d,
   Sparkles,
 } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { preload } from "react-dom";
 import type { ReactNode } from "react";
-import { BotonWhatsapp } from "@/components/sitio/boton-whatsapp";
+import { BloqueAsesor } from "@/components/sitio/asesor";
+import { CtaFicha, type WhatsappFicha } from "@/components/sitio/cta-ficha";
 import { FormConsulta } from "@/components/sitio/form-consulta";
-import { PedirVisita } from "@/components/sitio/pedir-visita";
+import { MediosFicha } from "@/components/sitio/medios-ficha";
 import { BotonCompartir, RastreoVista } from "@/components/sitio/rastreo";
-import { Galeria } from "@/components/sitio/galeria";
 import { JsonLd } from "@/components/sitio/json-ld";
 import { Mapa } from "@/components/sitio/mapa";
 import { SeccionPropiedades } from "@/components/sitio/secciones";
 import { Badge } from "@/components/ui/badge";
-import { buttonStyles } from "@/components/ui/button";
 import { Container } from "@/components/ui/states";
 import { getAgencia, getPropiedad, getRelacionadas, type PropiedadCompleta } from "@/lib/data/sitio";
 import {
   badgeObra,
+  ESTADO_COMERCIAL_LABEL,
   ESTADO_OBRA_LABEL,
   formatExpensas,
   formatM2,
   formatMesAnio,
   formatPrecio,
   formatUbicacion,
+  mensajeWhatsapp,
   OPERACION_LABEL,
   plural,
   TIPO_LABEL,
@@ -62,24 +60,25 @@ async function cargar(params: Promise<{ sitio: string; slug: string }>) {
   return { agencia, propiedad };
 }
 
-function resumen(p: PropiedadCompleta) {
+function resumen(p: PropiedadCompleta, recorrido: boolean) {
   const partes = [
     `${TIPO_LABEL[p.tipo]} en ${p.operacion === "alquiler" ? "alquiler" : "venta"}`,
     formatUbicacion(p) && `en ${formatUbicacion(p)}`,
     p.ambientes && plural(p.ambientes, "ambiente"),
     formatM2(p.superficie_total),
   ].filter(Boolean);
-  const extra = p.cantidadEscenas > 0 ? " Recorrela en 360° desde tu celular." : "";
+  const extra = recorrido && p.cantidadEscenas > 0 ? " Recorrela en 360° desde tu celular." : "";
   return `${partes.join(", ")}. ${formatPrecio(p.precio, p.moneda, p.operacion)}.${extra}`;
 }
 
 export async function generateMetadata({ params }: PageProps<"/s/[sitio]/propiedad/[slug]">): Promise<Metadata> {
   const { agencia, propiedad: p } = await cargar(params);
   if (!agencia || !p) return { title: "Propiedad no encontrada" };
+  const texto = resumen(p, agencia.recorrido_activo);
   return {
     title: `${p.titulo} · ${formatPrecio(p.precio, p.moneda, p.operacion)}`,
-    description: resumen(p).slice(0, 160),
-    ...metadataCompartir(agencia, p.slug, p.titulo, resumen(p).slice(0, 200), `/propiedad/${p.slug}`),
+    description: texto.slice(0, 160),
+    ...metadataCompartir(agencia, p.slug, p.titulo, texto.slice(0, 200), `/propiedad/${p.slug}`),
   };
 }
 
@@ -93,8 +92,22 @@ export default async function FichaPropiedad({ params }: PageProps<"/s/[sitio]/p
   const ubicacion = formatUbicacion(p);
   const obra = badgeObra(p.estado_obra, p.fecha_entrega);
   const mapa = ubicacionPublica(p.id, p.lat, p.lng, p.mostrar_direccion_exacta);
-  const mensajeWhatsapp = `¡Hola! Me interesa "${p.titulo}" (${precio}). ${url}`;
-  const relacionadas = await getRelacionadas(p);
+  const tour = agencia.recorrido_activo && p.cantidadEscenas > 0;
+  const cerrada = p.estado_comercial === "vendida" || p.estado_comercial === "alquilada";
+  // La consulta va al asesor de la propiedad; sin asesor (o sin su WhatsApp), a la inmobiliaria.
+  const numero = p.asesor?.whatsapp ?? agencia.whatsapp;
+  const base = { asesor: p.asesor?.whatsapp ? p.asesor.nombre : null, tipo: p.tipo, barrio: p.barrio, inmobiliaria: agencia.nombre, url };
+  const accionInfo = cerrada ? "ver propiedades parecidas" : "más información";
+  const whatsapp: WhatsappFicha | null = numero
+    ? {
+        numero,
+        mensaje: mensajeWhatsapp({ ...base, accion: accionInfo }),
+        mensajeRecorrido: mensajeWhatsapp({ ...base, accion: accionInfo, yaRecorrio: true }),
+        mensajeVisita: mensajeWhatsapp({ ...base, accion: "coordinar una visita" }),
+        mensajeVisitaRecorrido: mensajeWhatsapp({ ...base, accion: "coordinar una visita", yaRecorrio: true }),
+      }
+    : null;
+  const relacionadas = await getRelacionadas(agencia, p);
   // La primera foto es el LCP de la ficha: se pide desde el <head> con el mismo srcset que la galería.
   const portada = p.fotos[0];
   if (portada) {
@@ -122,7 +135,16 @@ export default async function FichaPropiedad({ params }: PageProps<"/s/[sitio]/p
     <>
       <Container className="px-0 sm:px-6 sm:pt-4">
         <div className="overflow-hidden sm:rounded-(--radius-card)">
-          <Galeria fotos={p.fotos} titulo={p.titulo} propertyId={p.id} />
+          <MediosFicha
+            fotos={p.fotos}
+            titulo={p.titulo}
+            slug={p.slug}
+            propertyId={p.id}
+            ambientesTour={tour ? p.cantidadEscenas : 0}
+            primerAmbiente={p.portadaTour?.nombre ?? null}
+            planos={p.cantidadPlanos > 0}
+            mapa={Boolean(mapa)}
+          />
         </div>
       </Container>
 
@@ -130,6 +152,7 @@ export default async function FichaPropiedad({ params }: PageProps<"/s/[sitio]/p
         <div className="flex min-w-0 flex-col gap-8">
           <header className="flex flex-col gap-3">
             <div className="flex flex-wrap gap-2">
+              {p.estado_comercial !== "disponible" && <Badge tone={p.estado_comercial}>{ESTADO_COMERCIAL_LABEL[p.estado_comercial]}</Badge>}
               <Badge tone="brand">{OPERACION_LABEL[p.operacion]}</Badge>
               <Badge>{TIPO_LABEL[p.tipo]}</Badge>
               {obra && (
@@ -152,25 +175,10 @@ export default async function FichaPropiedad({ params }: PageProps<"/s/[sitio]/p
             )}
           </header>
 
-          {(p.cantidadEscenas > 0 || p.cantidadPlanos > 0) && (
-            <div className="flex flex-col gap-3 sm:flex-row">
-              {p.cantidadEscenas > 0 && (
-                <Link
-                  href={`/propiedad/${p.slug}/tour`}
-                  className={buttonStyles({ variant: "accent", size: "lg", fullWidth: true, className: "text-lg sm:flex-1" })}
-                >
-                  <Rotate3d className="size-7" aria-hidden /> Recorrer la propiedad en 360°
-                </Link>
-              )}
-              {p.cantidadPlanos > 0 && (
-                <Link
-                  href={`/propiedad/${p.slug}/planos`}
-                  className={buttonStyles({ variant: "accent", size: "lg", fullWidth: true, className: "text-lg sm:flex-1" })}
-                >
-                  <DraftingCompass className="size-7" aria-hidden /> Ver planos
-                </Link>
-              )}
-            </div>
+          {cerrada && (
+            <p role="status" className="rounded-(--radius-card) border border-border bg-surface p-4 font-medium">
+              Esta propiedad ya se {p.estado_comercial === "vendida" ? "vendió" : "alquiló"}. Más abajo tenés propiedades parecidas.
+            </p>
           )}
 
           {p.estado_obra !== "terminada" && (
@@ -281,32 +289,22 @@ export default async function FichaPropiedad({ params }: PageProps<"/s/[sitio]/p
         <aside id="consulta" aria-labelledby="titulo-consulta" className="flex flex-col gap-4 lg:sticky lg:top-20">
           <div className="rounded-(--radius-card) border border-border p-5 shadow-(--shadow-card)">
             <h2 id="titulo-consulta" className="text-xl font-bold">
-              ¿Te interesa? Coordiná una visita
+              {cerrada ? "¿Buscás algo parecido?" : tour ? "Conocela antes de visitarla" : "¿Te interesa? Coordiná una visita"}
             </h2>
             <p className="mt-1 mb-4 text-sm text-muted">
-              {p.cantidadEscenas > 0
-                ? "Recorrela en 360° y pedí la visita respondiendo un par de preguntas."
-                : "Respondé un par de preguntas y te contactamos para coordinar."}
+              {cerrada
+                ? "Escribinos y te mostramos propiedades parecidas."
+                : tour
+                  ? "Hacé el recorrido virtual y, si te convence, coordiná la visita."
+                  : "Respondé un par de preguntas y te contactamos para coordinar."}
             </p>
-            <PedirVisita
-              propertyId={p.id}
-              operacion={p.operacion}
-              titulo={p.titulo}
-              fullWidth
-              whatsapp={
-                agencia.whatsapp && (
-                  <BotonWhatsapp numero={agencia.whatsapp} mensaje={mensajeWhatsapp} propertyId={p.id} fullWidth>
-                    ¿Lo adelantamos por WhatsApp?
-                  </BotonWhatsapp>
-                )
-              }
-            />
+            {p.asesor && (
+              <div className="mb-4 border-b border-border pb-4">
+                <BloqueAsesor asesor={p.asesor} />
+              </div>
+            )}
+            <CtaFicha propertyId={p.id} slug={p.slug} titulo={p.titulo} operacion={p.operacion} tour={tour} cerrada={cerrada} whatsapp={whatsapp} donde="panel" />
             <div className="mt-3 flex flex-wrap gap-2">
-              {agencia.whatsapp && (
-                <BotonWhatsapp numero={agencia.whatsapp} mensaje={mensajeWhatsapp} propertyId={p.id} className="flex-1">
-                  Consultar por WhatsApp
-                </BotonWhatsapp>
-              )}
               <BotonCompartir propertyId={p.id} titulo={p.titulo} url={url} />
             </div>
             <details className="mt-4 border-t border-border pt-2">
@@ -319,7 +317,7 @@ export default async function FichaPropiedad({ params }: PageProps<"/s/[sitio]/p
         </aside>
       </Container>
 
-      <SeccionPropiedades titulo="Propiedades similares" items={relacionadas} total={0} verTodas={`/${p.operacion}`} />
+      <SeccionPropiedades titulo={cerrada ? "Propiedades parecidas" : "Propiedades similares"} items={relacionadas} total={0} verTodas={`/${p.operacion}`} />
 
       {/* Barra fija en el celular: precio + pedir visita (WhatsApp como opción secundaria) */}
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-bg/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur md:hidden">
@@ -328,29 +326,24 @@ export default async function FichaPropiedad({ params }: PageProps<"/s/[sitio]/p
             <p className="text-xs text-muted">{OPERACION_LABEL[p.operacion]}</p>
             <p className="truncate font-display text-lg font-bold">{precio}</p>
           </div>
-          <PedirVisita propertyId={p.id} operacion={p.operacion} titulo={p.titulo} size="md">
-            Pedir visita
-          </PedirVisita>
-          {agencia.whatsapp && (
-            <BotonWhatsapp numero={agencia.whatsapp} mensaje={mensajeWhatsapp} propertyId={p.id} size="icon" aria-label="Consultar por WhatsApp" />
-          )}
+          <CtaFicha propertyId={p.id} slug={p.slug} titulo={p.titulo} operacion={p.operacion} tour={tour} cerrada={cerrada} whatsapp={whatsapp} donde="barra" />
         </div>
       </div>
       <div className="h-20 md:hidden" aria-hidden />
 
       <RastreoVista propertyId={p.id} />
-      <JsonLd data={jsonLd(p, url)} />
+      <JsonLd data={jsonLd(p, url, agencia.recorrido_activo)} />
     </>
   );
 }
 
-function jsonLd(p: PropiedadCompleta, url: string) {
+function jsonLd(p: PropiedadCompleta, url: string, recorrido: boolean) {
   const exacta = p.mostrar_direccion_exacta;
   return {
     "@context": "https://schema.org",
     "@type": "RealEstateListing",
     name: p.titulo,
-    description: p.descripcion?.slice(0, 500) ?? resumen(p),
+    description: p.descripcion?.slice(0, 500) ?? resumen(p, recorrido),
     url,
     datePosted: p.created_at,
     image: p.fotos.slice(0, 6).map((f) => f.url),
@@ -359,7 +352,7 @@ function jsonLd(p: PropiedadCompleta, url: string) {
         "@type": "Offer",
         price: p.precio,
         priceCurrency: p.moneda,
-        availability: "https://schema.org/InStock",
+        availability: `https://schema.org/${p.estado_comercial === "vendida" || p.estado_comercial === "alquilada" ? "SoldOut" : "InStock"}`,
         businessFunction: `http://purl.org/goodrelations/v1#${p.operacion === "alquiler" ? "LeaseOut" : "Sell"}`,
       },
     }),

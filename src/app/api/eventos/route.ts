@@ -4,6 +4,7 @@ import { isSupabaseConfigured } from "@/lib/env";
 import { Limitador } from "@/lib/previsita/limite";
 import { actualizarLeadDelVisitante, asegurarVisitante, guardarLead, marcarActividad, recalcularLead, registrarEventos } from "@/lib/previsita/servidor";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { COOKIE_EQUIPO } from "@/lib/tracking/config";
 import { validarLote } from "@/lib/tracking/eventos";
 
 // Límites por instancia: 60 lotes por minuto por IP, 30 por visitante, 20 visitantes nuevos por hora por IP.
@@ -22,6 +23,8 @@ export async function POST(request: NextRequest) {
   if (request.headers.get("sec-gpc") === "1") return sinContenido();
   // Robots y herramientas de medición (Lighthouse, PageSpeed, vistas previas): no son visitas.
   if (ROBOTS.test(request.headers.get("user-agent") ?? "")) return sinContenido();
+  // Visitas del equipo de la inmobiliaria: no inflan las métricas del cliente.
+  if (request.cookies.get(COOKIE_EQUIPO)?.value === "1") return sinContenido();
 
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "local";
   if (!porIp.permitir(ip)) return new Response(null, { status: 429 });

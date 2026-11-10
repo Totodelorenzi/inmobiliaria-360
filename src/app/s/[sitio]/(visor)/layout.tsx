@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 import { AvisoPrivacidad, ScriptAvisoPrivacidad } from "@/components/sitio/privacidad";
-import { brandStyle } from "@/lib/color";
+import { aparienciaSitio } from "@/lib/fuentes";
 import { getAgencia } from "@/lib/data/sitio";
 import { urlEnSitio } from "@/lib/tenancy";
 
@@ -17,8 +17,9 @@ export default async function VisorLayout({ children, params }: LayoutProps<"/s/
   const agencia = await getAgencia((await params).sitio);
   // Ninguna inmobiliaria en esta dirección: 404 con la página neutra de la plataforma.
   if (!agencia) notFound();
+  const apariencia = aparienciaSitio(agencia);
   return (
-    <div style={brandStyle(agencia.color_primario)} className="fixed inset-0 overflow-hidden bg-black text-white">
+    <div style={apariencia.style} className={`fixed inset-0 overflow-hidden bg-black font-sans text-white ${apariencia.className}`}>
       {children}
       <ScriptAvisoPrivacidad />
       <AvisoPrivacidad posicion="arriba" />

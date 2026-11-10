@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, ChartColumn, CircleHelp, ExternalLink, House, Inbox, LayoutDashboard, LogOut, Menu, Settings, Users, X } from "lucide-react";
+import { Building2, ChartColumn, CircleHelp, Contact, ExternalLink, House, Inbox, LayoutDashboard, LogOut, Menu, Settings, Users, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRef } from "react";
@@ -31,6 +31,7 @@ function secundarios(esAdmin: boolean, superadmin: boolean) {
     ...(esAdmin
       ? [
           { href: "/admin/configuracion", label: "Configuración", Icono: Settings },
+          { href: "/admin/asesores", label: "Asesores", Icono: Contact },
           { href: "/admin/usuarios", label: "Usuarios", Icono: Users },
         ]
       : []),

@@ -127,7 +127,7 @@ export type FiltrosLeads = {
 };
 
 const CAMPOS_LEAD =
-  "id, nombre, telefono, email, mensaje, origen, created_at, codigo_ref, score, score_detalle, nivel, estado, notas, ultima_actividad, visitor_id, propiedad:properties(id, titulo, slug)";
+  "id, nombre, telefono, email, mensaje, origen, created_at, codigo_ref, score, score_detalle, nivel, estado, notas, ultima_actividad, visitor_id, propiedad:properties(id, titulo, slug, asesor:advisors!properties_asesor_id_fkey(nombre))";
 
 export type LeadListado = Pick<
   Tables<"leads">,
@@ -145,7 +145,7 @@ export type LeadListado = Pick<
   | "notas"
   | "ultima_actividad"
   | "visitor_id"
-> & { score_detalle: DetallePuntaje[]; propiedad: { id: string; titulo: string; slug: string } | null };
+> & { score_detalle: DetallePuntaje[]; propiedad: { id: string; titulo: string; slug: string; asesor: { nombre: string } | null } | null };
 
 /** Leads ordenados por puntaje (y después por actividad), con filtros y búsqueda por código, nombre o teléfono. */
 export async function getLeads(agencyId: string, f: FiltrosLeads) {
@@ -310,5 +310,19 @@ export async function getLinks(agencyId: string) {
     .order("created_at", { ascending: false })
     .limit(50);
   if (error) fallar("los links", error);
+  return data;
+}
+
+/** Asesores de la agencia (activos primero), para su sección y para asignarlos a propiedades. */
+export async function getAsesores(agencyId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("advisors")
+    .select("*")
+    .eq("agency_id", agencyId)
+    .order("activo", { ascending: false })
+    .order("orden")
+    .order("nombre");
+  if (error) fallar("los asesores", error);
   return data;
 }

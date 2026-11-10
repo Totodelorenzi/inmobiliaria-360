@@ -3,7 +3,7 @@ import Link from "next/link";
 import { preload } from "react-dom";
 import { Badge } from "@/components/ui/badge";
 import type { PropiedadTarjeta } from "@/lib/data/sitio";
-import { badgeObra, formatExpensas, formatM2, formatPrecio, formatUbicacion, OPERACION_LABEL, plural } from "@/lib/format";
+import { badgeObra, ESTADO_COMERCIAL_LABEL, formatExpensas, formatM2, formatPrecio, formatUbicacion, OPERACION_LABEL, plural } from "@/lib/format";
 
 export function PropertyCard({ p, prioridad = false }: { p: PropiedadTarjeta; prioridad?: boolean }) {
   const obra = badgeObra(p.estado_obra, p.fecha_entrega);
@@ -19,7 +19,7 @@ export function PropertyCard({ p, prioridad = false }: { p: PropiedadTarjeta; pr
   if (prioridad && p.foto) preload(p.foto.thumb_url ?? p.foto.url, { as: "image", fetchPriority: "high" });
 
   return (
-    <article className="group relative flex h-full flex-col overflow-hidden rounded-(--radius-card) border border-border bg-bg shadow-(--shadow-card) transition hover:shadow-lg has-[a:focus-visible]:outline-3 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-focus">
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-(--radius-card) border border-border bg-bg transition hover:border-muted has-[a:focus-visible]:outline-3 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-focus">
       <div className="relative aspect-[4/3] overflow-hidden bg-surface">
         {p.foto ? (
           // eslint-disable-next-line @next/next/no-img-element -- miniatura ya optimizada al subirla (ver DECISIONES)
@@ -39,6 +39,7 @@ export function PropertyCard({ p, prioridad = false }: { p: PropiedadTarjeta; pr
           </div>
         )}
         <div className="absolute inset-x-3 top-3 flex flex-wrap gap-1.5">
+          {p.estado_comercial !== "disponible" && <Badge tone={p.estado_comercial}>{ESTADO_COMERCIAL_LABEL[p.estado_comercial]}</Badge>}
           <Badge tone="overlay">{OPERACION_LABEL[p.operacion]}</Badge>
           {p.tieneTour && (
             <Badge tone="accent">

@@ -9,7 +9,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { contarFiltros, filtrosAQuery, ORDEN_LABEL, type Filtros, type Modo, type Orden } from "@/lib/filtros";
 import { ESTADO_OBRA_LABEL, TIPO_LABEL } from "@/lib/format";
 
-type Props = { modo: Modo; filtros: Filtros; barrios: string[]; total: number };
+type Props = { modo: Modo; filtros: Filtros; barrios: string[]; total: number; recorrido: boolean };
 
 /** Navega a la URL con los filtros del formulario, sin parámetros vacíos. */
 function useAplicarFiltros() {
@@ -34,7 +34,7 @@ function useAplicarFiltros() {
   return { aplicar, pendiente };
 }
 
-function CamposFiltros({ modo, filtros, barrios }: Omit<Props, "total">) {
+function CamposFiltros({ modo, filtros, barrios, recorrido }: Omit<Props, "total">) {
   const obras =
     modo === "emprendimientos" ? (["en_pozo", "en_construccion"] as const) : (["terminada", "en_construccion", "en_pozo"] as const);
   return (
@@ -113,7 +113,7 @@ function CamposFiltros({ modo, filtros, barrios }: Omit<Props, "total">) {
       </Field>
       <div className="flex flex-col">
         {[
-          { name: "tour", label: "Con tour 360°", checked: filtros.tour },
+          ...(recorrido ? [{ name: "tour", label: "Con tour 360°", checked: filtros.tour }] : []),
           { name: "credito", label: "Apto crédito", checked: filtros.credito },
         ].map((opcion) => (
           <label key={opcion.name} className="flex min-h-11 cursor-pointer items-center gap-3 font-medium">
@@ -127,7 +127,7 @@ function CamposFiltros({ modo, filtros, barrios }: Omit<Props, "total">) {
   );
 }
 
-export function FiltrosListado({ modo, filtros, barrios, total }: Props) {
+export function FiltrosListado({ modo, filtros, barrios, total, recorrido }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const { aplicar, pendiente } = useAplicarFiltros();
   const activos = contarFiltros(filtros);
@@ -176,7 +176,7 @@ export function FiltrosListado({ modo, filtros, barrios, total }: Props) {
             </button>
           </div>
           <div className="overflow-y-auto px-4 py-4">
-            <CamposFiltros modo={modo} filtros={filtros} barrios={barrios} />
+            <CamposFiltros modo={modo} filtros={filtros} barrios={barrios} recorrido={recorrido} />
           </div>
           <div className="grid grid-cols-2 gap-2 border-t border-border p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
             <a href={limpiar} className={buttonStyles({ variant: "outline" })}>
@@ -202,7 +202,7 @@ export function FiltrosListado({ modo, filtros, barrios, total }: Props) {
               </span>
             )}
           </div>
-          <CamposFiltros modo={modo} filtros={filtros} barrios={barrios} />
+          <CamposFiltros modo={modo} filtros={filtros} barrios={barrios} recorrido={recorrido} />
           <Button type="submit" variant="brand" fullWidth>
             Aplicar
           </Button>

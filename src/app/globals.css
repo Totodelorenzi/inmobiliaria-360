@@ -2,10 +2,20 @@
 
 /*
  * Tokens del sistema de diseño.
- * --brand, --brand-fg y --brand-ink se sobrescriben por inmobiliaria (brandStyle en src/lib/color.ts).
- * --accent es fijo: amarillo de los botones de tour y planos.
+ * Sistema base. Cada inmobiliaria los sobrescribe en el contenedor de su sitio (src/lib/tema.ts):
+ * color de marca, neutros, acento de tour y planos, estados, radios y tipografías.
+ * Los usos van directo a estas variables (no a otras derivadas en :root), así el override funciona.
  */
 :root {
+  --font-texto: var(--font-inter);
+  --font-titulos: var(--font-bricolage), var(--font-inter);
+  --radius-control: 0.75rem;
+  --radius-card: 1rem;
+
+  --estado-disponible: #067647;
+  --estado-reservada: #93370d;
+  --estado-vendida: #555c68;
+
   --brand: #1f3a5f;
   --brand-fg: #ffffff;
   --brand-ink: #1f3a5f;
@@ -50,10 +60,9 @@
   --color-danger: var(--danger);
   --color-danger-bg: var(--danger-bg);
 
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-bricolage), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-texto), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-titulos), ui-sans-serif, system-ui, sans-serif;
 
-  --radius-card: 1rem;
   --shadow-card: 0 1px 2px rgb(20 22 26 / 0.06), 0 4px 16px rgb(20 22 26 / 0.06);
   --shadow-float: 0 -4px 24px rgb(20 22 26 / 0.12);
 }
@@ -66,13 +75,13 @@
   body {
     background: var(--bg);
     color: var(--fg);
-    font-family: var(--font-sans);
+    font-family: var(--font-texto), ui-sans-serif, system-ui, sans-serif;
   }
 
   h1,
   h2,
   h3 {
-    font-family: var(--font-display);
+    font-family: var(--font-titulos), ui-sans-serif, system-ui, sans-serif;
     letter-spacing: -0.02em;
     text-wrap: balance;
   }

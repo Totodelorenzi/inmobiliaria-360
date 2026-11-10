@@ -15,7 +15,7 @@ export function generateStaticParams() {
 export default async function Inicio({ params }: PageProps<"/s/[sitio]">) {
   const agencia = await getAgencia((await params).sitio);
   if (!agencia) return null;
-  const { alquiler, venta, emprendimientos, total } = await getInicio(agencia.id);
+  const { alquiler, venta, emprendimientos, total } = await getInicio(agencia);
   const hayPropiedades = total.alquiler + total.venta + total.emprendimientos > 0;
 
   return (
@@ -23,9 +23,11 @@ export default async function Inicio({ params }: PageProps<"/s/[sitio]">) {
       <section className="bg-brand text-brand-fg">
         <Container className="py-10 sm:py-16">
           <h1 className="max-w-2xl text-4xl leading-tight font-bold sm:text-5xl">Encontrá tu próxima propiedad</h1>
-          <p className="mt-3 flex max-w-xl items-center gap-2 text-lg opacity-90">
-            <Rotate3d className="size-6 shrink-0" aria-hidden /> Recorré cada ambiente en 360° antes de visitarla.
-          </p>
+          {agencia.recorrido_activo && (
+            <p className="mt-3 flex max-w-xl items-center gap-2 text-lg opacity-90">
+              <Rotate3d className="size-6 shrink-0" aria-hidden /> Recorré cada ambiente en 360° antes de visitarla.
+            </p>
+          )}
           <Buscador total={total} />
         </Container>
       </section>

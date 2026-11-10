@@ -23,11 +23,11 @@ test.describe("pre-visita en la web pública", { tag: "@con-datos" }, () => {
 
   test("pedido de visita: valida antes de enviar", async ({ page }) => {
     await page.goto(`/propiedad/${SEED.casaVenta}`);
-    await page.getByRole("button", { name: "Pedir visita presencial" }).first().click();
-    const dialogo = page.getByRole("dialog", { name: "Pedir visita presencial" });
+    await page.getByRole("button", { name: "Coordinar visita" }).first().click();
+    const dialogo = page.getByRole("dialog", { name: "Coordinar visita" });
     await expect(dialogo.getByText("¿Cómo pensás pagar?")).toBeVisible();
     await expect(dialogo.getByText("¿Necesitás vender otra propiedad para comprar?")).toBeVisible();
-    await dialogo.getByRole("button", { name: "Pedir visita" }).click();
+    await dialogo.getByRole("button", { name: "Pedir la visita" }).click();
     await expect(dialogo.getByRole("alert").first()).toBeVisible();
     await revisarAccesibilidad(page);
   });
@@ -68,15 +68,15 @@ test.describe("circuito completo de pre-visita", { tag: "@admin" }, () => {
     await expect(visitante.getByText("¡Recorriste toda la propiedad!")).toBeVisible({ timeout: 20_000 });
 
     // 2. Pedido de visita desde el aviso de tour completo (propiedad en alquiler: plazo y franja).
-    await visitante.getByRole("status").filter({ hasText: "¡Recorriste toda la propiedad!" }).getByRole("button", { name: "Pedir visita" }).click();
-    const dialogo = visitante.getByRole("dialog", { name: "Pedir visita presencial" });
+    await visitante.getByRole("status").filter({ hasText: "¡Recorriste toda la propiedad!" }).getByRole("button", { name: "Coordinar visita" }).click();
+    const dialogo = visitante.getByRole("dialog", { name: "Coordinar visita" });
     await dialogo.getByText("Lo antes posible").click();
     await dialogo.getByText("Tarde", { exact: true }).click();
     await dialogo.getByLabel("Nombre").fill(nombre);
     await dialogo.getByLabel("Teléfono").fill("11 0000-9999");
     await dialogo.getByRole("checkbox").check();
-    await dialogo.getByRole("button", { name: "Pedir visita" }).click();
-    await expect(dialogo.getByText("¡Listo! Te vamos a contactar para coordinar la visita.")).toBeVisible();
+    await dialogo.getByRole("button", { name: "Pedir la visita" }).click();
+    await expect(dialogo.getByText("Visita pedida. Te escribimos para confirmar el día y el horario.")).toBeVisible();
     const codigo = (await dialogo.locator("strong.font-mono").textContent())!.trim();
     await visitante.context().close();
 

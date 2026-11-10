@@ -30,6 +30,8 @@ export const CAMPOS_DATOS = [
   "operacion",
   "tipo",
   "estado_obra",
+  "estado_comercial",
+  "asesor_id",
   "fecha_entrega",
   "avance_obra_pct",
   "precio",
@@ -124,6 +126,17 @@ export function validarDatos(entrada: Entrada) {
     const v = enLista(entrada.estado_obra, E.estado_obra);
     if (!v) errores.estado_obra = "Elegí el estado de obra.";
     else cambios.estado_obra = v;
+  }
+  if (hay("estado_comercial")) {
+    const v = enLista(entrada.estado_comercial, E.estado_comercial);
+    if (!v) errores.estado_comercial = "Elegí el estado de la propiedad.";
+    else cambios.estado_comercial = v;
+  }
+  if (hay("asesor_id")) {
+    const t = (entrada.asesor_id ?? "").trim();
+    if (!t) cambios.asesor_id = null;
+    else if (!/^[0-9a-f-]{36}$/i.test(t)) errores.asesor_id = "Elegí un asesor de la lista.";
+    else cambios.asesor_id = t;
   }
   if (hay("moneda")) {
     const v = enLista(entrada.moneda, E.moneda);

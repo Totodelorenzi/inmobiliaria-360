@@ -62,6 +62,9 @@ export async function guardarAgencia(_prev: EstadoAgencia, formData: FormData): 
   }
   cambios.telefono = texto("telefono", 40);
   cambios.direccion = texto("direccion", 200);
+  cambios.matricula = texto("matricula", 120);
+  cambios.horarios = texto("horarios", 200);
+  cambios.recorrido_activo = formData.get("recorrido_activo") === "on";
   const logo = texto("logo_url", 500);
   if (logo !== undefined) cambios.logo_url = logo;
 

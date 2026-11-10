@@ -5,7 +5,23 @@ import { useRef, useState } from "react";
 import { buttonStyles } from "@/components/ui/button";
 import { registrar } from "@/lib/tracking/cliente";
 
-type Foto = { id: string; url: string; thumb_url: string | null };
+type Foto = { id: string; url: string; thumb_url: string | null; ambiente?: string | null };
+
+/** Texto alternativo con el ambiente (si está rotulado) y la posición. */
+const alt = (f: Foto, titulo: string, i: number, total: number) =>
+  f.ambiente ? `${f.ambiente}, ${titulo} (foto ${i + 1} de ${total})` : `${titulo}, foto ${i + 1} de ${total}`;
+
+/** Fotos agrupadas por ambiente en el orden en que aparecen (las sin rótulo, juntas al final). */
+function porAmbiente(fotos: Foto[]) {
+  const grupos = new Map<string, { foto: Foto; i: number }[]>();
+  fotos.forEach((foto, i) => {
+    const clave = foto.ambiente ?? "";
+    grupos.set(clave, [...(grupos.get(clave) ?? []), { foto, i }]);
+  });
+  const sinRotulo = grupos.get("");
+  grupos.delete("");
+  return [...grupos.entries(), ...(sinRotulo ? ([["", sinRotulo]] as const) : [])];
+}
 
 const srcSet = (f: Foto) => (f.thumb_url ? `${f.thumb_url} 800w, ${f.url} 2400w` : undefined);
 
@@ -30,7 +46,8 @@ export function Galeria({ fotos, titulo, propertyId }: { fotos: Foto[]; titulo: 
     setActual(i);
     if (!propertyId || vistas.current.has(i)) return;
     vistas.current.add(i);
-    registrar({ tipo: "photo_view", propertyId, meta: { indice: i } });
+    const ambiente = fotos[i]?.ambiente;
+    registrar({ tipo: "photo_view", propertyId, meta: { indice: i, ...(ambiente ? { ambiente } : {}) } });
   };
 
   const anchoFoto = () => (pistaRef.current?.firstElementChild as HTMLElement | null)?.offsetWidth ?? 1;
@@ -53,7 +70,7 @@ export function Galeria({ fotos, titulo, propertyId }: { fotos: Foto[]; titulo: 
               src={foto.url}
               srcSet={srcSet(foto)}
               sizes="(min-width: 768px) 50vw, 100vw"
-              alt={`${titulo}, foto ${i + 1} de ${fotos.length}`}
+              alt={alt(foto, titulo, i, fotos.length)}
               width={1600}
               height={1200}
               loading={i < 2 ? "eager" : "lazy"}
@@ -86,6 +103,7 @@ export function Galeria({ fotos, titulo, propertyId }: { fotos: Foto[]; titulo: 
             <ChevronRight aria-hidden />
           </button>
           <p className="absolute bottom-3 left-3 rounded-full bg-black/70 px-3 py-1 text-sm font-semibold text-white md:hidden" aria-hidden>
+            {fotos[actual]?.ambiente ? `${fotos[actual].ambiente} · ` : ""}
             {actual + 1} / {fotos.length}
           </p>
           <button
@@ -117,22 +135,29 @@ export function Galeria({ fotos, titulo, propertyId }: { fotos: Foto[]; titulo: 
             <X aria-hidden />
           </button>
         </div>
-        <ul className="mx-auto flex max-w-4xl flex-col gap-2 p-2">
-          {fotos.map((foto, i) => (
-            <li key={foto.id}>
-              {/* eslint-disable-next-line @next/next/no-img-element -- tamaños generados al subir (800 y 2400 px) */}
-              <img
-                src={foto.url}
-                srcSet={srcSet(foto)}
-                sizes="(min-width: 896px) 896px, 100vw"
-                alt={`${titulo}, foto ${i + 1} de ${fotos.length}`}
-                loading="lazy"
-                decoding="async"
-                className="w-full rounded-lg"
-              />
-            </li>
+        <div className="mx-auto flex max-w-4xl flex-col gap-6 p-2">
+          {porAmbiente(fotos).map(([ambiente, grupo]) => (
+            <section key={ambiente || "sin-rotulo"} aria-label={ambiente || "Otras fotos"}>
+              {ambiente && <h2 className="px-1 pb-2 text-lg font-semibold">{ambiente}</h2>}
+              <ul className="flex flex-col gap-2">
+                {grupo.map(({ foto, i }) => (
+                  <li key={foto.id}>
+                    {/* eslint-disable-next-line @next/next/no-img-element -- tamaños generados al subir (800 y 2400 px) */}
+                    <img
+                      src={foto.url}
+                      srcSet={srcSet(foto)}
+                      sizes="(min-width: 896px) 896px, 100vw"
+                      alt={alt(foto, titulo, i, fotos.length)}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full rounded-lg"
+                    />
+                  </li>
+                ))}
+              </ul>
+            </section>
           ))}
-        </ul>
+        </div>
       </dialog>
     </div>
   );

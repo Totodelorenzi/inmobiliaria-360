@@ -40,7 +40,8 @@ test.describe("web pública", { tag: "@con-datos" }, () => {
     await page.goto(`/propiedad/${SEED.conTour}`);
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Luminoso 3 ambientes");
     await expect(page.getByText("$ 1.150.000/mes").first()).toBeVisible();
-    await expect(page.getByRole("link", { name: "Recorrer la propiedad en 360°" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Hacer el recorrido" }).first()).toBeVisible();
+    await expect(page.getByText("Hecho con udevelop")).toBeVisible();
     const whatsapp = page.getByRole("link", { name: "Consultar por WhatsApp" }).first();
     await expect(whatsapp).toHaveAttribute("href", /^https:\/\/wa\.me\/\d+\?text=/);
     const jsonLd = JSON.parse((await page.locator('script[type="application/ld+json"]').textContent()) ?? "{}");

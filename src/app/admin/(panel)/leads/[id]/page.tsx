@@ -7,7 +7,7 @@ import { NivelBadge, ORIGEN_LABEL, Puntaje } from "@/components/admin/nivel";
 import { Pagina, Panel } from "@/components/admin/ui";
 import { getLeadDetalle } from "@/lib/admin/datos";
 import { requerirSesion } from "@/lib/admin/sesion";
-import { duracion, lineaDeTiempo } from "@/lib/previsita/linea-tiempo";
+import { duracion, lineaDeTiempo, resumenParaAsesor } from "@/lib/previsita/linea-tiempo";
 import { FORMA_PAGO_LABEL, FRANJAS, PLAZO_LABEL } from "@/lib/previsita/validacion";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +30,7 @@ export default async function LeadPage({ params }: PageProps<"/admin/leads/[id]"
   if (!lead) notFound();
   const visitas = lineaDeTiempo(lead.eventos);
   const pedido = lead.pedidos[0];
+  const resumen = resumenParaAsesor(lead.eventos, { origen: lead.visitante?.utm_source === "cartel" ? "cartel" : null });
 
   return (
     <Pagina>
@@ -56,6 +57,13 @@ export default async function LeadPage({ params }: PageProps<"/admin/leads/[id]"
 
       <div className="grid gap-5 lg:grid-cols-[1fr_20rem] lg:items-start">
         <div className="flex flex-col gap-5">
+          {(resumen || lead.propiedad?.asesor) && (
+            <Panel titulo="En una frase">
+              {resumen && <p>{resumen}</p>}
+              {lead.propiedad?.asesor && <p className="mt-2 text-sm text-muted">Asesor a cargo: {lead.propiedad.asesor.nombre}</p>}
+            </Panel>
+          )}
+
           <Panel titulo="Contacto">
             <ContactoLead lead={lead} agencia={sesion.agencia.nombre} />
             {lead.mensaje && <p className="mt-3 rounded-xl bg-surface p-3 text-sm whitespace-pre-line">{lead.mensaje}</p>}

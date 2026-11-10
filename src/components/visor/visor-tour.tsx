@@ -58,7 +58,8 @@ type Props = {
   tienePlanos: boolean;
   propertyId: string;
   operacion: Enums<"operacion">;
-  whatsapp: { numero: string; mensaje: string } | null;
+  /** {ambiente} en los mensajes se reemplaza por el ambiente que se está mirando. */
+  whatsapp: { numero: string; mensaje: string; mensajeRecorrido?: string } | null;
   /** A dónde lleva "cerrar" (por defecto, la ficha pública). */
   volverA?: string;
   /** Link a los planos (por defecto, los planos públicos). */
@@ -89,6 +90,7 @@ export function VisorTour({ escenas, titulo, slug, tienePlanos, propertyId, oper
   const soportaGiroscopio = useSoporte(() => matchMedia("(pointer: coarse)").matches && "DeviceOrientationEvent" in window);
   const soportaPantallaCompleta = useSoporte(() => document.fullscreenEnabled);
   const nombreActual = escenas.find((e) => e.id === actual)?.nombre_ambiente ?? "";
+  const conAmbiente = (mensaje: string) => mensaje.replace("{ambiente}", nombreActual.toLowerCase() || "el recorrido");
 
   useEffect(() => {
     let visor: Visor | undefined;
@@ -314,11 +316,17 @@ export function VisorTour({ escenas, titulo, slug, tienePlanos, propertyId, oper
           <div className="flex items-end gap-2">
             {publico && (
               <PedirVisita propertyId={propertyId} operacion={operacion} titulo={titulo} variant="accent" size="md" className="shadow-lg">
-                <CalendarCheck className="size-5" aria-hidden /> Pedir visita
+                <CalendarCheck className="size-5" aria-hidden /> Coordinar visita
               </PedirVisita>
             )}
             {whatsapp && (
-              <BotonWhatsapp {...whatsapp} propertyId={propertyId} size="icon" className="shadow-lg" aria-label="Consultar por WhatsApp" />
+              <BotonWhatsapp
+                numero={whatsapp.numero}
+                mensaje={conAmbiente(whatsapp.mensaje)}
+                mensajeRecorrido={whatsapp.mensajeRecorrido && conAmbiente(whatsapp.mensajeRecorrido)}
+                propertyId={propertyId}
+                ubicacion="recorrido"
+                size="icon" className="shadow-lg" aria-label="Consultar por WhatsApp" />
             )}
           </div>
         </div>
@@ -330,7 +338,7 @@ export function VisorTour({ escenas, titulo, slug, tienePlanos, propertyId, oper
               Si te gustó, pedí una visita presencial: la coordinamos en un par de minutos.
             </p>
             <PedirVisita propertyId={propertyId} operacion={operacion} titulo={titulo} size="md" className="shrink-0">
-              Pedir visita
+              Coordinar visita
             </PedirVisita>
             <button type="button" onClick={() => setCtaCerrado(true)} className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-surface" aria-label="Cerrar aviso">
               <X className="size-5" aria-hidden />

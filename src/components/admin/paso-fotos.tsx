@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { useCallback, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { eliminarFoto, marcarPrincipal, registrarFoto, reordenar } from "@/lib/admin/acciones";
+import { eliminarFoto, marcarPrincipal, registrarFoto, reordenar, rotularFoto } from "@/lib/admin/acciones";
 import type { Foto } from "@/lib/admin/datos";
+import { AMBIENTES } from "@/lib/format";
 import { procesarFoto } from "@/lib/admin/imagenes";
 import { rutaNueva, subirArchivo } from "@/lib/admin/subida";
 import { BotonConfirmar, MostrarAviso, useAccion } from "./acciones-ui";
@@ -51,7 +52,8 @@ export function PasoFotos({ propertyId, agencyId, fotos }: Props) {
     <div className="flex flex-col gap-5">
       <Panel titulo="Agregar fotos">
         <p className="mb-4 text-sm text-muted">
-          Elegí varias a la vez. Se achican automáticamente para que la web cargue rápido (las fotos del iPhone también funcionan).
+          Elegí varias a la vez. Se achican automáticamente para que la web cargue rápido (las fotos del iPhone también funcionan). Después
+          indicá qué ambiente es cada una y ordenalas como se recorre la casa: la web las agrupa por ambiente.
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
           <Button variant="accent" size="lg" fullWidth onClick={() => elegirRef.current?.click()}>
@@ -78,13 +80,29 @@ export function PasoFotos({ propertyId, agencyId, fotos }: Props) {
               <li key={foto.id} className="overflow-hidden rounded-xl border border-border bg-bg">
                 <div className="relative aspect-[4/3] bg-surface">
                   {/* eslint-disable-next-line @next/next/no-img-element -- miniatura de Storage */}
-                  <img src={foto.thumb_url ?? foto.url} alt={`Foto ${i + 1}`} className="size-full object-cover" loading="lazy" />
+                  <img src={foto.thumb_url ?? foto.url} alt={foto.ambiente ? `${foto.ambiente} (foto ${i + 1})` : `Foto ${i + 1}`} className="size-full object-cover" loading="lazy" />
                   {foto.es_principal && (
                     <Badge tone="accent" className="absolute top-2 left-2">
                       <Star aria-hidden /> Principal
                     </Badge>
                   )}
                 </div>
+                <label className="block px-2 pt-2">
+                  <span className="sr-only">Ambiente de la foto {i + 1}</span>
+                  <select
+                    defaultValue={foto.ambiente ?? ""}
+                    disabled={pendiente}
+                    onChange={(e) => ejecutar(() => rotularFoto(foto.id, propertyId, e.target.value))}
+                    className="min-h-11 w-full rounded-lg border border-border bg-bg px-2 text-sm"
+                  >
+                    <option value="">¿Qué ambiente es?</option>
+                    {[...AMBIENTES, ...(foto.ambiente && !AMBIENTES.includes(foto.ambiente as (typeof AMBIENTES)[number]) ? [foto.ambiente] : [])].map((a) => (
+                      <option key={a} value={a}>
+                        {a}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <div className="flex items-center justify-between gap-1 p-1">
                   <div className="flex">
                     <Button variant="ghost" size="icon" disabled={i === 0 || pendiente} onClick={() => mover(i, -1)} aria-label={`Mover foto ${i + 1} antes`}>

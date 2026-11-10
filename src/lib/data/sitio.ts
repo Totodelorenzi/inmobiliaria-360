@@ -13,7 +13,7 @@ type Propiedad = Tables<"properties">;
 
 const CAMPOS_TARJETA =
   "id, slug, titulo, operacion, tipo, estado_obra, fecha_entrega, precio, moneda, expensas, direccion, " +
-  "mostrar_direccion_exacta, barrio, ciudad, ambientes, dormitorios, banos, superficie_total, destacada, " +
+  "mostrar_direccion_exacta, barrio, ciudad, ambientes, dormitorios, banos, superficie_total, destacada, estado_comercial, " +
   "fotos:property_photos(url, thumb_url), escenas:tour_scenes(count), planos:property_plans(count)";
 
 export type PropiedadTarjeta = Pick<
@@ -37,6 +37,7 @@ export type PropiedadTarjeta = Pick<
   | "banos"
   | "superficie_total"
   | "destacada"
+  | "estado_comercial"
 > & { foto: { url: string; thumb_url: string | null } | null; tieneTour: boolean; tienePlanos: boolean };
 
 type FilaTarjeta = Omit<PropiedadTarjeta, "foto" | "tieneTour" | "tienePlanos"> & {
@@ -45,9 +46,21 @@ type FilaTarjeta = Omit<PropiedadTarjeta, "foto" | "tieneTour" | "tienePlanos"> 
   planos: { count: number }[];
 };
 
-function aTarjeta({ fotos, escenas, planos, ...p }: FilaTarjeta): PropiedadTarjeta {
-  return { ...p, foto: fotos[0] ?? null, tieneTour: (escenas[0]?.count ?? 0) > 0, tienePlanos: (planos[0]?.count ?? 0) > 0 };
-}
+/** Lo que las consultas de tarjetas necesitan de la inmobiliaria. */
+type Sitio = Pick<Agencia, "id" | "recorrido_activo">;
+
+/** Con el switch del 360 apagado, ninguna tarjeta ofrece el tour. */
+const aTarjeta =
+  (sitio: Sitio) =>
+  ({ fotos, escenas, planos, ...p }: FilaTarjeta): PropiedadTarjeta => ({
+    ...p,
+    foto: fotos[0] ?? null,
+    tieneTour: sitio.recorrido_activo && (escenas[0]?.count ?? 0) > 0,
+    tienePlanos: (planos[0]?.count ?? 0) > 0,
+  });
+
+/** Vendidas y alquiladas siguen con su ficha, pero no aparecen en listados, similares ni sitemap. */
+const ESTADOS_EN_LISTADO = ["disponible", "reservada"] as const;
 
 function fallar(contexto: string, error: { message: string }): never {
   throw new Error(`No se pudieron cargar ${contexto}: ${error.message}`);
@@ -82,6 +95,7 @@ function consultaTarjetas(agencyId: string, opciones: { contar?: boolean } = {})
     .select(CAMPOS_TARJETA, opciones.contar ? { count: "exact" } : undefined)
     .eq("agency_id", agencyId)
     .eq("publicada", true)
+    .in("estado_comercial", ESTADOS_EN_LISTADO)
     .order("es_principal", { referencedTable: "fotos", ascending: false })
     .order("orden", { referencedTable: "fotos" })
     .limit(1, { referencedTable: "fotos" });
@@ -99,35 +113,38 @@ async function contar(agencyId: string, modo: Modo) {
     .from("properties")
     .select("id", { count: "exact", head: true })
     .eq("agency_id", agencyId)
-    .eq("publicada", true);
+    .eq("publicada", true)
+    .in("estado_comercial", ESTADOS_EN_LISTADO);
   query = modo === "emprendimientos" ? query.neq("estado_obra", "terminada") : query.eq("operacion", modo);
   const { count, error } = await query;
   if (error) fallar("las propiedades", error);
   return count ?? 0;
 }
 
-async function ultimas(query: Consulta, cantidad: number) {
+async function ultimas(sitio: Sitio, query: Consulta, cantidad: number) {
   const { data, error } = await query
     .order("destacada", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(cantidad);
   if (error) fallar("las propiedades", error);
-  return (data as unknown as FilaTarjeta[]).map(aTarjeta);
+  return (data as unknown as FilaTarjeta[]).map(aTarjeta(sitio));
 }
 
 /** Datos del inicio: secciones y contadores. */
-export async function getInicio(agencyId: string) {
+export async function getInicio(sitio: Sitio) {
+  const agencyId = sitio.id;
   const [alquiler, venta, emprendimientos, total] = await Promise.all([
-    ultimas(aplicarModo(consultaTarjetas(agencyId), "alquiler"), 6),
-    ultimas(aplicarModo(consultaTarjetas(agencyId), "venta").eq("estado_obra", "terminada"), 6),
-    ultimas(aplicarModo(consultaTarjetas(agencyId), "emprendimientos"), 6),
+    ultimas(sitio, aplicarModo(consultaTarjetas(agencyId), "alquiler"), 6),
+    ultimas(sitio, aplicarModo(consultaTarjetas(agencyId), "venta").eq("estado_obra", "terminada"), 6),
+    ultimas(sitio, aplicarModo(consultaTarjetas(agencyId), "emprendimientos"), 6),
     Promise.all([contar(agencyId, "alquiler"), contar(agencyId, "venta"), contar(agencyId, "emprendimientos")]),
   ]);
   return { alquiler, venta, emprendimientos, total: { alquiler: total[0], venta: total[1], emprendimientos: total[2] } };
 }
 
 /** Listado filtrado y paginado. */
-export async function getListado(agencyId: string, modo: Modo, f: Filtros) {
+export async function getListado(sitio: Sitio, modo: Modo, f: Filtros) {
+  const agencyId = sitio.id;
   let query = aplicarModo(consultaTarjetas(agencyId, { contar: true }), modo);
 
   for (const palabra of normalizarBusqueda(f.q ?? "").split(" ").filter(Boolean)) {
@@ -143,7 +160,7 @@ export async function getListado(agencyId: string, modo: Modo, f: Filtros) {
   }
   if (f.credito) query = query.eq("apto_credito", true);
   if (f.obra) query = query.eq("estado_obra", f.obra);
-  if (f.tour) {
+  if (f.tour && sitio.recorrido_activo) {
     // Solo las que tienen al menos una escena: filtro por los ids con tour.
     const { data, error } = await createPublicClient({ tags: [tagSitio(agencyId)] })
       .from("tour_scenes")
@@ -162,7 +179,7 @@ export async function getListado(agencyId: string, modo: Modo, f: Filtros) {
   const { data, error, count } = await query.range(desde, desde + POR_PAGINA - 1);
   // Página fuera de rango: PostgREST responde 416; se muestra vacía en vez de romper.
   if (error && error.code !== "PGRST103") fallar("las propiedades", error);
-  return { items: ((data ?? []) as unknown as FilaTarjeta[]).map(aTarjeta), total: count ?? 0 };
+  return { items: ((data ?? []) as unknown as FilaTarjeta[]).map(aTarjeta(sitio)), total: count ?? 0 };
 }
 
 /** Barrios con propiedades publicadas en ese modo, para el filtro. */
@@ -172,6 +189,7 @@ export async function getBarrios(agencyId: string, modo: Modo) {
     .select("barrio")
     .eq("agency_id", agencyId)
     .eq("publicada", true)
+    .in("estado_comercial", ESTADOS_EN_LISTADO)
     .not("barrio", "is", null);
   query = modo === "emprendimientos" ? query.neq("estado_obra", "terminada") : query.eq("operacion", modo);
   const { data, error } = await query;
@@ -179,9 +197,15 @@ export async function getBarrios(agencyId: string, modo: Modo) {
   return [...new Set(data.map((p) => p.barrio!))].sort((a, b) => a.localeCompare(b, "es"));
 }
 
+export type Asesor = Pick<Tables<"advisors">, "id" | "nombre" | "rol" | "foto_url" | "whatsapp" | "telefono" | "matricula">;
+
 export type PropiedadCompleta = Propiedad & {
-  fotos: Pick<Tables<"property_photos">, "id" | "url" | "thumb_url">[];
+  fotos: Pick<Tables<"property_photos">, "id" | "url" | "thumb_url" | "ambiente">[];
+  /** Asesor activo a cargo (null: la consulta va a la inmobiliaria). */
+  asesor: Asesor | null;
   cantidadEscenas: number;
+  /** Primer ambiente del tour: portada del recorrido en la ficha. */
+  portadaTour: { nombre: string; imagen: string | null } | null;
   cantidadPlanos: number;
 };
 
@@ -189,29 +213,35 @@ export type PropiedadCompleta = Propiedad & {
 export const getPropiedad = cache(async (agencyId: string, slug: string): Promise<PropiedadCompleta | null> => {
   const { data, error } = await createPublicClient({ tags: [tagSitio(agencyId)] })
     .from("properties")
-    .select("*, fotos:property_photos(id, url, thumb_url, es_principal, orden), escenas:tour_scenes(count), planos:property_plans(count)")
+    // Un solo literal: así supabase-js infiere el tipo de la fila.
+    .select(
+      "*, fotos:property_photos(id, url, thumb_url, ambiente, es_principal, orden), asesor:advisors!properties_asesor_id_fkey(id, nombre, rol, foto_url, whatsapp, telefono, matricula), escenas:tour_scenes(nombre_ambiente, thumb_url, orden), planos:property_plans(count)",
+    )
     .eq("agency_id", agencyId)
     .eq("publicada", true)
     .eq("slug", slug)
     .maybeSingle();
   if (error) fallar("la propiedad", error);
   if (!data) return null;
-  const { fotos, escenas, planos, ...propiedad } = data;
+  const { fotos, escenas, planos, asesor, ...propiedad } = data;
+  const primera = [...escenas].sort((a, b) => a.orden - b.orden)[0];
   return {
     ...propiedad,
     fotos: fotos
       .sort((a, b) => Number(b.es_principal) - Number(a.es_principal) || a.orden - b.orden)
-      .map(({ id, url, thumb_url }) => ({ id, url, thumb_url })),
-    cantidadEscenas: escenas[0]?.count ?? 0,
+      .map(({ id, url, thumb_url, ambiente }) => ({ id, url, thumb_url, ambiente })),
+    asesor: asesor ?? null,
+    cantidadEscenas: escenas.length,
+    portadaTour: primera ? { nombre: primera.nombre_ambiente, imagen: primera.thumb_url } : null,
     cantidadPlanos: planos[0]?.count ?? 0,
   };
 });
 
 /** Hasta 3 propiedades parecidas: misma operación, mismo barrio o tipo. */
-export async function getRelacionadas(p: Pick<Propiedad, "id" | "agency_id" | "operacion" | "barrio" | "tipo">) {
-  let query = consultaTarjetas(p.agency_id).eq("operacion", p.operacion).neq("id", p.id);
+export async function getRelacionadas(sitio: Sitio, p: Pick<Propiedad, "id" | "operacion" | "barrio" | "tipo">) {
+  let query = consultaTarjetas(sitio.id).eq("operacion", p.operacion).neq("id", p.id);
   query = p.barrio ? query.or(`barrio.eq."${p.barrio.replace(/"/g, "")}",tipo.eq.${p.tipo}`) : query.eq("tipo", p.tipo);
-  return ultimas(query, 3);
+  return ultimas(sitio, query, 3);
 }
 
 /** Slugs publicados con fecha de modificación (sitemap y prerender). */
@@ -220,7 +250,8 @@ export async function getSlugs(agencyId: string) {
     .from("properties")
     .select("slug, updated_at")
     .eq("agency_id", agencyId)
-    .eq("publicada", true);
+    .eq("publicada", true)
+    .in("estado_comercial", ESTADOS_EN_LISTADO);
   if (error) fallar("las propiedades", error);
   return data;
 }
@@ -235,7 +266,8 @@ export const getTour = cache(async (agencyId: string, slug: string) => {
   const { data, error } = await createPublicClient({ tags: [tagSitio(agencyId)] })
     .from("properties")
     .select(
-      "id, slug, titulo, operacion, precio, moneda, planos:property_plans(count), " +
+      "id, slug, titulo, operacion, tipo, barrio, precio, moneda, estado_comercial, planos:property_plans(count), " +
+        "asesor:advisors!properties_asesor_id_fkey(nombre, whatsapp), " +
         "escenas:tour_scenes(id, nombre_ambiente, panorama_url, thumb_url, orden, yaw_inicial, pitch_inicial, " +
         "hotspots:tour_hotspots!tour_hotspots_scene_id_fkey(id, target_scene_id, yaw, pitch, texto))",
     )
@@ -245,7 +277,11 @@ export const getTour = cache(async (agencyId: string, slug: string) => {
     .maybeSingle();
   if (error) fallar("el tour", error);
   if (!data) return null;
-  const fila = data as unknown as Pick<Propiedad, "id" | "slug" | "titulo" | "operacion" | "precio" | "moneda"> & {
+  const fila = data as unknown as Pick<
+    Propiedad,
+    "id" | "slug" | "titulo" | "operacion" | "tipo" | "barrio" | "precio" | "moneda" | "estado_comercial"
+  > & {
+    asesor: { nombre: string; whatsapp: string | null } | null;
     planos: { count: number }[];
     escenas: (EscenaTour & { orden: number })[];
   };

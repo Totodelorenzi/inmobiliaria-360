@@ -22,3 +22,6 @@ export function tourCompleto(escenasVistas: number, totalEscenas: number, segund
   const necesarias = Math.max(1, Math.ceil(totalEscenas * TOUR_COMPLETO.escenasMinimas));
   return escenasVistas >= necesarias && segundosVisibles >= TOUR_COMPLETO.segundosMinimos;
 }
+
+/** Cookie del navegador de alguien del equipo: sus visitas no se cuentan (ver /api/no-contar). */
+export const COOKIE_EQUIPO = "v360_equipo";

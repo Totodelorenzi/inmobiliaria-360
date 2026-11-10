@@ -21,7 +21,7 @@ export async function Listado({ modo, sitio, searchParams }: { modo: Modo; sitio
   const agencia = await getAgencia(sitio);
   if (!agencia) return null;
   const [{ items, total }, barrios] = await Promise.all([
-    getListado(agencia.id, modo, filtros),
+    getListado(agencia, modo, filtros),
     getBarrios(agencia.id, modo),
   ]);
 
@@ -32,7 +32,7 @@ export async function Listado({ modo, sitio, searchParams }: { modo: Modo; sitio
         {total === 0 ? "Sin resultados" : `${total} ${total === 1 ? "propiedad" : "propiedades"}`}
       </p>
       <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[18rem_1fr] lg:items-start lg:gap-8">
-        <FiltrosListado key={filtrosAQuery(filtros, modo)} modo={modo} filtros={filtros} barrios={barrios} total={total} />
+        <FiltrosListado key={filtrosAQuery(filtros, modo)} modo={modo} filtros={filtros} barrios={barrios} total={total} recorrido={agencia.recorrido_activo} />
         <div className="flex flex-col gap-6">
           <div className="hidden justify-end lg:flex">
             <SelectorOrden filtros={filtros} modo={modo} />

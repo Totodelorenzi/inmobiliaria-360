@@ -17,6 +17,62 @@ export type Database = {
   }
   public: {
     Tables: {
+      advisors: {
+        Row: {
+          activo: boolean
+          agency_id: string
+          created_at: string
+          email: string | null
+          es_demo: boolean
+          foto_url: string | null
+          id: string
+          matricula: string | null
+          nombre: string
+          orden: number
+          rol: string | null
+          telefono: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          activo?: boolean
+          agency_id: string
+          created_at?: string
+          email?: string | null
+          es_demo?: boolean
+          foto_url?: string | null
+          id?: string
+          matricula?: string | null
+          nombre: string
+          orden?: number
+          rol?: string | null
+          telefono?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          activo?: boolean
+          agency_id?: string
+          created_at?: string
+          email?: string | null
+          es_demo?: boolean
+          foto_url?: string | null
+          id?: string
+          matricula?: string | null
+          nombre?: string
+          orden?: number
+          rol?: string | null
+          telefono?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advisors_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agencies: {
         Row: {
           color_primario: string
@@ -26,12 +82,16 @@ export type Database = {
           email: string | null
           es_test: boolean
           facebook: string | null
+          horarios: string | null
           id: string
           instagram: string | null
           logo_url: string | null
+          matricula: string | null
           nombre: string
+          recorrido_activo: boolean
           subdominio: string
           telefono: string | null
+          tema: Json
           whatsapp: string | null
         }
         Insert: {
@@ -42,12 +102,16 @@ export type Database = {
           email?: string | null
           es_test?: boolean
           facebook?: string | null
+          horarios?: string | null
           id?: string
           instagram?: string | null
           logo_url?: string | null
+          matricula?: string | null
           nombre: string
+          recorrido_activo?: boolean
           subdominio: string
           telefono?: string | null
+          tema?: Json
           whatsapp?: string | null
         }
         Update: {
@@ -58,12 +122,16 @@ export type Database = {
           email?: string | null
           es_test?: boolean
           facebook?: string | null
+          horarios?: string | null
           id?: string
           instagram?: string | null
           logo_url?: string | null
+          matricula?: string | null
           nombre?: string
+          recorrido_activo?: boolean
           subdominio?: string
           telefono?: string | null
+          tema?: Json
           whatsapp?: string | null
         }
         Relationships: []
@@ -252,6 +320,7 @@ export type Database = {
           ambientes: number | null
           amenities: string[]
           apto_credito: boolean
+          asesor_id: string | null
           avance_obra_pct: number | null
           banos: number | null
           barrio: string | null
@@ -265,6 +334,7 @@ export type Database = {
           direccion: string | null
           dormitorios: number | null
           es_demo: boolean
+          estado_comercial: Database["public"]["Enums"]["estado_comercial"]
           estado_obra: Database["public"]["Enums"]["estado_obra"]
           expensas: number | null
           fecha_entrega: string | null
@@ -289,6 +359,7 @@ export type Database = {
           ambientes?: number | null
           amenities?: string[]
           apto_credito?: boolean
+          asesor_id?: string | null
           avance_obra_pct?: number | null
           banos?: number | null
           barrio?: string | null
@@ -302,6 +373,7 @@ export type Database = {
           direccion?: string | null
           dormitorios?: number | null
           es_demo?: boolean
+          estado_comercial?: Database["public"]["Enums"]["estado_comercial"]
           estado_obra?: Database["public"]["Enums"]["estado_obra"]
           expensas?: number | null
           fecha_entrega?: string | null
@@ -326,6 +398,7 @@ export type Database = {
           ambientes?: number | null
           amenities?: string[]
           apto_credito?: boolean
+          asesor_id?: string | null
           avance_obra_pct?: number | null
           banos?: number | null
           barrio?: string | null
@@ -339,6 +412,7 @@ export type Database = {
           direccion?: string | null
           dormitorios?: number | null
           es_demo?: boolean
+          estado_comercial?: Database["public"]["Enums"]["estado_comercial"]
           estado_obra?: Database["public"]["Enums"]["estado_obra"]
           expensas?: number | null
           fecha_entrega?: string | null
@@ -359,6 +433,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "properties_asesor_id_fkey"
+            columns: ["asesor_id"]
+            isOneToOne: false
+            referencedRelation: "advisors"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "properties_agency_id_fkey"
             columns: ["agency_id"]
             isOneToOne: false
@@ -369,6 +450,7 @@ export type Database = {
       }
       property_photos: {
         Row: {
+          ambiente: string | null
           created_at: string
           es_principal: boolean
           id: string
@@ -378,6 +460,7 @@ export type Database = {
           url: string
         }
         Insert: {
+          ambiente?: string | null
           created_at?: string
           es_principal?: boolean
           id?: string
@@ -387,6 +470,7 @@ export type Database = {
           url: string
         }
         Update: {
+          ambiente?: string | null
           created_at?: string
           es_principal?: boolean
           id?: string
@@ -802,6 +886,7 @@ export type Database = {
       }
     }
     Enums: {
+      estado_comercial: "disponible" | "reservada" | "vendida" | "alquilada"
       estado_lead:
         | "nuevo"
         | "contactado"
@@ -968,6 +1053,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      estado_comercial: ["disponible", "reservada", "vendida", "alquilada"],
       estado_lead: [
         "nuevo",
         "contactado",

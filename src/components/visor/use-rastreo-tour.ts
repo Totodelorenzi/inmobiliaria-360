@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { guardarAvance } from "@/lib/tracking/avance";
 import { registrar } from "@/lib/tracking/cliente";
 import { tourCompleto } from "@/lib/tracking/config";
 import { CronometroVisible } from "@/lib/tracking/cronometro";
+
+const ORIGENES = ["portada", "boton", "tarjeta", "plano", "cartel", "compartido"] as const;
 
 /**
  * Seguimiento del tour: tiempo visible por escena (desde que carga hasta que se cambia),
@@ -31,6 +34,7 @@ export function useRastreoTour({ propertyId, totalEscenas, activo }: { propertyI
       if (completoRef.current || !tourCompleto(vistas.current.size, totalEscenas, c.totalMs() / 1000)) return;
       completoRef.current = true;
       setCompleto(true);
+      guardarAvance(propertyId, { vistas: vistas.current.size, total: totalEscenas, completo: true });
       registrar({ tipo: "tour_complete", propertyId, meta: { escenas: vistas.current.size, segundos: Math.round(c.totalMs() / 1000) } });
     };
     // Al ocultar la pestaña se cierra el tramo (el cronómetro ya no cuenta mientras está oculta).
@@ -64,9 +68,13 @@ export function useRastreoTour({ propertyId, totalEscenas, activo }: { propertyI
       c.tomar();
       escena.current = id;
       vistas.current.add(id);
+      guardarAvance(propertyId, { vistas: vistas.current.size, total: totalEscenas, completo: completoRef.current });
       if (!iniciado.current) {
         iniciado.current = true;
-        registrar({ tipo: "tour_start", propertyId });
+        // Desde dónde se abrió: portada de la ficha, botón, tarjeta, plano o el QR del cartel.
+        const pedido = new URLSearchParams(window.location.search).get("origen");
+        const origen = ORIGENES.find((o) => o === pedido);
+        registrar({ tipo: "tour_start", propertyId, ...(origen ? { meta: { origen } } : {}) });
       }
     },
   };

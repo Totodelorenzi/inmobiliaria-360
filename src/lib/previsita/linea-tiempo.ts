@@ -31,9 +31,11 @@ function texto(e: EventoHistorial, repeticiones: number, ms: number) {
     case "view_property":
       return `Vio la ficha${en}`;
     case "photo_view":
-      return repeticiones > 1 ? `Miró ${repeticiones} fotos` : meta.todas ? "Abrió todas las fotos" : "Miró una foto";
+      if (repeticiones > 1) return `Miró ${repeticiones} fotos`;
+      if (meta.todas) return "Abrió todas las fotos";
+      return typeof meta.ambiente === "string" ? `Miró una foto de ${meta.ambiente.toLowerCase()}` : "Miró una foto";
     case "tour_start":
-      return `Empezó el tour 360°${en}`;
+      return `Empezó el tour 360°${en}${meta.origen === "cartel" ? " desde el QR del cartel" : ""}`;
     case "scene_view":
       return `Recorrió ${e.escena ?? "un ambiente"}${tiempo}`;
     case "tour_complete":
@@ -92,4 +94,40 @@ export function lineaDeTiempo(eventos: EventoHistorial[]): Visita[] {
       };
     })
     .reverse();
+}
+
+const ORIGEN_TOUR: Record<string, string> = { cartel: "el QR del cartel", compartido: "un link compartido" };
+
+/**
+ * Resumen en una frase para el asesor, solo con lo registrado: "Recorrido: 7 ambientes en 6 min,
+ * volvió 2 veces; donde más se quedó: cocina y patio. Abrió el plano. Llegó desde el QR del cartel."
+ * `totalAmbientes` (si se conoce) permite decir "7 de 8".
+ */
+export function resumenParaAsesor(eventos: EventoHistorial[], opciones: { totalAmbientes?: number; origen?: string | null } = {}) {
+  const frases: string[] = [];
+  const escenas = new Map<string, number>();
+  for (const e of eventos) if (e.tipo === "scene_view" && e.escena) escenas.set(e.escena, (escenas.get(e.escena) ?? 0) + (e.duracion_ms ?? 0));
+  const sesiones = new Set(eventos.filter((e) => e.sesion_id).map((e) => e.sesion_id)).size;
+
+  if (escenas.size > 0) {
+    const ms = [...escenas.values()].reduce((a, b) => a + b, 0);
+    const de = opciones.totalAmbientes ? ` de ${opciones.totalAmbientes}` : "";
+    const masTiempo = [...escenas.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 2)
+      .map(([nombre]) => nombre.toLowerCase());
+    const completo = eventos.some((e) => e.tipo === "tour_complete") ? " (completo)" : "";
+    let frase = `Recorrido${completo}: ${escenas.size}${de} ${escenas.size === 1 ? "ambiente" : "ambientes"} en ${duracion(ms / 1000)}`;
+    if (sesiones > 1) frase += `, volvió ${sesiones - 1} ${sesiones === 2 ? "vez" : "veces"}`;
+    if (escenas.size > 1) frase += `; donde más se quedó: ${masTiempo.join(" y ")}`;
+    frases.push(`${frase}.`);
+  } else if (eventos.some((e) => e.tipo === "tour_start")) {
+    frases.push("Abrió el recorrido, sin detalle por ambiente.");
+  } else if (eventos.some((e) => e.tipo === "view_property")) {
+    frases.push(sesiones > 1 ? `Vio la ficha en ${sesiones} visitas, sin hacer el recorrido.` : "Vio la ficha, sin hacer el recorrido.");
+  }
+  if (eventos.some((e) => e.tipo === "plan_view")) frases.push("Abrió el plano.");
+  const origen = opciones.origen ?? eventos.map((e) => (e.meta as Record<string, unknown> | null)?.origen).find((o) => typeof o === "string");
+  if (typeof origen === "string" && ORIGEN_TOUR[origen]) frases.push(`Llegó desde ${ORIGEN_TOUR[origen]}.`);
+  return frases.join(" ");
 }

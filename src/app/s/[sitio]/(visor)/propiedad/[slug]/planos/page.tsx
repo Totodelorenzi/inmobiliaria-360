@@ -34,6 +34,6 @@ export async function generateMetadata({ params }: PageProps<"/s/[sitio]/propied
 export default async function PlanosPage({ params }: PageProps<"/s/[sitio]/propiedad/[slug]/planos">) {
   const cargado = await cargar(params);
   if (!cargado) notFound();
-  const { datos } = cargado;
-  return <VisorPlanos planos={datos.planos} titulo={datos.titulo} slug={datos.slug} tieneTour={datos.tieneTour} propertyId={datos.id} />;
+  const { agencia, datos } = cargado;
+  return <VisorPlanos planos={datos.planos} titulo={datos.titulo} slug={datos.slug} tieneTour={agencia.recorrido_activo && datos.tieneTour} propertyId={datos.id} />;
 }

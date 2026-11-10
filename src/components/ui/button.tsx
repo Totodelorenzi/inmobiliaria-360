@@ -16,8 +16,8 @@ const variants = {
 
 const sizes = {
   /** Todos los tamaños miden al menos 44 px de alto (objetivo táctil). */
-  md: "min-h-11 px-4 text-sm gap-2 rounded-xl",
-  lg: "min-h-14 px-6 text-base gap-3 rounded-2xl",
+  md: "min-h-11 px-4 text-sm gap-2 rounded-(--radius-control)",
+  lg: "min-h-14 px-6 text-base gap-3 rounded-[calc(var(--radius-control)+4px)]",
   icon: "size-11 rounded-full",
 } as const;
 

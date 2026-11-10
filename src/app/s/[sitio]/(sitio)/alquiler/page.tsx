@@ -3,7 +3,7 @@ import { Listado, TITULO_MODO } from "@/components/sitio/listado";
 
 export const metadata: Metadata = {
   title: TITULO_MODO.alquiler,
-  description: "Departamentos, casas y PH en alquiler. Filtrá por barrio, precio y ambientes, y recorrelos en 360°.",
+  description: "Departamentos, casas y PH en alquiler. Filtrá por barrio, precio y ambientes.",
   alternates: { canonical: "/alquiler" },
 };
 

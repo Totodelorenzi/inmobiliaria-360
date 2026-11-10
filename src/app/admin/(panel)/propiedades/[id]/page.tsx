@@ -11,7 +11,7 @@ import { PasoTour } from "@/components/admin/paso-tour";
 import { Aviso, Pagina } from "@/components/admin/ui";
 import { Badge } from "@/components/ui/badge";
 import { buttonStyles } from "@/components/ui/button";
-import { getPropiedadEditor } from "@/lib/admin/datos";
+import { getAsesores, getPropiedadEditor } from "@/lib/admin/datos";
 import { requisitosPublicacion, TITULO_BORRADOR } from "@/lib/admin/propiedad";
 import { requerirSesion } from "@/lib/admin/sesion";
 import { urlEnSitio } from "@/lib/tenancy";
@@ -112,7 +112,7 @@ export default async function EditorPropiedad({ params, searchParams }: PageProp
         </ol>
       </nav>
 
-      {paso === "datos" && <PasoDatos propiedad={p} />}
+      {paso === "datos" && <PasoDatos propiedad={p} asesores={await getAsesores(sesion.agencia.id)} />}
       {paso === "fotos" && <PasoFotos propertyId={p.id} agencyId={p.agency_id} fotos={p.fotos} />}
       {paso === "tour" && <PasoTour propertyId={p.id} agencyId={p.agency_id} escenas={p.escenas} />}
       {paso === "planos" && (

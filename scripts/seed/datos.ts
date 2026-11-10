@@ -19,10 +19,17 @@ export const AGENCIA: TablesInsert<"agencies"> = {
   direccion: "Av. Cabildo 2000, CABA",
   instagram: "https://instagram.com/",
   facebook: "https://facebook.com/",
+  horarios: "Lunes a viernes de 9 a 18 h, sábados de 10 a 13 h",
 };
 
+/** Asesores ficticios de la demo (sin foto: la web muestra un ícono). */
+export const ASESORES: Omit<TablesInsert<"advisors">, "agency_id">[] = [
+  { nombre: "Lucía Fernández", rol: "Asesora comercial", whatsapp: "5491100000001", orden: 0, es_demo: true },
+  { nombre: "Martín Gómez", rol: "Asesor comercial", whatsapp: "5491100000002", orden: 1, es_demo: true },
+];
+
 /** Vista de una panorámica usada como foto común (yaw/pitch/campo visual en grados). */
-export type Vista = { pano: string; yaw: number; pitch?: number; hfov?: number };
+export type Vista = { pano: string; yaw: number; pitch?: number; hfov?: number; ambiente?: string };
 
 export type EscenaDemo = { pano: string; nombre: string; yaw?: number; pitch?: number };
 

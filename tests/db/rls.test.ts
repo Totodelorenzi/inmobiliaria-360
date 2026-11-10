@@ -513,3 +513,64 @@ describe("datos de ejemplo", () => {
     assert.equal(resumen, f.leads.length);
   });
 });
+
+describe("webs de clientes", () => {
+  const asesor = (agencia: string, extra = "") =>
+    `insert into advisors (agency_id, nombre, whatsapp${extra ? ", activo" : ""}) values ('${agencia}', 'Lucía', '5492214567890'${extra}) returning id`;
+
+  test("lo existente queda disponible, con el 360 activo y sin tema", async () => {
+    await como(db, "anon", async (tx) => {
+      const p = await tx.query<{ e: string }>("select distinct estado_comercial as e from properties");
+      assert.deepEqual(p.rows, [{ e: "disponible" }]);
+      const a = await tx.query<{ r: boolean; t: object }>("select distinct recorrido_activo as r, tema as t from agencies");
+      assert.deepEqual(a.rows, [{ r: true, t: {} }]);
+    });
+  });
+
+  test("el público ve los asesores activos; solo el admin los da de alta", async () => {
+    await db.transaction(async (tx) => {
+      await tx.exec(asesor(ID.agenciaA));
+      await tx.exec(asesor(ID.agenciaA, ", false"));
+      await tx.exec("set local role anon");
+      assert.equal(await contar(tx, "select * from advisors"), 1);
+      await tx.rollback();
+    });
+    await como(db, "adminA", async (tx) => {
+      assert.equal((await tx.query(asesor(ID.agenciaA))).rows.length, 1);
+    });
+    await assert.rejects(como(db, "agenteA", (tx) => tx.query(asesor(ID.agenciaA))), RLS);
+    await assert.rejects(como(db, "adminB", (tx) => tx.query(asesor(ID.agenciaA))), RLS);
+    await assert.rejects(como(db, "anon", (tx) => tx.query(asesor(ID.agenciaA))), RLS);
+  });
+
+  test("una propiedad no puede tener un asesor de otra inmobiliaria", async () => {
+    await como(db, "servicio", async (tx) => {
+      const { rows } = await tx.query<{ id: string }>(asesor(ID.agenciaB));
+      assert.equal((await tx.query("update properties set asesor_id = $1 where id = $2", [rows[0].id, ID.pubB])).affectedRows, 1);
+    });
+    await assert.rejects(
+      como(db, "servicio", async (tx) => {
+        const { rows } = await tx.query<{ id: string }>(asesor(ID.agenciaB));
+        await tx.query("update properties set asesor_id = $1 where id = $2", [rows[0].id, ID.pubA]);
+      }),
+      /misma inmobiliaria/,
+    );
+  });
+
+  test("el admin cambia el switch del 360 y la matrícula, pero no el tema", async () => {
+    await como(db, "adminA", async (tx) => {
+      const r = await tx.query("update agencies set recorrido_activo = false, matricula = 'CMCPSI 1234' where id = $1", [ID.agenciaA]);
+      assert.equal(r.affectedRows, 1);
+    });
+    await assert.rejects(como(db, "adminA", (tx) => tx.query(`update agencies set tema = '{"x":1}' where id = $1`, [ID.agenciaA])), RLS);
+  });
+
+  test("estado comercial y ambiente de la foto con valores válidos", async () => {
+    await como(db, "adminA", async (tx) => {
+      await tx.query("update properties set estado_comercial = 'reservada' where id = $1", [ID.pubA]);
+      await tx.query("update property_photos set ambiente = 'Cocina' where id = $1", [ID.fotoPubA1]);
+    });
+    await assert.rejects(como(db, "adminA", (tx) => tx.query("update properties set estado_comercial = 'regalada' where id = $1", [ID.pubA])), /invalid input value/);
+    await assert.rejects(como(db, "adminA", (tx) => tx.query("update property_photos set ambiente = '  ' where id = $1", [ID.fotoPubA1])), /check constraint/);
+  });
+});

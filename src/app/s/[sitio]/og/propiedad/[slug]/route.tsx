@@ -61,7 +61,7 @@ export async function GET(_request: Request, { params }: RouteContext<"/s/[sitio
   }
 
   const foto = await fotoComoDataUrl(p.fotos[0]?.url ?? p.fotos[0]?.thumb_url ?? undefined);
-  const etiquetas = [OPERACION_LABEL[p.operacion], p.cantidadEscenas > 0 && "Tour 360°", p.cantidadPlanos > 0 && "Planos"].filter(
+  const etiquetas = [OPERACION_LABEL[p.operacion], agencia.recorrido_activo && p.cantidadEscenas > 0 && "Tour 360°", p.cantidadPlanos > 0 && "Planos"].filter(
     Boolean,
   ) as string[];
 

@@ -66,9 +66,22 @@ export async function copiarDemo(db: Db, destino: string) {
     .eq("publicada", true);
   if (error) throw new Error(`No se pudo leer la demo: ${error.message}`);
 
-  for (const { id: _id, fotos, escenas, planos, created_at: _c, updated_at: _u, busqueda: _b, ...datos } of propiedades) {
+  // Asesores: copias propias (una propiedad no puede tener el asesor de otra inmobiliaria).
+  const { data: asesores, error: errorAsesores } = await db.from("advisors").select("*").eq("agency_id", AGENCIA_DEMO_ID);
+  if (errorAsesores) throw new Error(`No se pudieron leer los asesores de la demo: ${errorAsesores.message}`);
+  const asesor = new Map(asesores.map((a) => [a.id, crypto.randomUUID()]));
+  if (asesores.length) {
+    const alta = await db
+      .from("advisors")
+      .insert(asesores.map(({ id, created_at: _c, ...a }) => ({ ...a, id: asesor.get(id), agency_id: destino, es_demo: false })));
+    if (alta.error) throw new Error(`No se pudieron copiar los asesores: ${alta.error.message}`);
+  }
+
+  for (const { id: _id, fotos, escenas, planos, created_at: _c, updated_at: _u, busqueda: _b, asesor_id, ...datos } of propiedades) {
     const propertyId = crypto.randomUUID();
-    const alta = await db.from("properties").insert({ ...datos, id: propertyId, agency_id: destino, es_demo: false });
+    const alta = await db
+      .from("properties")
+      .insert({ ...datos, id: propertyId, agency_id: destino, es_demo: false, asesor_id: asesor_id ? (asesor.get(asesor_id) ?? null) : null });
     if (alta.error) throw new Error(`No se pudo copiar ${datos.slug}: ${alta.error.message}`);
     if (fotos.length) {
       await db.from("property_photos").insert(fotos.map(({ id: _f, property_id: _p, ...f }) => ({ ...f, property_id: propertyId })));

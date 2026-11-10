@@ -8,6 +8,7 @@ import { Button, buttonStyles } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
 import { actualizarEscena, eliminarEscena, registrarEscena, reordenar } from "@/lib/admin/acciones";
 import type { Escena } from "@/lib/admin/datos";
+import { AMBIENTES } from "@/lib/format";
 import { procesarPanoramica } from "@/lib/admin/imagenes";
 import { rutaNueva, subirArchivo } from "@/lib/admin/subida";
 import { cn } from "@/lib/utils";
@@ -115,6 +116,7 @@ export function PasoTour({ propertyId, agencyId, escenas }: Props) {
                   key={escena.nombre_ambiente}
                   defaultValue={escena.nombre_ambiente}
                   aria-label={`Nombre del ambiente ${i + 1}`}
+                  list="ambientes-sugeridos"
                   maxLength={60}
                   onBlur={(e) => {
                     const valor = e.target.value.trim();
@@ -149,6 +151,12 @@ export function PasoTour({ propertyId, agencyId, escenas }: Props) {
           <EditorEscena key={actual.id} escena={actual} escenas={escenas} propertyId={propertyId} />
         </Panel>
       )}
+      {/* Mismos nombres que las fotos y los planos: así el recorrido, la galería y las estadísticas coinciden. */}
+      <datalist id="ambientes-sugeridos">
+        {AMBIENTES.map((a) => (
+          <option key={a} value={a} />
+        ))}
+      </datalist>
     </div>
   );
 }

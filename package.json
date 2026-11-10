@@ -15,6 +15,7 @@
     "seed": "node --env-file-if-exists=.env.local --import ./scripts/alias.ts scripts/seed.ts",
     "crear-admin": "node --env-file-if-exists=.env.local --import ./scripts/alias.ts scripts/create-admin.ts",
     "crear-usuario-demo": "node --env-file-if-exists=.env.local --import ./scripts/alias.ts scripts/crear-usuario-demo.ts",
+    "tema": "node --env-file-if-exists=.env.local --import ./scripts/alias.ts scripts/aplicar-tema.ts",
     "demo:actualizar-fechas": "npx --yes supabase db query --linked -f supabase/demo/actualizar-fechas.sql",
     "test:e2e": "node --env-file=tests/e2e/.env node_modules/@playwright/test/cli.js test",
     "e2e:instalar": "node --env-file=tests/e2e/.env node_modules/@playwright/test/cli.js install chromium webkit"

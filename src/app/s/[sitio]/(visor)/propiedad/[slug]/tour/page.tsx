@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { VisorTour } from "@/components/visor/visor-tour";
 import { getAgencia, getTour } from "@/lib/data/sitio";
-import { formatPrecio } from "@/lib/format";
+import { mensajeWhatsapp } from "@/lib/format";
 import { metadataCompartir } from "@/lib/og";
 import { urlEnSitio } from "@/lib/tenancy";
 
@@ -17,7 +17,8 @@ async function cargar(params: Promise<{ sitio: string; slug: string }>) {
   const { sitio, slug } = await params;
   const agencia = await getAgencia(sitio);
   const tour = agencia ? await getTour(agencia.id, slug) : null;
-  return { agencia, tour: tour && tour.escenas.length > 0 ? tour : null };
+  // Con el switch del 360 apagado, el tour no existe para el público.
+  return { agencia, tour: agencia?.recorrido_activo && tour && tour.escenas.length > 0 ? tour : null };
 }
 
 export async function generateMetadata({ params }: PageProps<"/s/[sitio]/propiedad/[slug]/tour">): Promise<Metadata> {
@@ -35,7 +36,18 @@ export async function generateMetadata({ params }: PageProps<"/s/[sitio]/propied
 export default async function TourPage({ params }: PageProps<"/s/[sitio]/propiedad/[slug]/tour">) {
   const { agencia, tour } = await cargar(params);
   if (!agencia || !tour) notFound();
-  const mensaje = `¡Hola! Estoy viendo el tour 360° de "${tour.titulo}" (${formatPrecio(tour.precio, tour.moneda, tour.operacion)}). ${urlEnSitio(agencia, `/propiedad/${tour.slug}`)}`;
+  const numero = tour.asesor?.whatsapp ?? agencia.whatsapp;
+  // {ambiente} lo completa el visor con el ambiente que se está mirando.
+  const datos = {
+    asesor: tour.asesor?.whatsapp ? tour.asesor.nombre : null,
+    tipo: tour.tipo,
+    barrio: tour.barrio,
+    inmobiliaria: agencia.nombre,
+    accion: "saber más (estoy mirando: {ambiente})",
+    url: urlEnSitio(agencia, `/propiedad/${tour.slug}`),
+  };
+  const mensaje = mensajeWhatsapp(datos);
+  const mensajeRecorrido = mensajeWhatsapp({ ...datos, yaRecorrio: true });
   return (
     <VisorTour
       escenas={tour.escenas}
@@ -44,7 +56,7 @@ export default async function TourPage({ params }: PageProps<"/s/[sitio]/propied
       tienePlanos={tour.tienePlanos}
       propertyId={tour.id}
       operacion={tour.operacion}
-      whatsapp={agencia.whatsapp ? { numero: agencia.whatsapp, mensaje } : null}
+      whatsapp={numero ? { numero, mensaje, mensajeRecorrido } : null}
     />
   );
 }

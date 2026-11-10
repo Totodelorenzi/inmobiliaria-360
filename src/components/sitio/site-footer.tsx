@@ -1,8 +1,9 @@
-import { Mail, MapPin, Phone } from "lucide-react";
+import { Clock, Mail, MapPin, Phone } from "lucide-react";
 import Link from "next/link";
 import { Container } from "@/components/ui/states";
 import type { Agencia } from "@/lib/data/sitio";
 import { whatsappLink } from "@/lib/format";
+import { PLATAFORMA, urlPlataforma } from "@/lib/plataforma";
 import { FacebookIcon, InstagramIcon, WhatsappIcon } from "./iconos-marca";
 import { LINKS_SITIO } from "./links";
 
@@ -19,10 +20,18 @@ export function SiteFooter({ agencia }: { agencia: Agencia }) {
       <Container className="grid gap-8 py-10 sm:grid-cols-2 lg:grid-cols-3">
         <div>
           <p className="font-display text-xl font-bold">{agencia.nombre}</p>
-          <p className="mt-2 text-sm text-muted">Propiedades en alquiler y venta con tour virtual 360°.</p>
+          <p className="mt-2 text-sm text-muted">
+            Propiedades en alquiler y venta{agencia.recorrido_activo && " con tour virtual 360°"}.
+          </p>
+          {agencia.matricula && <p className="mt-2 text-sm">{agencia.matricula}</p>}
+          {agencia.horarios && (
+            <p className="mt-2 flex items-start gap-2 text-sm">
+              <Clock className="mt-0.5 size-4 shrink-0" aria-hidden /> {agencia.horarios}
+            </p>
+          )}
         </div>
         <div>
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Contacto</h2>
+          <h2 className="text-sm font-semibold text-muted">Contacto</h2>
           <ul className="mt-2 flex flex-col">
             {agencia.whatsapp && (
               <li>
@@ -53,7 +62,7 @@ export function SiteFooter({ agencia }: { agencia: Agencia }) {
           </ul>
         </div>
         <div>
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Propiedades</h2>
+          <h2 className="text-sm font-semibold text-muted">Propiedades</h2>
           <ul className="mt-2 flex flex-col">
             {LINKS_SITIO.map((link) => (
               <li key={link.href}>
@@ -87,7 +96,22 @@ export function SiteFooter({ agencia }: { agencia: Agencia }) {
         <Link href="/privacidad" className="inline-flex min-h-11 items-center underline">
           Privacidad
         </Link>
+        {" · "}
+        <CreditoPlataforma />
       </p>
     </footer>
+  );
+}
+
+/** Única mención de la plataforma que ve el comprador. */
+function CreditoPlataforma() {
+  const url = urlPlataforma();
+  const texto = `Hecho con ${PLATAFORMA.nombre}`;
+  return url ? (
+    <a href={url} target="_blank" rel="noopener" className="inline-flex min-h-11 items-center hover:underline">
+      {texto}
+    </a>
+  ) : (
+    <span>{texto}</span>
   );
 }

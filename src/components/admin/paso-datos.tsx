@@ -6,7 +6,7 @@ import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import { Spinner } from "@/components/ui/spinner";
 import { guardarDatos } from "@/lib/admin/acciones";
 import { TITULO_BORRADOR, type CampoDatos, type ErroresDatos } from "@/lib/admin/propiedad";
-import { ESTADO_OBRA_LABEL, OPERACION_LABEL, TIPO_LABEL } from "@/lib/format";
+import { ESTADO_COMERCIAL_LABEL, ESTADO_OBRA_LABEL, OPERACION_LABEL, TIPO_LABEL } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Tables } from "@/types/database";
 import { SelectorUbicacion } from "./selector-ubicacion";
@@ -79,7 +79,7 @@ function Casilla({ nombre, label, defaultChecked, onCambio, hint }: { nombre: st
 
 const Grilla = ({ children }: { children: ReactNode }) => <div className="grid gap-4 sm:grid-cols-2">{children}</div>;
 
-export function PasoDatos({ propiedad: p }: { propiedad: Tables<"properties"> }) {
+export function PasoDatos({ propiedad: p, asesores }: { propiedad: Tables<"properties">; asesores: Pick<Tables<"advisors">, "id" | "nombre" | "activo">[] }) {
   const formRef = useRef<HTMLFormElement>(null);
   const pendientes = useRef<Record<string, string>>({});
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -214,6 +214,32 @@ export function PasoDatos({ propiedad: p }: { propiedad: Tables<"properties"> })
           </Field>
           <Field label="Título del aviso" required error={err("titulo")} hint="Corto y concreto, ej. “Depto 3 ambientes con balcón al frente”.">
             {(a) => <Input {...a} name="titulo" defaultValue={p.titulo === TITULO_BORRADOR ? "" : p.titulo} maxLength={160} placeholder="Depto 3 ambientes con balcón" />}
+          </Field>
+        </div>
+      </Panel>
+
+      <Panel titulo="Estado y asesor">
+        <div className="flex flex-col gap-4">
+          <Opciones nombre="estado_comercial" legend="Estado" opciones={ESTADO_COMERCIAL_LABEL} valor={p.estado_comercial} />
+          <p className="-mt-2 text-sm text-muted">
+            Reservada se sigue mostrando con su cartel. Vendida o alquilada sale de los listados, pero su link sigue andando y muestra propiedades parecidas.
+          </p>
+          <Field
+            label="Asesor a cargo"
+            error={err("asesor_id")}
+            hint={asesores.length === 0 ? "Todavía no cargaste asesores (sección Asesores). Las consultas van al WhatsApp de la inmobiliaria." : "Las consultas por WhatsApp de esta propiedad le llegan a esta persona."}
+          >
+            {(a) => (
+              <Select {...a} name="asesor_id" defaultValue={p.asesor_id ?? ""}>
+                <option value="">Sin asesor (WhatsApp de la inmobiliaria)</option>
+                {asesores.map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {x.nombre}
+                    {x.activo ? "" : " (inactivo)"}
+                  </option>
+                ))}
+              </Select>
+            )}
           </Field>
         </div>
       </Panel>

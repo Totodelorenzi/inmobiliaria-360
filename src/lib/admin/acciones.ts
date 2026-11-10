@@ -220,6 +220,8 @@ export async function borrarDatosDeEjemplo(): Promise<Resultado> {
   }
   const { error: errorBorrado } = await ctx.supabase.from("properties").delete().eq("agency_id", agencia).eq("es_demo", true);
   if (errorBorrado) return falla(errorBorrado, "No se pudieron borrar los datos de ejemplo.");
+  const { error: errorAsesores } = await ctx.supabase.from("advisors").delete().eq("agency_id", agencia).eq("es_demo", true);
+  if (errorAsesores) return falla(errorAsesores, "No se pudieron borrar los asesores de ejemplo.");
   updateTag(tagSitio(agencia));
   return { ok: true, mensaje: `Listo: se borraron ${demo.length} propiedades de ejemplo con sus leads y visitas.` };
 }
@@ -260,6 +262,17 @@ export async function marcarPrincipal(fotoId: string, propertyId: string): Promi
   if (!ctx) return SESION_VENCIDA;
   const { error } = await ctx.supabase.from("property_photos").update({ es_principal: true }).eq("id", fotoId);
   if (error) return falla(error, "No se pudo marcar como principal.");
+  await refrescarSitioSi(ctx.supabase, propertyId);
+  return { ok: true };
+}
+
+/** Rótulo de ambiente de una foto (vacío: sin rótulo). */
+export async function rotularFoto(fotoId: string, propertyId: string, ambiente: string): Promise<Resultado> {
+  const ctx = await contexto();
+  if (!ctx) return SESION_VENCIDA;
+  const valor = ambiente.trim().slice(0, 60) || null;
+  const { error } = await ctx.supabase.from("property_photos").update({ ambiente: valor }).eq("id", fotoId).eq("property_id", propertyId);
+  if (error) return falla(error, "No se pudo guardar el ambiente.");
   await refrescarSitioSi(ctx.supabase, propertyId);
   return { ok: true };
 }

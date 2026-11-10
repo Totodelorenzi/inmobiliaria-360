@@ -95,3 +95,68 @@ export function telefonoWhatsapp(telefono: string) {
   if (con15 && con15[1].length + con15[2].length === 10) d = con15[1] + con15[2];
   return d.length === 10 ? `549${d}` : d;
 }
+
+export const ESTADO_COMERCIAL_LABEL: Record<Enums<"estado_comercial">, string> = {
+  disponible: "Disponible",
+  reservada: "Reservada",
+  vendida: "Vendida",
+  alquilada: "Alquilada",
+};
+
+/** Vocabulario de ambientes: los mismos rótulos en fotos, tour, planos y eventos. */
+export const AMBIENTES = [
+  "Fachada",
+  "Entrada",
+  "Living",
+  "Comedor",
+  "Living comedor",
+  "Cocina",
+  "Lavadero",
+  "Dormitorio principal",
+  "Dormitorio 2",
+  "Dormitorio 3",
+  "Baño principal",
+  "Baño",
+  "Toilette",
+  "Escritorio",
+  "Pasillo",
+  "Patio",
+  "Jardín",
+  "Quincho",
+  "Parrilla",
+  "Pileta",
+  "Balcón",
+  "Terraza",
+  "Cochera",
+  "Vista",
+  "Amenities",
+] as const;
+
+const CON_ARTICULO: Record<Enums<"tipo_propiedad">, string> = {
+  departamento: "el departamento",
+  casa: "la casa",
+  ph: "el PH",
+  local: "el local",
+  terreno: "el terreno",
+  oficina: "la oficina",
+  cochera: "la cochera",
+};
+
+/**
+ * Mensaje precargado de WhatsApp: "Hola Lucía, vi la casa en Tolosa en la web de Horizonte.
+ * Ya hice el recorrido virtual. Quiero coordinar una visita. https://…"
+ */
+export function mensajeWhatsapp(m: {
+  asesor?: string | null;
+  tipo: Enums<"tipo_propiedad">;
+  barrio?: string | null;
+  inmobiliaria: string;
+  yaRecorrio?: boolean;
+  accion: string;
+  url: string;
+}) {
+  const saludo = m.asesor ? `Hola ${m.asesor.split(" ")[0]}` : "Hola";
+  const donde = m.barrio ? ` en ${m.barrio}` : "";
+  const recorrido = m.yaRecorrio ? " Ya hice el recorrido virtual." : "";
+  return `${saludo}, vi ${CON_ARTICULO[m.tipo]}${donde} en la web de ${m.inmobiliaria}.${recorrido} Quiero ${m.accion}. ${m.url}`;
+}

@@ -10,7 +10,7 @@ import { borrarCarpetaPropiedad, type Bucket } from "@/lib/admin/storage";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { cargarActividad, type PropiedadCreada } from "./seed/actividad.ts";
-import { AGENCIA, AGENCIA_DEMO_ID, PROPIEDADES, panoramasUsadas } from "./seed/datos.ts";
+import { AGENCIA, AGENCIA_DEMO_ID, ASESORES, PROPIEDADES, panoramasUsadas } from "./seed/datos.ts";
 import * as img from "./seed/imagenes.ts";
 
 const soloImagenes = process.argv.includes("--solo-imagenes");
@@ -95,7 +95,17 @@ async function main() {
     log(`Borradas ${viejas.length} propiedades de ejemplo anteriores`);
   }
 
-  // 3. Propiedades
+  // 3. Asesores de ejemplo (se recrean en cada corrida)
+  await db.from("advisors").delete().eq("agency_id", agencyId).eq("es_demo", true);
+  const { data: asesores, error: errorAsesores } = await db
+    .from("advisors")
+    .insert(ASESORES.map((a) => ({ ...a, agency_id: agencyId })))
+    .select("id");
+  if (errorAsesores) throw new Error(`No se pudieron crear los asesores: ${errorAsesores.message}`);
+  const idsAsesores = asesores.map((a) => a.id);
+  log(`${idsAsesores.length} asesores de ejemplo`);
+
+  // 4. Propiedades
   // Los slugs son únicos por inmobiliaria.
   const { data: slugsUsados } = await db.from("properties").select("slug").eq("agency_id", agencyId);
   const usados = new Set((slugsUsados ?? []).map((s) => s.slug));
@@ -117,6 +127,8 @@ async function main() {
       id,
       agency_id: agencyId,
       slug,
+      // Las propiedades se reparten entre los asesores de ejemplo.
+      asesor_id: idsAsesores[i % idsAsesores.length] ?? null,
       // Fechas escalonadas: el orden "más recientes" queda prolijo.
       created_at: new Date(Date.now() - i * 36e5).toISOString(),
     });
@@ -125,7 +137,9 @@ async function main() {
     for (const [orden, foto] of fotos.entries()) {
       const imagen = "svg" in foto ? await img.desdeSvg(img.svgFachada(datos.titulo.split(":")[0]), 2400, 800) : await img.fotoDesdePanorama(panos.get(foto.pano)!, foto);
       const subida = await subirImagen("fotos", carpeta, imagen, "-800");
-      await db.from("property_photos").insert({ property_id: id, ...subida, orden, es_principal: orden === 0 });
+      // Rótulo de ambiente: el de la foto o el de la escena del tour hecha con la misma panorámica.
+      const ambiente = "svg" in foto ? "Fachada" : (foto.ambiente ?? escenas.find((e) => e.pano === foto.pano)?.nombre ?? null);
+      await db.from("property_photos").insert({ property_id: id, ...subida, ambiente, orden, es_principal: orden === 0 });
     }
 
     const creada: PropiedadCreada = { id, titulo: datos.titulo, operacion: datos.operacion, fotos: fotos.length, escenas: [], planos: [] };
@@ -165,7 +179,7 @@ async function main() {
     log(`${i + 1}/${PROPIEDADES.length} ${datos.titulo} (${fotos.length} fotos${escenas.length ? `, tour de ${escenas.length} ambientes` : ""}${planos.length ? `, ${planos.length} planos` : ""})`);
   }
 
-  // 4. Visitas, leads y pedidos de visita de las últimas 3 semanas
+  // 5. Visitas, leads y pedidos de visita de las últimas 3 semanas
   const a = await cargarActividad(db, agencyId, creadas);
   log(
     `Actividad de ejemplo: ${a.visitantes} visitantes, ${a.eventos} eventos, ${a.leads} leads ` +
