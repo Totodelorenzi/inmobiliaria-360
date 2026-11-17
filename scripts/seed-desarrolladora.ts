@@ -284,16 +284,15 @@ async function main() {
     log("Tenant creado: Desarrollos Demo (?agencia=desarrollos-demo)");
   }
 
-  // El admin de la plataforma entra a su panel (ADMIN_EMAIL de .env.local).
-  const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
-  if (email) {
-    const { data: usuarios } = await db.auth.admin.listUsers({ perPage: 200 });
-    const usuario = usuarios?.users.find((u) => u.email?.toLowerCase() === email);
-    if (usuario) {
-      const { error } = await db.from("agency_members").upsert({ user_id: usuario.id, agency_id: agencyId, rol: "admin" }, { onConflict: "user_id,agency_id" });
-      fallar("No se pudo sumar al admin", error);
-      log(`${email} es admin de Desarrollos Demo`);
-    }
+  // Entran a su panel el admin de la plataforma (ADMIN_EMAIL) y el usuario de demo para presentaciones (DEMO_EMAIL).
+  const { data: usuarios } = await db.auth.admin.listUsers({ perPage: 200 });
+  for (const [variable, rol] of [["ADMIN_EMAIL", "admin"], ["DEMO_EMAIL", "agente"]] as const) {
+    const email = process.env[variable]?.trim().toLowerCase();
+    const usuario = email && usuarios?.users.find((u) => u.email?.toLowerCase() === email);
+    if (!usuario) continue;
+    const { error } = await db.from("agency_members").upsert({ user_id: usuario.id, agency_id: agencyId, rol }, { onConflict: "user_id,agency_id" });
+    fallar("No se pudo sumar al usuario", error);
+    log(`${email} es ${rol} de Desarrollos Demo`);
   }
 
   // 2. Proyecto de ejemplo: se borra y se vuelve a crear (cascada a pisos, tipologías y unidades)
@@ -342,7 +341,7 @@ async function main() {
     for (const [i, r] of lista.entries()) {
       const llave = `${r.pano}:${r.yaw}`;
       if (!renders.has(llave)) {
-        const foto = await fotoDesdePanorama(panos.get(r.pano)!, { pano: r.pano, yaw: r.yaw });
+        const foto = await fotoDesdePanorama(panos.get(r.pano)!, { pano: r.pano, yaw: r.yaw, hfov: 95 });
         renders.set(llave, await subir(carpeta, await sharp(foto.grande).resize(1600).webp({ quality: 74 }).toBuffer()));
       }
       filas.push({ unit_type_id: id, nombre: r.nombre, render_url: renders.get(llave)!, orden: i });

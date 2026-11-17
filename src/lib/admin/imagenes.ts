@@ -85,6 +85,14 @@ export function procesarFoto(archivo: File) {
   return procesar(archivo, 2400, 800, 0.8, true);
 }
 
+/**
+ * Imagen del edificio (fachada, planta, maqueta o render): liviana, para que la primera pantalla
+ * cargue rápido en el celular con 4G.
+ */
+export function procesarImagenEdificio(archivo: File, maxLado = 1600) {
+  return procesar(archivo, maxLado, 480, 0.8, true);
+}
+
 /** Plano en imagen: más resolución para que se lean los textos al hacer zoom. */
 export function procesarPlano(archivo: File) {
   return procesar(archivo, 3200, 600, 0.85, true);

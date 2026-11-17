@@ -2,7 +2,7 @@
 
 Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
-**Próximo paso:** rama `udevelop-demo` (módulo desarrolladora, NO unir a `main` sin OK del usuario). Seguir por el primer bloque sin tildar de la etapa 16.
+**Próximo paso:** el usuario revisa el preview de la rama `udevelop-demo` desde el celular (fachada → piso → unidad → ambientes, y el panel de Desarrollos Demo). NO unir a `main` sin su OK.
 
 **Cómo verificar:** `npm run typecheck`, `npm run lint`, `npm test` (unitarios + base con PGlite), `npm run build`, `npm run test:e2e` (Playwright; con el build hecho).
 
@@ -76,9 +76,10 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
 - [~] 16. uDevelop: módulo desarrolladora (rama `udevelop-demo`, 2026-11-16). Reglas del usuario: una sola base (no hay clientes reales), migraciones solo aditivas, sin tests nuevos salvo permisos, no tocar "Emprendimientos", no renombrar nada.
   - [x] Bloque 1 – Datos: migración 0012 (módulos por inmobiliaria, proyectos, pisos, tipologías, ambientes, unidades, polígonos en porcentajes, columnas de seguimiento y `leads.unit_id`) aplicada en la base real; 5 tests de permisos en PGlite; tipos regenerados; menú del panel según módulo; `npm run seed:desarrolladora` (tenant `desarrollos-demo`, Edificio Mirador, 23 unidades).
-  - [ ] Bloque 2 – Web del comprador: fachada → planta → unidad → ambientes.
-  - [ ] Bloque 3 – Leads: "Pedir información", eventos nuevos y puntaje.
-  - [ ] Bloque 4 – Panel mínimo: unidades con cambio de estado, reemplazo de imágenes y marcador de polígonos.
+  - [x] Bloque 2 – Web del comprador: grupo de rutas `(edificio)` con `/proyecto/[slug]` (fachada con pisos tocables: hover en compu, doble toque en celular), `/piso/[n]` (planta coloreada por estado), `/unidad/[codigo]` (maqueta, ficha, "Ver ambientes" solo si hay renders, "Pedir información") y `/ambientes` (pantalla completa con fundido, deslizar o botones). Espejado con CSS. Sin Pannellum; imagen principal precargada. Inicio de un tenant sin módulo inmobiliaria → su proyecto.
+  - [x] Bloque 3 – Leads: `pedirInformacion` usa el lead por visitante, guarda `unit_id` (la última) y registra `form_submit` con la unidad; `/api/eventos` valida `floor_view`, `unit_view`, `rooms_open`, `room_view` contra proyectos publicados; puntaje con pesos nuevos sin tocar los existentes; el detalle del lead muestra "Unidades que miró".
+  - [x] Bloque 4 – Panel mínimo: `/admin/proyectos/[id]` con Unidades (estado en un toque), Imágenes (reemplazo, comprimidas a 1600 px) y Zonas (marcador de vértices sobre la fachada o la planta). Probado en celular simulado con el usuario de demo.
+  - Verificado: typecheck, lint, build, 58 unitarios y 49 de base. E2E no corridos en esta etapa.
 
 ## Pendientes técnicos
 
