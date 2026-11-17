@@ -12,6 +12,7 @@ import { telefonoWhatsapp, whatsappLink } from "@/lib/format";
 import type { Enums } from "@/types/database";
 import { BotonConfirmar, Hoja, MostrarAviso, useAccion } from "./acciones-ui";
 import { ESTADO_LABEL } from "./nivel";
+import { asuntoLead, type UnidadLead } from "@/lib/edificio";
 
 /** Estado del lead, editable en el lugar. */
 export function SelectorEstado({ id, estado }: { id: string; estado: Enums<"estado_lead"> }) {
@@ -63,13 +64,13 @@ export function ContactoLead({
   lead,
   agencia,
 }: {
-  lead: { id: string; nombre: string | null; telefono: string | null; email: string | null; codigo_ref: string | null; propiedad: { titulo: string } | null };
+  lead: { id: string; nombre: string | null; telefono: string | null; email: string | null; codigo_ref: string | null; propiedad: { titulo: string } | null; unidad?: UnidadLead | null };
   agencia: string;
 }) {
   const { ejecutar } = useAccion();
   const router = useRouter();
   const saludo = `Hola${lead.nombre ? ` ${lead.nombre.split(" ")[0]}` : ""}, te escribo de ${agencia}${
-    lead.propiedad ? ` por “${lead.propiedad.titulo}”` : ""
+    lead.unidad || lead.propiedad ? ` por “${asuntoLead(lead)}”` : ""
   }.`;
   return (
     <div className="flex flex-wrap gap-2">

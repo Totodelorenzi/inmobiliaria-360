@@ -10,6 +10,7 @@ import { requerirSesion } from "@/lib/admin/sesion";
 import { duracion, lineaDeTiempo, resumenParaAsesor } from "@/lib/previsita/linea-tiempo";
 import { FORMA_PAGO_LABEL, FRANJAS, PLAZO_LABEL } from "@/lib/previsita/validacion";
 import { cn } from "@/lib/utils";
+import { asuntoLead } from "@/lib/edificio";
 
 export const metadata: Metadata = { title: "Detalle del lead" };
 
@@ -46,7 +47,7 @@ export default async function LeadPage({ params }: PageProps<"/admin/leads/[id]"
           </div>
           <p className="mt-1 text-muted">
             {lead.codigo_ref && <span className="font-mono">Ref. {lead.codigo_ref} · </span>}
-            {ORIGEN_LABEL[lead.origen]} · {lead.propiedad ? lead.propiedad.titulo : "Consulta general"}
+            {ORIGEN_LABEL[lead.origen]} · {asuntoLead(lead)}
           </p>
         </div>
         <div className="flex items-center gap-4">
@@ -71,6 +72,22 @@ export default async function LeadPage({ params }: PageProps<"/admin/leads/[id]"
               <p className="mt-2 text-xs text-muted">Aceptó el uso de sus datos el {fechaHora.format(new Date(lead.consentimiento_at))}.</p>
             )}
           </Panel>
+
+          {lead.unidades.length > 0 && (
+            <Panel titulo="Unidades que miró">
+              <ul className="flex flex-col gap-2">
+                {lead.unidades.map((u) => (
+                  <li key={u.codigo} className="flex items-center gap-3 text-sm">
+                    <span className={cn("grid size-10 shrink-0 place-items-center rounded-full font-bold", u.consulto ? "bg-brand text-brand-fg" : "bg-surface")}>{u.codigo}</span>
+                    <span>
+                      {u.consulto && <strong className="block">Pidió información{lead.unidad?.codigo === u.codigo && lead.unidades.filter((x) => x.consulto).length > 1 ? " (la última)" : ""}</strong>}
+                      <span className="text-muted">{u.vistas > 0 ? `La vio ${u.vistas} ${u.vistas === 1 ? "vez" : "veces"}` : "Sin vistas registradas"}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </Panel>
+          )}
 
           <Panel titulo="Actividad">
             {visitas.length === 0 ? (

@@ -1,3 +1,4 @@
+import type { UnidadLead } from "@/lib/edificio";
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { normalizarCodigo } from "@/lib/previsita/codigos";
@@ -23,13 +24,13 @@ export async function getResumen(agencyId: string) {
     supabase.from("properties").select("id", { count: "exact", head: true }).eq("agency_id", agencyId).eq("es_demo", true),
     supabase
       .from("leads")
-      .select("id, nombre, telefono, email, origen, created_at, propiedad:properties(titulo, slug)")
+      .select("id, nombre, telefono, email, origen, created_at, propiedad:properties(titulo, slug), unidad:units(codigo, proyecto:projects(nombre))")
       .eq("agency_id", agencyId)
       .order("created_at", { ascending: false })
       .limit(5),
     supabase
       .from("leads")
-      .select("id, nombre, telefono, codigo_ref, score, score_detalle, nivel, estado, ultima_actividad, propiedad:properties(titulo)")
+      .select("id, nombre, telefono, codigo_ref, score, score_detalle, nivel, estado, ultima_actividad, propiedad:properties(titulo), unidad:units(codigo, proyecto:projects(nombre))")
       .eq("agency_id", agencyId)
       .eq("nivel", "caliente")
       .gte("ultima_actividad", haceUnaSemana)
@@ -48,6 +49,7 @@ export async function getResumen(agencyId: string) {
     pedidosSemana: pedidos.count ?? 0,
     calientes: (calientes.data ?? []) as unknown as (Pick<LeadListado, "id" | "nombre" | "telefono" | "codigo_ref" | "score" | "nivel" | "estado" | "ultima_actividad" | "score_detalle"> & {
       propiedad: { titulo: string } | null;
+      unidad: UnidadLead | null;
     })[],
   };
 }
@@ -127,7 +129,7 @@ export type FiltrosLeads = {
 };
 
 const CAMPOS_LEAD =
-  "id, nombre, telefono, email, mensaje, origen, created_at, codigo_ref, score, score_detalle, nivel, estado, notas, ultima_actividad, visitor_id, propiedad:properties(id, titulo, slug, asesor:advisors!properties_asesor_id_fkey(nombre))";
+  "id, nombre, telefono, email, mensaje, origen, created_at, codigo_ref, score, score_detalle, nivel, estado, notas, ultima_actividad, visitor_id, propiedad:properties(id, titulo, slug, asesor:advisors!properties_asesor_id_fkey(nombre)), unidad:units(codigo, proyecto:projects(nombre))";
 
 export type LeadListado = Pick<
   Tables<"leads">,
@@ -145,7 +147,12 @@ export type LeadListado = Pick<
   | "notas"
   | "ultima_actividad"
   | "visitor_id"
-> & { score_detalle: DetallePuntaje[]; propiedad: { id: string; titulo: string; slug: string; asesor: { nombre: string } | null } | null };
+> & {
+  score_detalle: DetallePuntaje[];
+  propiedad: { id: string; titulo: string; slug: string; asesor: { nombre: string } | null } | null;
+  /** Módulo desarrolladora: última unidad por la que pidió información. */
+  unidad: UnidadLead | null;
+};
 
 /** Leads ordenados por puntaje (y después por actividad), con filtros y búsqueda por código, nombre o teléfono. */
 export async function getLeads(agencyId: string, f: FiltrosLeads) {
@@ -191,6 +198,8 @@ export type LeadDetalle = LeadListado & {
   visitante: Pick<Tables<"visitors">, "first_seen" | "last_seen" | "utm_source" | "utm_medium" | "utm_campaign"> | null;
   link: (Pick<Tables<"tracked_links">, "codigo" | "created_at" | "nombre_prospecto"> & { abierto: boolean }) | null;
   eventos: EventoHistorial[];
+  /** Módulo desarrolladora: unidades que miró, con las que consultó primero. */
+  unidades: { codigo: string; vistas: number; consulto: boolean }[];
 };
 
 /** Todo lo de un lead: datos, calificación, link personalizado e historial completo. */
@@ -218,7 +227,7 @@ export async function getLeadDetalle(agencyId: string, id: string): Promise<Lead
     base.visitor_id
       ? supabase
           .from("visitor_events")
-          .select("tipo, created_at, sesion_id, duracion_ms, meta, propiedad:properties(titulo), escena:tour_scenes(nombre_ambiente), plano:property_plans(nombre)")
+          .select("tipo, created_at, sesion_id, duracion_ms, meta, propiedad:properties(titulo), escena:tour_scenes(nombre_ambiente), plano:property_plans(nombre), piso:project_floors(nombre), unidad:units(codigo), ambiente:unit_type_rooms(nombre)")
           .eq("visitor_id", base.visitor_id)
           .order("created_at", { ascending: false })
           .limit(500)
@@ -234,14 +243,27 @@ export async function getLeadDetalle(agencyId: string, id: string): Promise<Lead
     propiedad: { titulo: string } | null;
     escena: { nombre_ambiente: string } | null;
     plano: { nombre: string } | null;
+    piso: { nombre: string } | null;
+    unidad: { codigo: string } | null;
+    ambiente: { nombre: string } | null;
   };
+  const filas = (eventos.data ?? []) as unknown as FilaEvento[];
+  const unidades = new Map<string, { codigo: string; vistas: number; consulto: boolean }>();
+  for (const e of filas) {
+    if (!e.unidad || (e.tipo !== "unit_view" && e.tipo !== "form_submit")) continue;
+    const u = unidades.get(e.unidad.codigo) ?? { codigo: e.unidad.codigo, vistas: 0, consulto: false };
+    if (e.tipo === "unit_view") u.vistas++;
+    else u.consulto = true;
+    unidades.set(u.codigo, u);
+  }
   const v = visitante.data;
   return {
     ...base,
     pedidos: pedidos.data ?? [],
     visitante: v ? { first_seen: v.first_seen, last_seen: v.last_seen, utm_source: v.utm_source, utm_medium: v.utm_medium, utm_campaign: v.utm_campaign } : null,
     link: link.data ? { ...link.data, abierto: Boolean(v?.first_seen) } : null,
-    eventos: ((eventos.data ?? []) as unknown as FilaEvento[]).map((e) => ({
+    unidades: [...unidades.values()].sort((a, b) => Number(b.consulto) - Number(a.consulto) || b.vistas - a.vistas),
+    eventos: filas.map((e) => ({
       tipo: e.tipo,
       created_at: e.created_at,
       sesion_id: e.sesion_id,
@@ -250,6 +272,9 @@ export async function getLeadDetalle(agencyId: string, id: string): Promise<Lead
       propiedad: e.propiedad?.titulo ?? null,
       escena: e.escena?.nombre_ambiente ?? null,
       plano: e.plano?.nombre ?? null,
+      piso: e.piso?.nombre ?? null,
+      unidad: e.unidad?.codigo ?? null,
+      ambiente: e.ambiente?.nombre ?? null,
     })),
   };
 }

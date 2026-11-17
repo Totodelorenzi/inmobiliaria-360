@@ -1,6 +1,7 @@
 import { ESTADO_LABEL as ESTADO, NIVEL_LABEL as NIVEL, ORIGEN_LABEL as ORIGEN } from "@/components/admin/nivel";
 import { getEstadoSesion } from "@/lib/admin/sesion";
 import { createClient } from "@/lib/supabase/server";
+import { asuntoLead } from "@/lib/edificio";
 
 /** Celda CSV: entre comillas si hace falta; neutraliza fórmulas de Excel (=, +, -, @). */
 function celda(valor: string | null | undefined) {
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
   const supabase = await createClient();
   let query = supabase
     .from("leads")
-    .select("nombre, telefono, email, mensaje, origen, created_at, codigo_ref, score, nivel, estado, notas, ultima_actividad, propiedad:properties(titulo, slug)")
+    .select("nombre, telefono, email, mensaje, origen, created_at, codigo_ref, score, nivel, estado, notas, ultima_actividad, propiedad:properties(titulo, slug), unidad:units(codigo, proyecto:projects(nombre))")
     .eq("agency_id", estado.sesion.agencia.id)
     .order("score", { ascending: false })
     .limit(10000);
@@ -45,7 +46,7 @@ export async function GET(request: Request) {
       l.nombre,
       l.telefono,
       l.email,
-      l.propiedad?.titulo ?? "Consulta general",
+      asuntoLead(l),
       ORIGEN[l.origen],
       l.mensaje,
       l.notas,

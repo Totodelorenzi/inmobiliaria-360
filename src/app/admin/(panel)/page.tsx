@@ -10,6 +10,7 @@ import { crearBorrador } from "@/lib/admin/acciones";
 import { getOpcionesPropiedades, getResumen } from "@/lib/admin/datos";
 import { requerirSesion } from "@/lib/admin/sesion";
 import { resumenPuntaje } from "@/lib/scoring";
+import { asuntoLead } from "@/lib/edificio";
 
 export const metadata: Metadata = { title: "Inicio" };
 
@@ -69,7 +70,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/admin">) {
                   <Puntaje score={lead.score} nivel={lead.nivel} className="shrink-0" />
                   <span className="min-w-0">
                     <span className="block truncate font-semibold">{lead.nombre ?? `Ref. ${lead.codigo_ref}`}</span>
-                    <span className="block truncate text-sm text-muted">{lead.propiedad?.titulo ?? "Consulta general"}</span>
+                    <span className="block truncate text-sm text-muted">{asuntoLead(lead)}</span>
                     <span className="block truncate text-xs">{resumenPuntaje(lead.score_detalle, 3)}</span>
                   </span>
                 </Link>
@@ -117,7 +118,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/admin">) {
                 <span className="font-semibold">{lead.nombre ?? (lead.origen === "whatsapp_click" ? "Click en WhatsApp" : "Sin nombre")}</span>
                 <span className="text-sm text-muted">{cuando.format(new Date(lead.created_at))}</span>
                 <span className="w-full truncate text-sm text-muted">
-                  {lead.propiedad ? lead.propiedad.titulo : "Consulta general"}
+                  {asuntoLead(lead)}
                   {lead.telefono && ` · ${lead.telefono}`}
                 </span>
               </li>

@@ -12,6 +12,7 @@ import { requerirSesion } from "@/lib/admin/sesion";
 import { resumenPuntaje } from "@/lib/scoring";
 import { cn } from "@/lib/utils";
 import { Constants } from "@/types/database";
+import { asuntoLead } from "@/lib/edificio";
 
 export const metadata: Metadata = { title: "Leads" };
 
@@ -126,7 +127,7 @@ export default async function LeadsPage({ searchParams }: PageProps<"/admin/lead
                   {lead.codigo_ref && <span className="font-mono text-xs text-muted">Ref. {lead.codigo_ref}</span>}
                 </div>
                 <p className="truncate text-sm text-muted">
-                  {lead.propiedad?.titulo ?? "Consulta general"} · {ORIGEN_LABEL[lead.origen]} · activo {relativo(lead.ultima_actividad)}
+                  {asuntoLead(lead)} · {ORIGEN_LABEL[lead.origen]} · activo {relativo(lead.ultima_actividad)}
                 </p>
                 {lead.score_detalle.length > 0 && <p className="mt-1 truncate text-sm">{resumenPuntaje(lead.score_detalle)}</p>}
               </div>

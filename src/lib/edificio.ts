@@ -54,6 +54,15 @@ export function metrosUnidad(u: Pick<Tables<"units">, "superficie_cubierta" | "s
   return m ? `${numero.format(m)} m²` : null;
 }
 
+/** Unidad de un lead como la devuelven las consultas del panel. */
+export type UnidadLead = { codigo: string; proyecto: { nombre: string } | null };
+
+/** Por qué consultó un lead: la última unidad, la propiedad o "Consulta general". */
+export function asuntoLead(lead: { propiedad?: { titulo: string } | null; unidad?: UnidadLead | null }) {
+  if (lead.unidad) return `Unidad ${lead.unidad.codigo}${lead.unidad.proyecto ? ` · ${lead.unidad.proyecto.nombre}` : ""}`;
+  return lead.propiedad?.titulo ?? "Consulta general";
+}
+
 export const rutaProyecto = (slug: string) => `/proyecto/${slug}`;
 export const rutaPiso = (slug: string, numeroPiso: number) => `/proyecto/${slug}/piso/${numeroPiso}`;
 export const rutaUnidad = (slug: string, codigo: string) => `/proyecto/${slug}/unidad/${codigo.toLowerCase()}`;
