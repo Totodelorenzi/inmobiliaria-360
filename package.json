@@ -13,6 +13,7 @@
     "test:db": "node --import ./scripts/alias.ts --test \"tests/db/**/*.test.ts\"",
     "test": "npm run test:unit && npm run test:db",
     "seed": "node --env-file-if-exists=.env.local --import ./scripts/alias.ts scripts/seed.ts",
+    "seed:desarrolladora": "node --env-file-if-exists=.env.local --import ./scripts/alias.ts scripts/seed-desarrolladora.ts",
     "crear-admin": "node --env-file-if-exists=.env.local --import ./scripts/alias.ts scripts/create-admin.ts",
     "crear-usuario-demo": "node --env-file-if-exists=.env.local --import ./scripts/alias.ts scripts/crear-usuario-demo.ts",
     "tema": "node --env-file-if-exists=.env.local --import ./scripts/alias.ts scripts/aplicar-tema.ts",

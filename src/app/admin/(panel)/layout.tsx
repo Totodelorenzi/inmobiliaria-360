@@ -40,6 +40,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
         email={email}
         esAdmin={rol === "admin"}
         superadmin={superadmin}
+        modulos={agencia.modulos}
         urlSitio={urlEnSitio(agencia)}
       />
       <main className="flex min-w-0 flex-1 flex-col pb-24 lg:pb-0">{children}</main>

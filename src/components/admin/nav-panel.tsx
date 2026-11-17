@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, ChartColumn, CircleHelp, Contact, ExternalLink, House, Inbox, LayoutDashboard, LogOut, Menu, Settings, Users, X } from "lucide-react";
+import { Building, Building2, ChartColumn, CircleHelp, Contact, ExternalLink, House, Inbox, LayoutDashboard, LogOut, Menu, Settings, Users, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRef } from "react";
@@ -16,26 +16,32 @@ type Props = {
   email: string;
   esAdmin: boolean;
   superadmin: boolean;
+  /** Módulos habilitados de la inmobiliaria activa: definen qué secciones aparecen. */
+  modulos: string[];
   /** Web pública de la inmobiliaria activa, con su dominio real. */
   urlSitio: string;
 };
 
-const PRINCIPALES = [
-  { href: "/admin", label: "Inicio", Icono: LayoutDashboard },
-  { href: "/admin/propiedades", label: "Propiedades", Icono: House },
-  { href: "/admin/leads", label: "Leads", Icono: Inbox },
-];
+function principales(modulos: string[]) {
+  return [
+    { href: "/admin", label: "Inicio", Icono: LayoutDashboard },
+    ...(modulos.includes("inmobiliaria") ? [{ href: "/admin/propiedades", label: "Propiedades", Icono: House }] : []),
+    ...(modulos.includes("desarrolladora") ? [{ href: "/admin/proyectos", label: "Proyectos", Icono: Building }] : []),
+    { href: "/admin/leads", label: "Leads", Icono: Inbox },
+  ];
+}
 
-function secundarios(esAdmin: boolean, superadmin: boolean) {
+function secundarios(esAdmin: boolean, superadmin: boolean, modulos: string[]) {
+  const inmobiliaria = modulos.includes("inmobiliaria");
   return [
     ...(esAdmin
       ? [
           { href: "/admin/configuracion", label: "Configuración", Icono: Settings },
-          { href: "/admin/asesores", label: "Asesores", Icono: Contact },
+          ...(inmobiliaria ? [{ href: "/admin/asesores", label: "Asesores", Icono: Contact }] : []),
           { href: "/admin/usuarios", label: "Usuarios", Icono: Users },
         ]
       : []),
-    { href: "/admin/estadisticas", label: "Estadísticas", Icono: ChartColumn },
+    ...(inmobiliaria ? [{ href: "/admin/estadisticas", label: "Estadísticas", Icono: ChartColumn }] : []),
     { href: "/admin/ayuda", label: "Ayuda", Icono: CircleHelp },
     ...(superadmin ? [{ href: "/admin/plataforma", label: "Plataforma", Icono: Building2 }] : []),
   ];
@@ -53,10 +59,11 @@ function BotonSalir({ className }: { className?: string }) {
   );
 }
 
-export function NavPanel({ agencia, agencias, email, esAdmin, superadmin, urlSitio }: Props) {
+export function NavPanel({ agencia, agencias, email, esAdmin, superadmin, modulos, urlSitio }: Props) {
   const pathname = usePathname();
   const masRef = useRef<HTMLDialogElement>(null);
-  const todos = [...PRINCIPALES, ...secundarios(esAdmin, superadmin)];
+  const PRINCIPALES = principales(modulos);
+  const todos = [...PRINCIPALES, ...secundarios(esAdmin, superadmin, modulos)];
 
   const link = (item: (typeof todos)[number], extra?: string) => (
     <Link
@@ -139,7 +146,7 @@ export function NavPanel({ agencia, agencias, email, esAdmin, superadmin, urlSit
         </div>
         <SelectorAgencia agencias={agencias} activa={agencia.id} className="mb-2" />
         <nav aria-label="Más opciones" className="flex flex-col gap-1" onClick={() => masRef.current?.close()}>
-          {secundarios(esAdmin, superadmin).map((item) => link(item, "text-lg"))}
+          {secundarios(esAdmin, superadmin, modulos).map((item) => link(item, "text-lg"))}
         </nav>
         <div className="mt-2 border-t border-border pt-2">
           <BotonSalir className="text-lg" />

@@ -2,7 +2,7 @@
 
 Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
-**Próximo paso:** revisión del usuario en producción de la etapa 15. Para el primer cliente real: brief con la skill web-inmobiliaria-cliente (docs/clientes/{slug}/). Pendientes del usuario: dominio de la plataforma (SETUP-CUENTAS paso 6) y Resend (paso 7).
+**Próximo paso:** rama `udevelop-demo` (módulo desarrolladora, NO unir a `main` sin OK del usuario). Seguir por el primer bloque sin tildar de la etapa 16.
 
 **Cómo verificar:** `npm run typecheck`, `npm run lint`, `npm test` (unitarios + base con PGlite), `npm run build`, `npm run test:e2e` (Playwright; con el build hecho).
 
@@ -73,6 +73,12 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
   - [x] Panel: sección Asesores, estado y asesor en cada propiedad, ambiente en cada foto, switch del 360, matrícula y horarios, "No contar mis visitas", resumen del lead para el asesor.
   - [x] `npm run tema -- <subdominio>` y seed con asesores. Typecheck, lint, build y 58 unitarios OK.
   - [x] Migración aplicada en la base real (2026-11-10), demo recargada con asesores y fotos rotuladas, E2E 48/48 en local (6 de varios dominios se saltean) y merge a `main`.
+
+- [~] 16. uDevelop: módulo desarrolladora (rama `udevelop-demo`, 2026-11-16). Reglas del usuario: una sola base (no hay clientes reales), migraciones solo aditivas, sin tests nuevos salvo permisos, no tocar "Emprendimientos", no renombrar nada.
+  - [x] Bloque 1 – Datos: migración 0012 (módulos por inmobiliaria, proyectos, pisos, tipologías, ambientes, unidades, polígonos en porcentajes, columnas de seguimiento y `leads.unit_id`) aplicada en la base real; 5 tests de permisos en PGlite; tipos regenerados; menú del panel según módulo; `npm run seed:desarrolladora` (tenant `desarrollos-demo`, Edificio Mirador, 23 unidades).
+  - [ ] Bloque 2 – Web del comprador: fachada → planta → unidad → ambientes.
+  - [ ] Bloque 3 – Leads: "Pedir información", eventos nuevos y puntaje.
+  - [ ] Bloque 4 – Panel mínimo: unidades con cambio de estado, reemplazo de imágenes y marcador de polígonos.
 
 ## Pendientes técnicos
 

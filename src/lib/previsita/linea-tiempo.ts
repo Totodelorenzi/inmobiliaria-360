@@ -8,6 +8,10 @@ export type EventoHistorial = {
   propiedad: string | null;
   escena: string | null;
   plano: string | null;
+  /** Módulo desarrolladora: piso, unidad (código) y ambiente del render. */
+  piso?: string | null;
+  unidad?: string | null;
+  ambiente?: string | null;
   meta: unknown;
 };
 
@@ -47,11 +51,19 @@ function texto(e: EventoHistorial, repeticiones: number, ms: number) {
     case "whatsapp_click":
       return "Tocó “Consultar por WhatsApp”";
     case "form_submit":
-      return "Dejó una consulta";
+      return e.unidad ? `Pidió información de la unidad ${e.unidad}` : "Dejó una consulta";
     case "visit_request":
       return `Pidió visita presencial${en}`;
     case "share":
       return "Compartió la propiedad";
+    case "floor_view":
+      return `Entró a ${e.piso?.toLowerCase() ?? "un piso"}`;
+    case "unit_view":
+      return `Vio la unidad ${e.unidad ?? ""}`.trim();
+    case "rooms_open":
+      return `Abrió los ambientes de la unidad ${e.unidad ?? ""}`.trim();
+    case "room_view":
+      return `Miró el render de ${e.ambiente?.toLowerCase() ?? "un ambiente"}${tiempo}`;
   }
 }
 
@@ -73,9 +85,9 @@ export function lineaDeTiempo(eventos: EventoHistorial[]): Visita[] {
     .map(({ eventos: lista }) => {
       const items: (ItemTiempo & { clave: string; repeticiones: number; ms: number; base: EventoHistorial })[] = [];
       for (const e of lista) {
-        const clave = `${e.tipo}:${e.escena ?? ""}:${e.plano ?? ""}`;
+        const clave = `${e.tipo}:${e.escena ?? ""}:${e.plano ?? ""}:${e.unidad ?? ""}:${e.ambiente ?? ""}`;
         const previo = items.at(-1);
-        const agrupable = e.tipo === "photo_view" || e.tipo === "scene_view" || e.tipo === "plan_view";
+        const agrupable = e.tipo === "photo_view" || e.tipo === "scene_view" || e.tipo === "plan_view" || e.tipo === "room_view";
         if (previo && agrupable && previo.clave === clave) {
           previo.repeticiones++;
           previo.ms += e.duracion_ms ?? 0;

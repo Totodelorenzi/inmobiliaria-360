@@ -574,3 +574,90 @@ describe("webs de clientes", () => {
     await assert.rejects(como(db, "adminA", (tx) => tx.query("update property_photos set ambiente = '  ' where id = $1", [ID.fotoPubA1])), /check constraint/);
   });
 });
+
+describe("desarrolladora", () => {
+  const P = {
+    pubA: "a0000000-0000-4000-8000-00000000000a",
+    borradorB: "a0000000-0000-4000-8000-00000000000b",
+    pisoA: "a1000000-0000-4000-8000-00000000000a",
+    pisoB: "a1000000-0000-4000-8000-00000000000b",
+    tipoA: "a2000000-0000-4000-8000-00000000000a",
+    tipoB: "a2000000-0000-4000-8000-00000000000b",
+    unidadA: "a3000000-0000-4000-8000-00000000000a",
+    unidadB: "a3000000-0000-4000-8000-00000000000b",
+  };
+  const TABLAS = ["projects", "project_floors", "unit_types", "unit_type_rooms", "units"];
+
+  before(async () => {
+    await db.exec(`
+      insert into public.projects (id, agency_id, nombre, slug, publicado) values
+        ('${P.pubA}', '${ID.agenciaA}', 'Edificio A', 'edificio-a', true),
+        ('${P.borradorB}', '${ID.agenciaB}', 'Edificio B', 'edificio-b', false);
+      insert into public.project_floors (id, project_id, numero, nombre, poligono) values
+        ('${P.pisoA}', '${P.pubA}', 1, 'Piso 1', '[[10,10],[90,10],[90,20],[10,20]]'),
+        ('${P.pisoB}', '${P.borradorB}', 1, 'Piso 1', null);
+      insert into public.unit_types (id, project_id, nombre) values
+        ('${P.tipoA}', '${P.pubA}', 'Tipo A'), ('${P.tipoB}', '${P.borradorB}', 'Tipo B');
+      insert into public.unit_type_rooms (unit_type_id, nombre) values ('${P.tipoA}', 'Living'), ('${P.tipoB}', 'Living');
+      insert into public.units (id, project_id, floor_id, unit_type_id, codigo) values
+        ('${P.unidadA}', '${P.pubA}', '${P.pisoA}', '${P.tipoA}', '1A'),
+        ('${P.unidadB}', '${P.borradorB}', '${P.pisoB}', '${P.tipoB}', '1A');
+    `);
+  });
+
+  test("lo existente queda con el módulo inmobiliaria y el admin no lo cambia", async () => {
+    await como(db, "anon", async (tx) => {
+      const a = await tx.query<{ m: string[] }>("select distinct modulos as m from agencies");
+      assert.deepEqual(a.rows, [{ m: ["inmobiliaria"] }]);
+    });
+    await assert.rejects(como(db, "adminA", (tx) => tx.query(`update agencies set modulos = '{desarrolladora}' where id = $1`, [ID.agenciaA])), RLS);
+  });
+
+  test("el público lee solo lo de proyectos publicados y no escribe", async () => {
+    await como(db, "anon", async (tx) => {
+      for (const tabla of TABLAS) assert.equal(await contar(tx, `select * from ${tabla}`), 1, tabla);
+    });
+    await assert.rejects(como(db, "anon", (tx) => tx.query("update units set estado = 'vendida'")), RLS);
+    await assert.rejects(como(db, "anon", (tx) => tx.query("delete from projects")), RLS);
+  });
+
+  test("un tenant ve su borrador pero no el de otro", async () => {
+    await como(db, "adminB", async (tx) => {
+      for (const tabla of TABLAS) assert.equal(await contar(tx, `select * from ${tabla}`), 2, tabla);
+    });
+    await como(db, "agenteA", async (tx) => {
+      for (const tabla of TABLAS) assert.equal(await contar(tx, `select * from ${tabla}`), 1, tabla);
+    });
+  });
+
+  test("cada tenant edita lo suyo y nada de otro", async () => {
+    await como(db, "agenteA", async (tx) => {
+      assert.equal((await tx.query("update units set estado = 'reservada' where id = $1", [P.unidadA])).affectedRows, 1);
+      assert.equal((await tx.query(`update project_floors set poligono = '[[0,0],[50,0],[50,50]]' where id = $1`, [P.pisoA])).affectedRows, 1);
+      assert.equal((await tx.query("update unit_types set maqueta_url = 'https://x/m.webp' where id = $1", [P.tipoA])).affectedRows, 1);
+    });
+    await como(db, "adminB", async (tx) => {
+      // El proyecto de A está publicado: B lo ve, pero sus cambios no tocan ninguna fila.
+      assert.equal((await tx.query("update units set estado = 'vendida' where id = $1", [P.unidadA])).affectedRows, 0);
+      assert.equal((await tx.query("update projects set nombre = 'hack' where id = $1", [P.pubA])).affectedRows, 0);
+      assert.equal((await tx.query("update project_floors set poligono = null where id = $1", [P.pisoA])).affectedRows, 0);
+      assert.equal((await tx.query("update unit_type_rooms set nombre = 'hack' where unit_type_id = $1", [P.tipoA])).affectedRows, 0);
+      assert.equal((await tx.query("delete from unit_types where id = $1", [P.tipoA])).affectedRows, 0);
+    });
+    await assert.rejects(
+      como(db, "adminB", (tx) => tx.query("insert into units (project_id, floor_id, unit_type_id, codigo) values ($1, $2, $3, '9Z')", [P.pubA, P.pisoA, P.tipoA])),
+      RLS,
+    );
+    await assert.rejects(como(db, "adminB", (tx) => tx.query("insert into projects (agency_id, nombre, slug) values ($1, 'x', 'x')", [ID.agenciaA])), RLS);
+  });
+
+  test("una unidad no mezcla proyectos y los polígonos van en porcentajes", async () => {
+    await assert.rejects(
+      como(db, "servicio", (tx) => tx.query("insert into units (project_id, floor_id, unit_type_id, codigo) values ($1, $2, $3, '2A')", [P.pubA, P.pisoA, P.tipoB])),
+      /mismo proyecto/,
+    );
+    for (const malo of ["[[0,0],[10,10]]", "[[0,0],[10,10],[120,5]]", '{"a":1}']) {
+      await assert.rejects(como(db, "servicio", (tx) => tx.query("update units set poligono = $1 where id = $2", [malo, P.unidadA])), /check constraint/);
+    }
+  });
+});
