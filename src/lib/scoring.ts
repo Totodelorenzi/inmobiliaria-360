@@ -26,6 +26,13 @@ export const PESOS = {
   formaPago: { contado: 10, credito_hipotecario: 8, financiacion: 7, no_sabe: 0 },
   plazo: { inmediato: 12, "1_3_meses": 9, "3_6_meses": 4, mas_6_meses: 0 },
   noNecesitaVender: 4,
+  // Módulo desarrolladora (edificio): solo suman cuando hay eventos del edificio.
+  porUnidad: 4,
+  maxUnidades: 12,
+  abrioAmbientes: 8,
+  porRender: 1.5,
+  maxRenders: 9,
+  pidioInfoUnidad: 15,
 } as const;
 
 /** Desde cuántos puntos es tibio o caliente. */
@@ -37,6 +44,9 @@ export type EventoPuntaje = {
   plan_id: string | null;
   duracion_ms: number | null;
   sesion_id: string | null;
+  project_id?: string | null;
+  unit_id?: string | null;
+  room_id?: string | null;
 };
 
 export type Calificacion = {
@@ -58,6 +68,11 @@ export type Resumen = {
   formulario: boolean;
   compartio: boolean;
   pidioVisita: boolean;
+  /** Edificio: unidades distintas que vio, si abrió los ambientes, renders distintos y si pidió información de una unidad. */
+  unidades?: number;
+  abrioAmbientes?: boolean;
+  renders?: number;
+  pidioInfoUnidad?: boolean;
 };
 
 export type DetallePuntaje = { clave: string; texto: string; puntos: number };
@@ -71,6 +86,8 @@ export function resumirEventos(eventos: EventoPuntaje[]): Resumen {
   const toursIniciados = new Set<string>();
   const toursCompletos = new Set<string>();
   const planos = new Set<string>();
+  const unidades = new Set<string>();
+  const renders = new Set<string>();
   const r: Resumen = {
     propiedades: 0,
     visitas: 0,
@@ -87,10 +104,12 @@ export function resumirEventos(eventos: EventoPuntaje[]): Resumen {
   };
   let ms = 0;
   for (const e of eventos) {
-    if (e.property_id && e.sesion_id) {
-      const set = sesionesPorPropiedad.get(e.property_id) ?? new Set<string>();
+    // Las visitas repetidas cuentan igual para una propiedad que para un proyecto.
+    const destino = e.property_id ?? e.project_id;
+    if (destino && e.sesion_id) {
+      const set = sesionesPorPropiedad.get(destino) ?? new Set<string>();
       set.add(e.sesion_id);
-      sesionesPorPropiedad.set(e.property_id, set);
+      sesionesPorPropiedad.set(destino, set);
     }
     switch (e.tipo) {
       case "view_property":
@@ -118,6 +137,17 @@ export function resumirEventos(eventos: EventoPuntaje[]): Resumen {
         break;
       case "form_submit":
         r.formulario = true;
+        if (e.unit_id) r.pidioInfoUnidad = true;
+        break;
+      case "unit_view":
+        if (e.unit_id) unidades.add(e.unit_id);
+        break;
+      case "rooms_open":
+        r.abrioAmbientes = true;
+        break;
+      case "room_view":
+        ms += e.duracion_ms ?? 0;
+        if (e.room_id) renders.add(e.room_id);
         break;
       case "visit_request":
         r.pidioVisita = true;
@@ -133,6 +163,8 @@ export function resumirEventos(eventos: EventoPuntaje[]): Resumen {
   r.toursCompletos = toursCompletos.size;
   r.segundos = Math.round(ms / 1000);
   r.planos = planos.size;
+  if (unidades.size > 0) r.unidades = unidades.size;
+  if (renders.size > 0) r.renders = renders.size;
   return r;
 }
 
@@ -166,6 +198,10 @@ export function calcularPuntaje(r: Resumen, calificacion: Calificacion = null, e
   if (r.puntosPlano > 0) sumar("puntos", `Tocó ${r.puntosPlano} ambientes del plano`, Math.min(P.maxPuntosPlano, r.puntosPlano * P.porPuntoPlano));
   if (r.visitas > 1) sumar("visitas", `${r.visitas} visitas`, Math.min(P.maxVisitasExtra, (r.visitas - 1) * P.porVisitaExtra));
   if (r.fotos > 0) sumar("fotos", r.fotos === 1 ? "Vio 1 foto" : `Vio ${r.fotos} fotos`, Math.min(P.maxFotos, r.fotos * P.porFoto));
+  if (r.unidades) sumar("unidades", r.unidades === 1 ? "Vio 1 unidad" : `Vio ${r.unidades} unidades`, Math.min(P.maxUnidades, r.unidades * P.porUnidad));
+  if (r.abrioAmbientes) sumar("ambientes", "Abrió los ambientes", P.abrioAmbientes);
+  if (r.renders) sumar("renders", r.renders === 1 ? "Vio 1 render" : `Vio ${r.renders} renders`, Math.min(P.maxRenders, r.renders * P.porRender));
+  if (r.pidioInfoUnidad) sumar("info", "Pidió información de una unidad", P.pidioInfoUnidad);
   if (r.pidioVisita) sumar("visita", "Pidió visita presencial", P.pidioVisita);
   if (r.formulario) sumar("datos", "Dejó sus datos", P.dejoDatos);
   if (r.whatsapp) sumar("whatsapp", "Escribió por WhatsApp", P.whatsapp);

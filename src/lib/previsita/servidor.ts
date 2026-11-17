@@ -124,11 +124,46 @@ async function destinosValidos(db: Db, agencyId: string): Promise<Destinos> {
   return destinos;
 }
 
-/** Inserta los eventos que apuntan a propiedades, escenas y planos reales de la inmobiliaria. */
+type DestinosProyecto = Map<string, { pisos: Set<string>; unidades: Set<string>; ambientes: Set<string> }>;
+const cacheProyectos = new Map<string, { vence: number; destinos: DestinosProyecto }>();
+
+/** Proyectos publicados de la inmobiliaria con sus pisos, unidades y ambientes (60 s en memoria). */
+async function proyectosValidos(db: Db, agencyId: string): Promise<DestinosProyecto> {
+  const enCache = cacheProyectos.get(agencyId);
+  if (enCache && enCache.vence > Date.now()) return enCache.destinos;
+  const { data, error } = await db
+    .from("projects")
+    .select("id, pisos:project_floors(id), unidades:units(id), tipologias:unit_types(ambientes:unit_type_rooms(id))")
+    .eq("agency_id", agencyId)
+    .eq("publicado", true);
+  if (error) fallar("No se pudieron validar los eventos", error);
+  const destinos: DestinosProyecto = new Map(
+    data.map((p) => [
+      p.id,
+      {
+        pisos: new Set(p.pisos.map((x) => x.id)),
+        unidades: new Set(p.unidades.map((x) => x.id)),
+        ambientes: new Set(p.tipologias.flatMap((t) => t.ambientes.map((x) => x.id))),
+      },
+    ]),
+  );
+  cacheProyectos.set(agencyId, { vence: Date.now() + 60_000, destinos });
+  return destinos;
+}
+
+/** Inserta los eventos que apuntan a propiedades, escenas, planos y proyectos reales de la inmobiliaria. */
 export async function registrarEventos(db: Db, v: Visitante, eventos: EventoCliente[]) {
   const destinos = await destinosValidos(db, v.agency_id);
+  // Solo se consultan los proyectos si el lote trae eventos del edificio.
+  const proyectos = eventos.some((e) => e.projectId) ? await proyectosValidos(db, v.agency_id) : null;
   const filas = eventos
     .filter((e) => {
+      if (e.projectId) {
+        const p = proyectos?.get(e.projectId);
+        if (!p || e.propertyId) return false;
+        return (!e.floorId || p.pisos.has(e.floorId)) && (!e.unitId || p.unidades.has(e.unitId)) && (!e.roomId || p.ambientes.has(e.roomId));
+      }
+      if (e.floorId || e.unitId || e.roomId) return false;
       if (!e.propertyId) return true;
       const d = destinos.get(e.propertyId);
       return Boolean(d) && (!e.sceneId || d!.escenas.has(e.sceneId)) && (!e.planId || d!.planos.has(e.planId));
@@ -140,6 +175,10 @@ export async function registrarEventos(db: Db, v: Visitante, eventos: EventoClie
       tipo: e.tipo,
       scene_id: e.sceneId ?? null,
       plan_id: e.planId ?? null,
+      project_id: e.projectId ?? null,
+      floor_id: e.floorId ?? null,
+      unit_id: e.unitId ?? null,
+      room_id: e.roomId ?? null,
       duracion_ms: e.duracionMs ?? null,
       sesion_id: e.sesion,
       meta: e.meta ?? {},
@@ -153,8 +192,16 @@ export async function registrarEventos(db: Db, v: Visitante, eventos: EventoClie
 }
 
 /** Evento generado por el servidor (formulario, pedido de visita): sin sesión del navegador. */
-export async function registrarEventoServidor(db: Db, v: Visitante, tipo: TipoEvento, propertyId: string | null) {
-  await db.from("visitor_events").insert({ visitor_id: v.id, agency_id: v.agency_id, property_id: propertyId, tipo });
+export async function registrarEventoServidor(
+  db: Db,
+  v: Visitante,
+  tipo: TipoEvento,
+  propertyId: string | null,
+  unidad?: { projectId: string; unitId: string },
+) {
+  await db
+    .from("visitor_events")
+    .insert({ visitor_id: v.id, agency_id: v.agency_id, property_id: propertyId, tipo, project_id: unidad?.projectId ?? null, unit_id: unidad?.unitId ?? null });
 }
 
 // ---------------------------------------------------------------------------
@@ -169,9 +216,17 @@ export type DatosContacto = { nombre?: string | null; telefono?: string | null; 
 /** Crea o actualiza el lead del visitante (uno por visitante e inmobiliaria). Todo su historial queda asociado. */
 export async function guardarLead(
   db: Db,
-  opciones: { visitante: Visitante; propertyId: string | null; origen: Enums<"origen_lead">; datos?: DatosContacto; consentimiento?: boolean },
+  opciones: {
+    visitante: Visitante;
+    propertyId: string | null;
+    /** Módulo desarrolladora: la unidad por la que pide información (queda la última). */
+    unitId?: string;
+    origen: Enums<"origen_lead">;
+    datos?: DatosContacto;
+    consentimiento?: boolean;
+  },
 ): Promise<Tables<"leads">> {
-  const { visitante: v, propertyId, origen, datos = {}, consentimiento } = opciones;
+  const { visitante: v, propertyId, unitId, origen, datos = {}, consentimiento } = opciones;
   const ahora = new Date().toISOString();
   const contacto = Object.fromEntries(Object.entries(datos).filter(([, valor]) => typeof valor === "string" && valor.trim() !== "")) as DatosContacto;
 
@@ -185,6 +240,7 @@ export async function guardarLead(
           ...contacto,
           origen: origenFinal,
           property_id: propertyId ?? existente.property_id,
+          ...(unitId ? { unit_id: unitId } : {}),
           ultima_actividad: ahora,
           ...(consentimiento ? { consentimiento_at: ahora } : {}),
         })
@@ -201,6 +257,7 @@ export async function guardarLead(
         visitor_id: v.id,
         codigo_ref: v.codigo_ref,
         property_id: propertyId,
+        unit_id: unitId ?? null,
         origen,
         ...contacto,
         ultima_actividad: ahora,
@@ -221,7 +278,7 @@ export async function recalcularLead(db: Db, lead: Pick<Tables<"leads">, "id" | 
     lead.visitor_id
       ? db
           .from("visitor_events")
-          .select("tipo, property_id, plan_id, duracion_ms, sesion_id")
+          .select("tipo, property_id, plan_id, duracion_ms, sesion_id, project_id, unit_id, room_id")
           .eq("visitor_id", lead.visitor_id)
           .order("created_at")
           .limit(5000)

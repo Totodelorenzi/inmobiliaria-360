@@ -104,7 +104,7 @@ export function SiteFooter({ agencia }: { agencia: Agencia }) {
 }
 
 /** Única mención de la plataforma que ve el comprador. */
-function CreditoPlataforma() {
+export function CreditoPlataforma() {
   const url = urlPlataforma();
   const texto = `Hecho con ${PLATAFORMA.nombre}`;
   return url ? (

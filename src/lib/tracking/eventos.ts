@@ -12,6 +12,11 @@ export type EventoCliente = {
   propertyId?: string;
   sceneId?: string;
   planId?: string;
+  /** Módulo desarrolladora: proyecto, piso, unidad y ambiente (render). */
+  projectId?: string;
+  floorId?: string;
+  unitId?: string;
+  roomId?: string;
   duracionMs?: number;
   meta?: Record<string, string | number | boolean>;
   /** Momento del evento en el navegador (ms). */
@@ -29,6 +34,9 @@ const esObjeto = (v: unknown): v is Record<string, unknown> => typeof v === "obj
 
 /** Eventos que siempre son sobre una propiedad. */
 const REQUIERE_PROPIEDAD: TipoEvento[] = ["view_property", "photo_view", "tour_start", "scene_view", "tour_complete", "plan_view", "plan_point_click"];
+
+/** Eventos del edificio: siempre sobre un proyecto, y cada uno con su piso, unidad o ambiente. */
+const REQUIERE_PROYECTO: TipoEvento[] = ["floor_view", "unit_view", "rooms_open", "room_view"];
 
 function validarMeta(meta: unknown): EventoCliente["meta"] | null | undefined {
   if (meta === undefined) return undefined;
@@ -56,6 +64,13 @@ function validarEvento(e: unknown, ahora: number): EventoCliente | null {
   if (e.planId !== undefined && !esUuid(e.planId)) return null;
   if (tipo === "scene_view" && !e.sceneId) return null;
   if ((tipo === "plan_view" || tipo === "plan_point_click") && !e.planId) return null;
+  for (const campo of ["projectId", "floorId", "unitId", "roomId"] as const) {
+    if (e[campo] !== undefined && !esUuid(e[campo])) return null;
+  }
+  if (REQUIERE_PROYECTO.includes(tipo) && !e.projectId) return null;
+  if (tipo === "floor_view" && !e.floorId) return null;
+  if ((tipo === "unit_view" || tipo === "rooms_open" || tipo === "room_view") && !e.unitId) return null;
+  if (tipo === "room_view" && !e.roomId) return null;
   if (e.duracionMs !== undefined && !(Number.isInteger(e.duracionMs) && (e.duracionMs as number) >= 0 && (e.duracionMs as number) <= MAX_DURACION_MS)) {
     return null;
   }
@@ -70,6 +85,10 @@ function validarEvento(e: unknown, ahora: number): EventoCliente | null {
     ...(e.propertyId ? { propertyId: e.propertyId as string } : {}),
     ...(e.sceneId ? { sceneId: e.sceneId as string } : {}),
     ...(e.planId ? { planId: e.planId as string } : {}),
+    ...(e.projectId ? { projectId: e.projectId as string } : {}),
+    ...(e.floorId ? { floorId: e.floorId as string } : {}),
+    ...(e.unitId ? { unitId: e.unitId as string } : {}),
+    ...(e.roomId ? { roomId: e.roomId as string } : {}),
     ...(e.duracionMs !== undefined ? { duracionMs: e.duracionMs as number } : {}),
     ...(meta ? { meta } : {}),
   };

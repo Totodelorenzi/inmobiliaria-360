@@ -1,8 +1,11 @@
 import { Rotate3d } from "lucide-react";
+import { redirect } from "next/navigation";
 import { JsonLd } from "@/components/sitio/json-ld";
 import { BarraOperaciones, Buscador, SeccionPropiedades } from "@/components/sitio/secciones";
 import { Container, EmptyState } from "@/components/ui/states";
+import { getProyectos } from "@/lib/data/proyecto";
 import { getAgencia, getInicio } from "@/lib/data/sitio";
+import { rutaProyecto } from "@/lib/edificio";
 import { urlEnSitio } from "@/lib/tenancy";
 
 export const revalidate = 3600;
@@ -15,6 +18,11 @@ export function generateStaticParams() {
 export default async function Inicio({ params }: PageProps<"/s/[sitio]">) {
   const agencia = await getAgencia((await params).sitio);
   if (!agencia) return null;
+  // Una desarrolladora sin módulo inmobiliaria no tiene listados: su inicio es su proyecto.
+  if (!agencia.modulos.includes("inmobiliaria")) {
+    const [proyecto] = await getProyectos(agencia.id);
+    if (proyecto) redirect(rutaProyecto(proyecto.slug));
+  }
   const { alquiler, venta, emprendimientos, total } = await getInicio(agencia);
   const hayPropiedades = total.alquiler + total.venta + total.emprendimientos > 0;
 
