@@ -1,18 +1,21 @@
 /**
  * Demo del módulo desarrolladora: tenant "Desarrollos Demo" con el proyecto "Edificio Mirador"
- * (Olavarría): 5 pisos, 3 tipologías con sus ambientes y 23 unidades con estados mezclados.
- * Imágenes provisorias (dibujos en SVG y vistas de panorámicas CC0) y polígonos aproximados.
- *   npm run seed:desarrolladora   → crea el tenant si falta y recrea el proyecto de ejemplo
- * Solo toca ese tenant: borra y vuelve a crear su proyecto `es_demo`.
+ * (Olavarría): planta baja y 4 pisos, 3 tipologías con sus ambientes, 24 unidades con estados
+ * mezclados y 10 leads de muestra con historial.
+ * Si existe la carpeta demo-mirador/ usa esas imágenes; si no, dibujos provisorios en SVG y vistas
+ * de panorámicas CC0. Los polígonos son aproximados (se ajustan en el panel).
+ *   npm run seed:desarrolladora   → crea el tenant si falta y recrea el proyecto y su actividad
+ * Solo toca ese tenant: borra y vuelve a crear su proyecto `es_demo`, sus leads y sus visitantes.
  */
 import { randomUUID } from "node:crypto";
 import sharp from "sharp";
 import { borrarCarpetaPropiedad } from "@/lib/admin/storage";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Enums, TablesInsert } from "@/types/database";
+import { cargarActividadEdificio } from "./seed/actividad-edificio.ts";
+import { aplicarImagenesMirador, DESARROLLADORA_DEMO_ID, hayImagenesMirador } from "./seed/imagenes-mirador.ts";
 import { descargarPanorama, fotoDesdePanorama, logoPng } from "./seed/imagenes.ts";
 
-export const DESARROLLADORA_DEMO_ID = "d3a0e3a1-5b1e-4c7a-9f2e-3d6b8e1f0d22";
 const SLUG = "edificio-mirador";
 const log = (texto: string) => console.log(`• ${texto}`);
 
@@ -26,94 +29,93 @@ const rect = (x1: number, y1: number, x2: number, y2: number, ancho: number, alt
   [pct(x1, ancho), pct(y2, alto)],
 ];
 
+const PISOS = [0, 1, 2, 3, 4];
+const nombrePiso = (numero: number) => (numero === 0 ? "Planta baja" : `${numero}° piso`);
+const codigoUnidad = (numero: number, letra: string) => (numero === 0 ? `PB ${letra}` : `${numero}${letra}`);
+
 // ---------------------------------------------------------------------------
-// Fachada (1200×1500): 5 pisos de 190 px sobre la planta baja
+// Fachada (1200×1500): planta baja y 4 pisos de 200 px
 // ---------------------------------------------------------------------------
-const FACHADA = { ancho: 1200, alto: 1500, x1: 250, x2: 950, techo: 260, altoPiso: 190 };
-const yPiso = (numero: number) => FACHADA.techo + (5 - numero) * FACHADA.altoPiso;
+const FACHADA = { ancho: 1200, alto: 1500, x1: 220, x2: 980, techo: 300, altoPiso: 200 };
+const yPiso = (numero: number) => FACHADA.techo + (4 - numero) * FACHADA.altoPiso;
 
 function svgFachada() {
   const { ancho, alto, x1, x2, techo, altoPiso } = FACHADA;
-  const base = techo + 5 * altoPiso;
-  const pisos = [5, 4, 3, 2, 1]
+  const vereda = techo + 5 * altoPiso;
+  // Una ventana por unidad, del ancho proporcional a la unidad (A, B, C, D y E).
+  const ventanas = (y: number) =>
+    UBICACION.map(([a, b]) => {
+      const xa = x1 + ((a - PLANTA.x1) / (PLANTA.x2 - PLANTA.x1)) * (x2 - x1) + 14;
+      const xb = x1 + ((b - PLANTA.x1) / (PLANTA.x2 - PLANTA.x1)) * (x2 - x1) - 14;
+      return `<rect x="${xa}" y="${y + 30}" width="${xb - xa}" height="118" fill="url(#vidrio)"/>`;
+    }).join("");
+  const pisos = [4, 3, 2, 1]
     .map((n) => {
       const y = yPiso(n);
-      const ventanas = [0, 1, 2, 3]
-        .map((i) => {
-          const x = x1 + 30 + i * 165;
-          return `<rect x="${x}" y="${y + 28}" width="145" height="112" fill="url(#vidrio)"/><line x1="${x + 72}" y1="${y + 28}" x2="${x + 72}" y2="${y + 140}" stroke="#f5f5f4" stroke-width="6"/>`;
-        })
-        .join("");
-      return `${ventanas}
-      <rect x="${x1 - 14}" y="${y + 150}" width="${x2 - x1 + 28}" height="16" fill="#e7e5e4"/>
-      <rect x="${x1 - 14}" y="${y + 104}" width="${x2 - x1 + 28}" height="46" fill="#ffffff" opacity="0.35"/>
-      <line x1="${x1 - 14}" y1="${y + 104}" x2="${x2 + 14}" y2="${y + 104}" stroke="#57534e" stroke-width="5"/>`;
+      return `${ventanas(y)}
+      <rect x="${x1 - 14}" y="${y + 150}" width="${x2 - x1 + 28}" height="14" fill="#e7e5e4"/>
+      <rect x="${x1 - 14}" y="${y + 108}" width="${x2 - x1 + 28}" height="42" fill="#ffffff" opacity="0.35"/>
+      <line x1="${x1 - 14}" y1="${y + 108}" x2="${x2 + 14}" y2="${y + 108}" stroke="#57534e" stroke-width="5"/>`;
     })
     .join("");
+  const pb = yPiso(0);
+  const [hallA, hallB] = [UBICACION[2][0], UBICACION[2][1]].map((x) => x1 + ((x - PLANTA.x1) / (PLANTA.x2 - PLANTA.x1)) * (x2 - x1));
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${ancho}" height="${alto}" viewBox="0 0 ${ancho} ${alto}">
   <defs>
     <linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6bb6ea"/><stop offset="1" stop-color="#e6f4fd"/></linearGradient>
     <linearGradient id="vidrio" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a9d0ea"/><stop offset="1" stop-color="#4b7ea8"/></linearGradient>
   </defs>
   <rect width="${ancho}" height="${alto}" fill="url(#cielo)"/>
-  <circle cx="1010" cy="170" r="70" fill="#fff7cc" opacity="0.9"/>
-  <rect x="0" y="${base + 170}" width="${ancho}" height="${alto - base - 170}" fill="#9ca3af"/>
-  <rect x="0" y="${base + 158}" width="${ancho}" height="22" fill="#d1d5db"/>
-  <rect x="${x1}" y="${techo}" width="${x2 - x1}" height="${base - techo + 170}" fill="#f5f5f4"/>
-  <rect x="${x2}" y="${techo}" width="46" height="${base - techo + 170}" fill="#d6d3d1"/>
+  <circle cx="1040" cy="170" r="70" fill="#fff7cc" opacity="0.9"/>
+  <rect x="0" y="${vereda}" width="${ancho}" height="${alto - vereda}" fill="#9ca3af"/>
+  <rect x="0" y="${vereda - 12}" width="${ancho}" height="22" fill="#d1d5db"/>
+  <rect x="${x1}" y="${techo}" width="${x2 - x1}" height="${vereda - techo}" fill="#f5f5f4"/>
+  <rect x="${x2}" y="${techo}" width="46" height="${vereda - techo}" fill="#d6d3d1"/>
   ${pisos}
+  ${ventanas(pb).replace(/height="118"/g, 'height="150"')}
+  <rect x="${hallA + 10}" y="${pb + 20}" width="${hallB - hallA - 20}" height="${altoPiso - 20}" fill="#292524"/>
+  <rect x="${hallA + 40}" y="${pb + 50}" width="${hallB - hallA - 80}" height="${altoPiso - 50}" fill="url(#vidrio)" opacity="0.6"/>
   <rect x="${x1 - 20}" y="${techo - 34}" width="${x2 - x1 + 86}" height="38" fill="#44403c"/>
-  <rect x="${x1 + 40}" y="${base + 30}" width="230" height="140" fill="url(#vidrio)"/>
-  <rect x="${x2 - 270}" y="${base + 30}" width="230" height="140" fill="url(#vidrio)"/>
-  <rect x="${(x1 + x2) / 2 - 60}" y="${base + 40}" width="120" height="130" fill="#292524"/>
-  ${[110, 1090].map((x) => `<rect x="${x - 10}" y="${base + 20}" width="20" height="150" fill="#78350f"/><circle cx="${x}" cy="${base - 20}" r="95" fill="#4d7c0f"/><circle cx="${x - 45}" cy="${base + 20}" r="62" fill="#65a30d"/>`).join("")}
+  ${[110, 1110].map((x) => `<rect x="${x - 10}" y="${vereda - 150}" width="20" height="150" fill="#78350f"/><circle cx="${x}" cy="${vereda - 190}" r="80" fill="#4d7c0f"/><circle cx="${x - 40}" cy="${vereda - 150}" r="55" fill="#65a30d"/>`).join("")}
 </svg>`;
 }
 
 // ---------------------------------------------------------------------------
-// Planta de piso (1200×1200): frente abajo, contrafrente arriba, palier al medio
+// Plantas (1200×1200): pasillo y escalera atrás, las 5 unidades al frente (abajo).
+// Ancho proporcional a los metros: A y B 1 dormitorio, C y D 2 dormitorios, E 3 en esquina.
 // ---------------------------------------------------------------------------
-const PLANTA = { lado: 1200, x1: 80, x2: 1120, y1: 140, y2: 1060, palier1: 560, palier2: 640 };
+const PLANTA = { lado: 1200, x1: 80, x2: 1120, y1: 140, y2: 1060, pasillo: 380 };
+const LETRAS = ["A", "B", "C", "D", "E"] as const;
+const UBICACION: [number, number][] = [
+  [80, 218],
+  [218, 356],
+  [356, 570],
+  [570, 784],
+  [784, 1120],
+];
+const cajaUnidad = (i: number): [number, number, number, number] => [UBICACION[i][0], PLANTA.pasillo, UBICACION[i][1], PLANTA.y2];
 
-type Hueco = { letra: string; caja: [number, number, number, number]; orientacion: string };
-function huecos(cantidad: 4 | 5): Hueco[] {
-  const { x1, x2, y1, y2, palier1, palier2 } = PLANTA;
-  const medio = (x1 + x2) / 2;
-  const frente: Hueco[] = [
-    { letra: "A", caja: [x1, palier2, medio, y2], orientacion: "Noroeste" },
-    { letra: "B", caja: [medio, palier2, x2, y2], orientacion: "Noreste" },
-  ];
-  const fondo: Hueco[] =
-    cantidad === 5
-      ? [
-          { letra: "C", caja: [x1, y1, 460, palier1], orientacion: "Suroeste" },
-          { letra: "D", caja: [460, y1, 740, palier1], orientacion: "Sur" },
-          { letra: "E", caja: [740, y1, x2, palier1], orientacion: "Sureste" },
-        ]
-      : [
-          { letra: "C", caja: [x1, y1, medio, palier1], orientacion: "Suroeste" },
-          { letra: "D", caja: [medio, y1, x2, palier1], orientacion: "Sureste" },
-        ];
-  return [...frente, ...fondo];
-}
-
-function svgPlanta(cantidad: 4 | 5) {
-  const { lado, x1, x2, y1, y2, palier1, palier2 } = PLANTA;
-  const cajas = huecos(cantidad)
-    .map(({ caja: [a, b, c, d] }) => `<rect x="${a}" y="${b}" width="${c - a}" height="${d - b}" fill="#ffffff" stroke="#1f2937" stroke-width="10"/>`)
-    .join("");
+function svgPlanta(baja: boolean) {
+  const { lado, x1, x2, y1, y2, pasillo } = PLANTA;
+  const cajas = LETRAS.map((letra, i) => {
+    const [a, b, c, d] = cajaUnidad(i);
+    if (baja && letra === "C") {
+      return `<rect x="${a}" y="${b}" width="${c - a}" height="${d - b}" fill="#e2e8f0" stroke="#1f2937" stroke-width="10"/>
+      <text x="${(a + c) / 2}" y="${(b + d) / 2}" font-family="Arial, Helvetica, sans-serif" font-size="40" fill="#475569" text-anchor="middle">Hall</text>`;
+    }
+    return `<rect x="${a}" y="${b}" width="${c - a}" height="${d - b}" fill="#ffffff" stroke="#1f2937" stroke-width="10"/>`;
+  }).join("");
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${lado}" height="${lado}" viewBox="0 0 ${lado} ${lado}">
   <rect width="${lado}" height="${lado}" fill="#f8fafc"/>
-  <rect x="${x1}" y="${palier1}" width="${x2 - x1}" height="${palier2 - palier1}" fill="#e2e8f0"/>
+  <rect x="${x1}" y="${y1}" width="${x2 - x1}" height="${pasillo - y1}" fill="#e2e8f0"/>
+  <rect x="420" y="${y1 + 20}" width="140" height="180" fill="#94a3b8"/>
+  <path d="M432 ${y1 + 40} H548 M432 ${y1 + 70} H548 M432 ${y1 + 100} H548 M432 ${y1 + 130} H548 M432 ${y1 + 160} H548" stroke="#f8fafc" stroke-width="5"/>
+  <rect x="600" y="${y1 + 20}" width="120" height="120" fill="#64748b"/>
   ${cajas}
-  <rect x="540" y="${palier1 + 8}" width="120" height="${palier2 - palier1 - 16}" fill="#94a3b8"/>
-  <path d="M552 ${palier1 + 16} H648 M552 ${palier1 + 32} H648 M552 ${palier1 + 48} H648 M552 ${palier1 + 64} H648" stroke="#f8fafc" stroke-width="4"/>
   <rect x="${x1}" y="${y1}" width="${x2 - x1}" height="${y2 - y1}" fill="none" stroke="#1f2937" stroke-width="16"/>
-  <text x="${lado / 2}" y="${y2 + 70}" font-family="Arial, Helvetica, sans-serif" font-size="34" fill="#64748b" text-anchor="middle">Frente · calle</text>
-  <text x="${lado / 2}" y="${y1 - 40}" font-family="Arial, Helvetica, sans-serif" font-size="34" fill="#64748b" text-anchor="middle">Contrafrente</text>
+  <text x="${lado / 2}" y="${y2 + 70}" font-family="Arial, Helvetica, sans-serif" font-size="34" fill="#64748b" text-anchor="middle">Frente · Norte</text>
 </svg>`;
 }
-
 // ---------------------------------------------------------------------------
 // Maquetas vistas desde arriba (1200×900, sin textos: se pueden mostrar espejadas)
 // ---------------------------------------------------------------------------
@@ -140,111 +142,109 @@ function svgMaqueta(ambientes: Ambiente[]) {
 </svg>`;
 }
 
+const planta = (x: number, y: number) => `<circle cx="${x}" cy="${y}" r="46" fill="#4d7c0f"/><circle cx="${x + 30}" cy="${y - 20}" r="30" fill="#65a30d"/>`;
+const reposera = (x: number, y: number) => `<rect x="${x}" y="${y}" width="80" height="190" rx="14" fill="#f8fafc" stroke="#94a3b8" stroke-width="4"/>`;
+
 type Render = { nombre: string; pano: string; yaw: number };
 type Tipologia = Pick<TablesInsert<"unit_types">, "nombre" | "ambientes" | "dormitorios" | "banos"> & {
-  clave: "mono" | "dos" | "tres";
+  clave: "t1" | "t2" | "t3";
   maqueta: Ambiente[];
   renders: Render[];
   cubierta: number;
   total: number;
-  precio: number;
 };
 
 const TIPOLOGIAS: Tipologia[] = [
   {
-    clave: "mono",
-    nombre: "Monoambiente",
-    ambientes: 1,
-    dormitorios: 0,
-    banos: 1,
-    cubierta: 34,
-    total: 38,
-    precio: 48000,
-    maqueta: [
-      { caja: [80, 80, 1120, 560], piso: MADERA, muebles: cama(820, 130) + sillon(160, 130) + mesa(520, 400) },
-      { caja: [80, 560, 640, 820], piso: CERAMICA, muebles: cocina(110, 730, 500) },
-      { caja: [640, 560, 1120, 820], piso: CERAMICA, muebles: bano(700, 600) },
-    ],
-    renders: [
-      { nombre: "Ambiente principal", pano: "hotel_room", yaw: 0 },
-      { nombre: "Cocina", pano: "kiara_interior", yaw: 0 },
-      { nombre: "Baño", pano: "modern_bathroom", yaw: 0 },
-      { nombre: "Balcón", pano: "veranda", yaw: 0 },
-    ],
-  },
-  {
-    clave: "dos",
-    nombre: "2 ambientes",
+    clave: "t1",
+    nombre: "1 dormitorio",
     ambientes: 2,
     dormitorios: 1,
     banos: 1,
-    cubierta: 52,
-    total: 58,
-    precio: 72000,
+    cubierta: 41,
+    total: 45,
     maqueta: [
-      { caja: [80, 80, 640, 520], piso: MADERA, muebles: sillon(140, 120) + mesa(470, 400) },
-      { caja: [80, 520, 380, 820], piso: CERAMICA, muebles: cocina(100, 740, 260) },
-      { caja: [380, 520, 640, 820], piso: CERAMICA, muebles: bano(410, 570) },
-      { caja: [640, 80, 1120, 820], piso: MADERA, muebles: cama(780, 130) },
+      { caja: [80, 80, 620, 560], piso: MADERA, muebles: sillon(130, 120) + mesa(470, 420) },
+      { caja: [80, 560, 400, 820], piso: CERAMICA, muebles: cocina(100, 740, 280) },
+      { caja: [400, 560, 620, 820], piso: CERAMICA, muebles: bano(412, 600) },
+      { caja: [620, 80, 1120, 820], piso: MADERA, muebles: cama(760, 130) },
     ],
     renders: [
       { nombre: "Living comedor", pano: "lythwood_lounge", yaw: 20 },
       { nombre: "Cocina", pano: "kiara_interior", yaw: 0 },
-      { nombre: "Dormitorio", pano: "lythwood_room", yaw: 90 },
+      { nombre: "Dormitorio", pano: "hotel_room", yaw: 0 },
       { nombre: "Baño", pano: "modern_bathroom", yaw: 0 },
-      { nombre: "Balcón", pano: "veranda", yaw: 0 },
     ],
   },
   {
-    clave: "tres",
-    nombre: "3 ambientes",
+    clave: "t2",
+    nombre: "2 dormitorios",
     ambientes: 3,
     dormitorios: 2,
     banos: 1,
-    cubierta: 78,
-    total: 86,
-    precio: 105000,
+    cubierta: 64,
+    total: 70,
     maqueta: [
-      { caja: [80, 80, 620, 560], piso: MADERA, muebles: sillon(130, 120) + mesa(460, 420) },
-      { caja: [80, 560, 400, 820], piso: CERAMICA, muebles: cocina(100, 740, 280) },
-      { caja: [400, 560, 620, 820], piso: CERAMICA, muebles: bano(412, 600) },
-      { caja: [620, 80, 1120, 450], piso: MADERA, muebles: cama(860, 100) },
-      { caja: [620, 450, 1120, 820], piso: MADERA, muebles: cama(660, 520) },
+      { caja: [80, 80, 580, 520], piso: MADERA, muebles: sillon(130, 120) + mesa(440, 400) },
+      { caja: [80, 520, 360, 820], piso: CERAMICA, muebles: cocina(100, 740, 240) },
+      { caja: [360, 520, 580, 820], piso: CERAMICA, muebles: bano(380, 580) },
+      { caja: [580, 80, 1120, 450], piso: MADERA, muebles: cama(760, 110) },
+      { caja: [580, 450, 1120, 820], piso: MADERA, muebles: cama(640, 520) },
     ],
     renders: [
       { nombre: "Living comedor", pano: "glasshouse_interior", yaw: 0 },
       { nombre: "Cocina", pano: "kiara_interior", yaw: 180 },
-      { nombre: "Dormitorio principal", pano: "hotel_room", yaw: 0 },
+      { nombre: "Dormitorio principal", pano: "lythwood_room", yaw: 90 },
       { nombre: "Segundo dormitorio", pano: "lythwood_room", yaw: 270 },
       { nombre: "Baño", pano: "bathroom", yaw: 0 },
     ],
   },
+  {
+    clave: "t3",
+    nombre: "3 dormitorios",
+    ambientes: 4,
+    dormitorios: 3,
+    banos: 1,
+    cubierta: 96,
+    total: 110,
+    maqueta: [
+      { caja: [80, 80, 560, 540], piso: MADERA, muebles: sillon(130, 120) + mesa(430, 410) },
+      { caja: [80, 540, 340, 820], piso: CERAMICA, muebles: cocina(100, 740, 220) },
+      { caja: [340, 540, 560, 820], piso: CERAMICA, muebles: bano(352, 590) },
+      { caja: [560, 80, 860, 450], piso: MADERA, muebles: cama(600, 120) },
+      { caja: [860, 80, 1120, 450], piso: MADERA, muebles: cama(880, 120) },
+      { caja: [560, 450, 860, 820], piso: MADERA, muebles: cama(600, 520) },
+      { caja: [860, 450, 1120, 820], piso: "#d6d3d1", muebles: planta(940, 540) + reposera(1000, 600) },
+    ],
+    renders: [
+      { nombre: "Living comedor", pano: "lythwood_lounge", yaw: 20 },
+      { nombre: "Cocina", pano: "kiara_interior", yaw: 180 },
+      { nombre: "Dormitorio principal", pano: "hotel_room", yaw: 0 },
+      { nombre: "Baño", pano: "modern_bathroom", yaw: 0 },
+      { nombre: "Balcón terraza", pano: "veranda", yaw: 0 },
+    ],
+  },
 ];
 
-/** Qué tipología va en cada lugar de la planta y si es la versión espejada. */
-const REPARTO: Record<4 | 5, Record<string, { tipo: Tipologia["clave"]; espejada: boolean }>> = {
-  5: {
-    A: { tipo: "tres", espejada: false },
-    B: { tipo: "tres", espejada: true },
-    C: { tipo: "dos", espejada: false },
-    D: { tipo: "mono", espejada: false },
-    E: { tipo: "dos", espejada: true },
-  },
-  4: {
-    A: { tipo: "tres", espejada: false },
-    B: { tipo: "tres", espejada: true },
-    C: { tipo: "dos", espejada: false },
-    D: { tipo: "dos", espejada: true },
-  },
+/** Qué tipología va en cada lugar de la planta y si es la versión espejada (B de A, D de C). */
+const REPARTO: Record<(typeof LETRAS)[number], { tipo: Tipologia["clave"]; espejada: boolean; orientacion: string }> = {
+  A: { tipo: "t1", espejada: false, orientacion: "Norte (frente)" },
+  B: { tipo: "t1", espejada: true, orientacion: "Norte (frente)" },
+  C: { tipo: "t2", espejada: false, orientacion: "Norte (frente)" },
+  D: { tipo: "t2", espejada: true, orientacion: "Norte (frente)" },
+  E: { tipo: "t3", espejada: false, orientacion: "Norte y Oeste (esquina)" },
 };
 
+/** Más vendidas en los pisos altos; el resto, disponibles. */
 const ESTADOS: Record<string, Enums<"estado_unidad">> = {
-  "1A": "vendida", "1B": "vendida", "1C": "reservada", "1D": "vendida", "1E": "vendida",
-  "2A": "vendida", "2C": "reservada", "2D": "vendida",
-  "3B": "reservada", "3D": "vendida",
-  "4A": "reservada", "4C": "vendida",
-  "5B": "reservada",
+  "4A": "vendida", "4E": "vendida", "3B": "vendida", "3E": "vendida", "2D": "vendida",
+  "4C": "reservada", "3D": "reservada", "2A": "reservada", "1E": "reservada", "PB B": "reservada",
 };
+/** Precio "a consultar". */
+const CONSULTAR = new Set(["4B", "4D", "3C", "PB E"]);
+/** Dólares por m² total: la planta baja un poco más barata y cada piso un 3 % más caro. */
+const USD_M2 = 1700;
+const precio = (numero: number, total: number) => Math.round((USD_M2 * total * (numero === 0 ? 0.96 : 1 + 0.03 * (numero - 1))) / 500) * 500;
 
 const webp = (svg: string, ancho: number) => sharp(Buffer.from(svg), { density: 144 }).resize(ancho).webp({ quality: 84 }).toBuffer();
 
@@ -295,7 +295,7 @@ async function main() {
     log(`${email} es ${rol} de Desarrollos Demo`);
   }
 
-  // 2. Proyecto de ejemplo: se borra y se vuelve a crear (cascada a pisos, tipologías y unidades)
+  // 2. Proyecto de ejemplo: se borra y se vuelve a crear (cascada a pisos, tipologías, unidades y sus eventos)
   const { data: viejos } = await db.from("projects").select("id").eq("agency_id", agencyId).eq("es_demo", true);
   for (const { id } of viejos ?? []) await borrarCarpetaPropiedad(db, agencyId, id);
   if (viejos?.length) fallar("No se pudo borrar el proyecto anterior", (await db.from("projects").delete().eq("agency_id", agencyId).eq("es_demo", true)).error);
@@ -312,7 +312,7 @@ async function main() {
         slug: SLUG,
         ciudad: "Olavarría",
         direccion: "Av. Colón 2400",
-        descripcion: "Departamentos de 1, 2 y 3 ambientes en pozo, a pasos del centro. Entrega estimada: diciembre de 2028.",
+        descripcion: "Departamentos de 1, 2 y 3 dormitorios en pozo, todos al frente, a pasos del centro. Entrega estimada: diciembre de 2028.",
         fachada_url: await subir(carpeta, await webp(svgFachada(), FACHADA.ancho)),
         fachada_ancho: FACHADA.ancho,
         fachada_alto: FACHADA.alto,
@@ -328,75 +328,106 @@ async function main() {
   for (const id of new Set(TIPOLOGIAS.flatMap((t) => t.renders.map((r) => r.pano)))) panos.set(id, await descargarPanorama(id));
   const renders = new Map<string, string>();
   const idTipo = new Map<Tipologia["clave"], string>();
+  const ambientes = new Map<string, string[]>();
   for (const [orden, t] of TIPOLOGIAS.entries()) {
     const id = randomUUID();
     idTipo.set(t.clave, id);
-    const { nombre, ambientes, dormitorios, banos, maqueta, renders: lista } = t;
-    const datos = { nombre, ambientes, dormitorios, banos };
+    const { nombre, dormitorios, banos, maqueta, renders: lista } = t;
     fallar(
-      `Tipología ${t.nombre}`,
-      (await db.from("unit_types").insert({ ...datos, id, project_id: projectId, orden, maqueta_url: await subir(carpeta, await webp(svgMaqueta(maqueta), 1200)), maqueta_ancho: 1200, maqueta_alto: 900 })).error,
+      `Tipología ${nombre}`,
+      (
+        await db.from("unit_types").insert({
+          id,
+          project_id: projectId,
+          nombre,
+          ambientes: t.ambientes,
+          dormitorios,
+          banos,
+          orden,
+          maqueta_url: await subir(carpeta, await webp(svgMaqueta(maqueta), 1200)),
+          maqueta_ancho: 1200,
+          maqueta_alto: 900,
+        })
+      ).error,
     );
-    const filas: TablesInsert<"unit_type_rooms">[] = [];
+    const filas: (TablesInsert<"unit_type_rooms"> & { id: string })[] = [];
     for (const [i, r] of lista.entries()) {
       const llave = `${r.pano}:${r.yaw}`;
       if (!renders.has(llave)) {
         const foto = await fotoDesdePanorama(panos.get(r.pano)!, { pano: r.pano, yaw: r.yaw, hfov: 95 });
         renders.set(llave, await subir(carpeta, await sharp(foto.grande).resize(1600).webp({ quality: 74 }).toBuffer()));
       }
-      filas.push({ unit_type_id: id, nombre: r.nombre, render_url: renders.get(llave)!, orden: i });
+      filas.push({ id: randomUUID(), unit_type_id: id, nombre: r.nombre, render_url: renders.get(llave)!, orden: i });
     }
-    fallar(`Ambientes de ${t.nombre}`, (await db.from("unit_type_rooms").insert(filas)).error);
-    log(`Tipología ${t.nombre}: maqueta y ${lista.length} renders`);
+    fallar(`Ambientes de ${nombre}`, (await db.from("unit_type_rooms").insert(filas)).error);
+    ambientes.set(id, filas.map((f) => f.id));
+    log(`Tipología ${nombre}: maqueta y ${lista.length} renders`);
   }
 
-  // 4. Pisos y unidades
-  const plantas = new Map<number, string>();
-  let unidades = 0;
-  for (const numero of [1, 2, 3, 4, 5]) {
-    const cantidad = numero <= 3 ? 5 : 4;
-    if (!plantas.has(cantidad)) plantas.set(cantidad, await subir(carpeta, await webp(svgPlanta(cantidad), PLANTA.lado)));
+  // 4. Pisos y unidades: los pisos 1 a 4 comparten la planta tipo; la planta baja tiene la suya (la C es el hall).
+  const plantaTipo = await subir(carpeta, await webp(svgPlanta(false), PLANTA.lado));
+  const plantaBaja = await subir(carpeta, await webp(svgPlanta(true), PLANTA.lado));
+  const pisos: { id: string; numero: number }[] = [];
+  const unidades: (TablesInsert<"units"> & { id: string })[] = [];
+  for (const numero of PISOS) {
     const floorId = randomUUID();
     const y = yPiso(numero);
     fallar(
-      `Piso ${numero}`,
+      nombrePiso(numero),
       (
         await db.from("project_floors").insert({
           id: floorId,
           project_id: projectId,
           numero,
-          nombre: `Piso ${numero}`,
-          planta_url: plantas.get(cantidad)!,
+          nombre: nombrePiso(numero),
+          planta_url: numero === 0 ? plantaBaja : plantaTipo,
           planta_ancho: PLANTA.lado,
           planta_alto: PLANTA.lado,
           poligono: rect(FACHADA.x1 - 14, y, FACHADA.x2 + 14, y + FACHADA.altoPiso, FACHADA.ancho, FACHADA.alto),
         })
       ).error,
     );
-    const filas = huecos(cantidad).map(({ letra, caja, orientacion }): TablesInsert<"units"> => {
-      const codigo = `${numero}${letra}`;
-      const { tipo, espejada } = REPARTO[cantidad][letra];
+    pisos.push({ id: floorId, numero });
+    for (const [i, letra] of LETRAS.entries()) {
+      if (numero === 0 && letra === "C") continue;
+      const codigo = codigoUnidad(numero, letra);
+      const { tipo, espejada, orientacion } = REPARTO[letra];
       const t = TIPOLOGIAS.find((x) => x.clave === tipo)!;
-      // Los 2 ambientes de los pisos de 4 unidades son más grandes; los del último piso van "a consultar".
-      const extra = cantidad === 4 && tipo === "dos" ? 9 : 0;
-      return {
+      unidades.push({
+        id: randomUUID(),
         project_id: projectId,
         floor_id: floorId,
         unit_type_id: idTipo.get(tipo)!,
         codigo,
-        superficie_cubierta: t.cubierta + extra,
-        superficie_total: t.total + extra + (extra ? 3 : 0),
+        superficie_cubierta: t.cubierta,
+        superficie_total: t.total,
         orientacion,
-        precio: numero === 5 ? null : Math.round((t.precio * (1 + 0.02 * (numero - 1)) * (1 + extra / 60)) / 500) * 500,
+        precio: CONSULTAR.has(codigo) ? null : precio(numero, t.total),
+        moneda: "USD",
         estado: ESTADOS[codigo] ?? "disponible",
         espejada,
-        poligono: rect(...caja, PLANTA.lado, PLANTA.lado),
-      };
-    });
-    fallar(`Unidades del piso ${numero}`, (await db.from("units").insert(filas)).error);
-    unidades += filas.length;
+        poligono: rect(...cajaUnidad(i), PLANTA.lado, PLANTA.lado),
+      });
+    }
   }
-  log(`5 pisos y ${unidades} unidades`);
+  fallar("Unidades", (await db.from("units").insert(unidades)).error);
+  log(`${pisos.length} pisos y ${unidades.length} unidades`);
+
+  // 5. Imágenes reales, si ya están en demo-mirador/
+  if (hayImagenesMirador()) {
+    const { subidas, faltan } = await aplicarImagenesMirador(db, agencyId, projectId, log);
+    log(`Imágenes reales: ${subidas}${faltan.length ? ` (faltan: ${faltan.join(", ")})` : ""}`);
+  }
+
+  // 6. Leads y visitantes de muestra
+  const actividad = await cargarActividadEdificio(db, agencyId, {
+    projectId,
+    pisos,
+    unidades: unidades.map(({ id, codigo, floor_id, unit_type_id }) => ({ id, codigo, floor_id, unit_type_id })),
+    ambientes,
+  });
+  const { caliente, tibio, frio } = actividad.niveles;
+  log(`Actividad: ${actividad.leads} leads (${caliente} calientes, ${tibio} tibios, ${frio} fríos), ${actividad.visitantes} visitantes, ${actividad.eventos} eventos`);
   console.log(`\nListo. Web de prueba: /proyecto/${SLUG}?agencia=desarrollos-demo`);
 }
 

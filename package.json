@@ -19,7 +19,8 @@
     "tema": "node --env-file-if-exists=.env.local --import ./scripts/alias.ts scripts/aplicar-tema.ts",
     "demo:actualizar-fechas": "npx --yes supabase db query --linked -f supabase/demo/actualizar-fechas.sql",
     "test:e2e": "node --env-file=tests/e2e/.env node_modules/@playwright/test/cli.js test",
-    "e2e:instalar": "node --env-file=tests/e2e/.env node_modules/@playwright/test/cli.js install chromium webkit"
+    "e2e:instalar": "node --env-file=tests/e2e/.env node_modules/@playwright/test/cli.js install chromium webkit",
+    "imagenes:mirador": "node --env-file-if-exists=.env.local --import ./scripts/alias.ts scripts/imagenes-mirador.ts"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",

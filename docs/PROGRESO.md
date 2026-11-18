@@ -2,7 +2,7 @@
 
 Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
-**Próximo paso:** el usuario revisa el preview de la rama `udevelop-demo` desde el celular (fachada → piso → unidad → ambientes, y el panel de Desarrollos Demo). NO unir a `main` sin su OK.
+**Próximo paso:** el usuario deja las imágenes reales en `demo-mirador/` y avisa → correr `npm run imagenes:mirador`, proponer polígonos aproximados de pisos y unidades mirándolas, correr los E2E y recién con su OK unir `udevelop-demo` a `main`.
 
 **Cómo verificar:** `npm run typecheck`, `npm run lint`, `npm test` (unitarios + base con PGlite), `npm run build`, `npm run test:e2e` (Playwright; con el build hecho).
 
@@ -79,6 +79,9 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
   - [x] Bloque 2 – Web del comprador: grupo de rutas `(edificio)` con `/proyecto/[slug]` (fachada con pisos tocables: hover en compu, doble toque en celular), `/piso/[n]` (planta coloreada por estado), `/unidad/[codigo]` (maqueta, ficha, "Ver ambientes" solo si hay renders, "Pedir información") y `/ambientes` (pantalla completa con fundido, deslizar o botones). Espejado con CSS. Sin Pannellum; imagen principal precargada. Inicio de un tenant sin módulo inmobiliaria → su proyecto.
   - [x] Bloque 3 – Leads: `pedirInformacion` usa el lead por visitante, guarda `unit_id` (la última) y registra `form_submit` con la unidad; `/api/eventos` valida `floor_view`, `unit_view`, `rooms_open`, `room_view` contra proyectos publicados; puntaje con pesos nuevos sin tocar los existentes; el detalle del lead muestra "Unidades que miró".
   - [x] Bloque 4 – Panel mínimo: `/admin/proyectos/[id]` con Unidades (estado en un toque), Imágenes (reemplazo, comprimidas a 1600 px) y Zonas (marcador de vértices sobre la fachada o la planta). Probado en celular simulado con el usuario de demo.
+  - [x] Ajuste al edificio real (2026-11-17): planta baja (PB A, B, D, E; la C es el hall) y pisos 1 a 4 con A–E sobre la misma planta tipo; tipologías 1, 2 y 3 dormitorios (B y D espejadas), precios en USD, estados mezclados. 10 leads de muestra con historial (3 calientes, 3 tibios, 4 fríos) y 30 visitantes anónimos, regenerados por `npm run seed:desarrolladora`.
+  - [x] Zonas: la zona de una unidad se copia a la misma letra de los pisos con la misma planta.
+  - [ ] Imágenes reales: `npm run imagenes:mirador` (lee `demo-mirador/`, fuera del repo). Pendiente de que el usuario las deje.
   - Verificado: typecheck, lint, build, 58 unitarios y 49 de base. E2E no corridos en esta etapa.
 
 ## Pendientes técnicos

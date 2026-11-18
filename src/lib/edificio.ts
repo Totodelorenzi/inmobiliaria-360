@@ -65,5 +65,9 @@ export function asuntoLead(lead: { propiedad?: { titulo: string } | null; unidad
 
 export const rutaProyecto = (slug: string) => `/proyecto/${slug}`;
 export const rutaPiso = (slug: string, numeroPiso: number) => `/proyecto/${slug}/piso/${numeroPiso}`;
-export const rutaUnidad = (slug: string, codigo: string) => `/proyecto/${slug}/unidad/${codigo.toLowerCase()}`;
+/** Código de unidad para la URL: "PB A" → "pb-a", "3B" → "3b". También normaliza lo que llega en la URL. */
+export const slugUnidad = (codigo: string) => codigo.trim().toLowerCase().replace(/[\s-]+/g, "-");
+/** Posición de la unidad en la planta (la letra): "3B" y "PB B" son la misma unidad en pisos distintos. */
+export const letraUnidad = (codigo: string) => codigo.match(/[A-Za-z]+$/)?.[0].toUpperCase() ?? codigo.toUpperCase();
+export const rutaUnidad = (slug: string, codigo: string) => `/proyecto/${slug}/unidad/${slugUnidad(codigo)}`;
 export const rutaAmbientes = (slug: string, codigo: string) => `${rutaUnidad(slug, codigo)}/ambientes`;

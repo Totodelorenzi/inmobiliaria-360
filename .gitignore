@@ -47,3 +47,6 @@ next-env.d.ts
 # Playwright
 /test-results/
 /playwright-report/
+
+# Imágenes reales de la demo del Edificio Mirador (se suben con npm run imagenes:mirador)
+/demo-mirador/

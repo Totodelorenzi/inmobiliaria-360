@@ -48,7 +48,7 @@ type Persona = {
 type Rol = "tourVenta" | "tourAlquiler" | "pozo" | "construccion" | "alquilerSimple" | "casaAlquiler";
 
 /** Generador con semilla (mulberry32): mismos datos en cada corrida. */
-function azar(semilla: number) {
+export function azar(semilla: number) {
   let a = semilla >>> 0;
   return () => {
     a = (a + 0x6d2b79f5) >>> 0;

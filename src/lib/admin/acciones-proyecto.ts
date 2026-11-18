@@ -1,7 +1,8 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { ESTADOS_UNIDAD, type EstadoUnidad, type Punto } from "@/lib/edificio";
+import { ESTADOS_UNIDAD, letraUnidad, type EstadoUnidad, type Punto } from "@/lib/edificio";
+import { plural } from "@/lib/format";
 import { createClient, tagSitio } from "@/lib/supabase/server";
 import { mensajeError, SESION_VENCIDA, sesionParaAccion, type Resultado } from "./sesion";
 import { rutaDeUrl } from "./storage";
@@ -49,8 +50,32 @@ export async function guardarZona(tipo: "piso" | "unidad", id: string, puntos: P
       : await supabase.from("units").update({ poligono }).eq("id", id).select("id");
   if (error) return { ok: false, error: mensajeError(error, "No se pudo guardar la zona.") };
   if (data.length === 0) return NO_ENCONTRADO;
+  const copias = tipo === "unidad" ? await copiarZonaAPisosIguales(supabase, id, poligono) : 0;
   updateTag(tagSitio(sesion.agencia.id));
-  return { ok: true, mensaje: poligono ? "Zona guardada." : "Zona borrada." };
+  const base = poligono ? "Zona guardada" : "Zona borrada";
+  return { ok: true, mensaje: copias ? `${base}, también en ${plural(copias, "unidad", "unidades")} de los otros pisos con la misma planta.` : `${base}.` };
+}
+
+/**
+ * Los pisos con la misma imagen de planta comparten la distribución: la zona de una unidad se copia
+ * a la unidad de la misma letra de esos pisos ("3B" → "1B", "2B", "4B"). Devuelve cuántas copió.
+ */
+async function copiarZonaAPisosIguales(supabase: Awaited<ReturnType<typeof createClient>>, unitId: string, poligono: Punto[] | null) {
+  const { data: unidad } = await supabase.from("units").select("codigo, project_id, piso:project_floors(id, planta_url)").eq("id", unitId).maybeSingle();
+  if (!unidad?.piso?.planta_url) return 0;
+  const { data: pisos } = await supabase
+    .from("project_floors")
+    .select("id")
+    .eq("project_id", unidad.project_id)
+    .eq("planta_url", unidad.piso.planta_url)
+    .neq("id", unidad.piso.id);
+  if (!pisos?.length) return 0;
+  const { data: vecinas } = await supabase.from("units").select("id, codigo").in("floor_id", pisos.map((p) => p.id));
+  const letra = letraUnidad(unidad.codigo);
+  const ids = (vecinas ?? []).filter((u) => letraUnidad(u.codigo) === letra).map((u) => u.id);
+  if (!ids.length) return 0;
+  const { data } = await supabase.from("units").update({ poligono }).in("id", ids).select("id");
+  return data?.length ?? 0;
 }
 
 export type DestinoImagen = { tipo: "fachada" | "planta" | "maqueta" | "render"; id: string };

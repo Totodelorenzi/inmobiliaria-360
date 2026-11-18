@@ -226,7 +226,7 @@ export function MarcadorZonas({ proyecto }: { proyecto: ProyectoAdmin }) {
             <option value="fachada">Los pisos, sobre la fachada</option>
             {[...proyecto.pisos].reverse().map((p) => (
               <option key={p.id} value={p.id}>
-                Las unidades de {p.nombre.toLowerCase()}, sobre su planta
+                {p.nombre}: las unidades, sobre su planta
               </option>
             ))}
           </Select>

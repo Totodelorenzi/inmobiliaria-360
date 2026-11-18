@@ -1,6 +1,6 @@
 import "server-only";
 import { cache } from "react";
-import { aPoligono, type Punto } from "@/lib/edificio";
+import { aPoligono, slugUnidad, type Punto } from "@/lib/edificio";
 import { createPublicClient, tagSitio } from "@/lib/supabase/server";
 import type { Tables } from "@/types/database";
 
@@ -97,7 +97,8 @@ export async function getProyectos(agencyId: string) {
 
 /** La unidad pedida en la URL (el código no distingue mayúsculas) con su piso y su tipología. */
 export function buscarUnidad(proyecto: Proyecto, codigo: string) {
-  const unidad = proyecto.unidades.find((u) => u.codigo.toLowerCase() === codigo.toLowerCase());
+  const buscado = slugUnidad(codigo.replace(/%20/gi, " "));
+  const unidad = proyecto.unidades.find((u) => slugUnidad(u.codigo) === buscado);
   const piso = unidad && proyecto.pisos.find((p) => p.id === unidad.floor_id);
   const tipologia = unidad && proyecto.tipologias.find((t) => t.id === unidad.unit_type_id);
   return unidad && piso && tipologia ? { unidad, piso, tipologia } : null;
