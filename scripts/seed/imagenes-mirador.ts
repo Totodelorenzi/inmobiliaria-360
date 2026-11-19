@@ -30,13 +30,13 @@ const r = (x1: number, y1: number, x2: number, y2: number): [number, number][] =
   [x2, y2],
   [x1, y2],
 ];
-/** Pisos sobre fachada.png: bandas entre losas (en % de la imagen). */
+/** Pisos sobre fachada.png (horizontal, 16:9): bandas entre losas, en % de la imagen. */
 const ZONAS_PISOS: Record<number, [number, number][]> = {
-  4: r(4, 20.5, 96, 35.5),
-  3: r(4, 35.5, 96, 48.5),
-  2: r(4, 48.5, 96, 61.5),
-  1: r(4, 61.5, 96, 74.5),
-  0: r(4, 74.5, 96, 88),
+  4: r(3.3, 9.5, 96.5, 27),
+  3: r(3.3, 27, 96.5, 43),
+  2: r(3.3, 43, 96.5, 59.5),
+  1: r(3.3, 59.5, 96.5, 76),
+  0: r(3.3, 76, 96.5, 90.5),
 };
 /** Unidades sobre planta-tipo.png y planta-baja.png (misma distribución): del pasillo al borde del balcón. */
 const ZONAS_UNIDADES: Record<string, [number, number][]> = {
@@ -51,7 +51,7 @@ export function hayImagenesMirador() {
   return existsSync(CARPETA_MIRADOR) && readdirSync(CARPETA_MIRADOR).some((a) => EXTENSIONES.test(a));
 }
 
-export async function aplicarImagenesMirador(db: Db, agencyId: string, projectId: string, log: (t: string) => void, zonas = false) {
+export async function aplicarImagenesMirador(db: Db, agencyId: string, projectId: string, log: (t: string) => void, zonas = false, solo?: string[]) {
   const archivos = new Map(
     readdirSync(CARPETA_MIRADOR)
       .filter((a) => EXTENSIONES.test(a))
@@ -63,6 +63,8 @@ export async function aplicarImagenesMirador(db: Db, agencyId: string, projectId
   /** Comprime y sube una imagen por nombre (una sola vez aunque se use en varios lugares). */
   async function subir(nombre: string) {
     if (cache.has(nombre)) return cache.get(nombre)!;
+    // Con una lista de nombres, solo se cargan esas (el resto queda como está).
+    if (solo?.length && !solo.includes(nombre)) return null;
     const archivo = archivos.get(nombre);
     if (!archivo) {
       faltan.push(nombre);

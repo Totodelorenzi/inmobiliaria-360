@@ -81,7 +81,7 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
   - [x] Bloque 4 – Panel mínimo: `/admin/proyectos/[id]` con Unidades (estado en un toque), Imágenes (reemplazo, comprimidas a 1600 px) y Zonas (marcador de vértices sobre la fachada o la planta). Probado en celular simulado con el usuario de demo.
   - [x] Ajuste al edificio real (2026-11-17): planta baja (PB A, B, D, E; la C es el hall) y pisos 1 a 4 con A–E sobre la misma planta tipo; tipologías 1, 2 y 3 dormitorios (B y D espejadas), precios en USD, estados mezclados. 10 leads de muestra con historial (3 calientes, 3 tibios, 4 fríos) y 30 visitantes anónimos, regenerados por `npm run seed:desarrolladora`.
   - [x] Zonas: la zona de una unidad se copia a la misma letra de los pisos con la misma planta.
-  - [~] Imágenes reales (`npm run imagenes:mirador`, carpeta `demo-mirador/` fuera del repo): cargadas fachada, plantas, maqueta y ambientes de la tipología 1 (2026-11-19); faltan t2 y t3. Polígonos de pisos y unidades medidos sobre las imágenes reales (el seed los aplica).
+  - [~] Imágenes reales (`npm run imagenes:mirador`, carpeta `demo-mirador/` fuera del repo): cargadas fachada (horizontal 16:9), plantas, maqueta y ambientes de la tipología 1 (2026-11-19); faltan t2 y t3. Polígonos de pisos y unidades medidos sobre las imágenes reales (el seed los aplica).
   - Verificado: typecheck, lint, build, 58 unitarios y 49 de base. E2E no corridos en esta etapa.
 
 ## Pendientes técnicos
