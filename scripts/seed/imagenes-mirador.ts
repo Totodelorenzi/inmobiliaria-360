@@ -7,6 +7,7 @@ import { randomUUID } from "node:crypto";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
+import { letraUnidad } from "@/lib/edificio";
 
 type Db = ReturnType<typeof import("@/lib/supabase/admin").createAdminClient>;
 
@@ -23,11 +24,34 @@ export const ARCHIVOS_AMBIENTES = [
 
 const EXTENSIONES = /\.(png|jpe?g|webp|avif|tiff?)$/i;
 
+const r = (x1: number, y1: number, x2: number, y2: number): [number, number][] => [
+  [x1, y1],
+  [x2, y1],
+  [x2, y2],
+  [x1, y2],
+];
+/** Pisos sobre fachada.png: bandas entre losas (en % de la imagen). */
+const ZONAS_PISOS: Record<number, [number, number][]> = {
+  4: r(4, 20.5, 96, 35.5),
+  3: r(4, 35.5, 96, 48.5),
+  2: r(4, 48.5, 96, 61.5),
+  1: r(4, 61.5, 96, 74.5),
+  0: r(4, 74.5, 96, 88),
+};
+/** Unidades sobre planta-tipo.png y planta-baja.png (misma distribución): del pasillo al borde del balcón. */
+const ZONAS_UNIDADES: Record<string, [number, number][]> = {
+  A: r(2.5, 37, 16.5, 81),
+  B: r(16.5, 37, 30, 81),
+  C: r(30.5, 37, 49.5, 80.5),
+  D: r(50.5, 37, 69, 80.5),
+  E: r(69.5, 37, 97, 82),
+};
+
 export function hayImagenesMirador() {
   return existsSync(CARPETA_MIRADOR) && readdirSync(CARPETA_MIRADOR).some((a) => EXTENSIONES.test(a));
 }
 
-export async function aplicarImagenesMirador(db: Db, agencyId: string, projectId: string, log: (t: string) => void) {
+export async function aplicarImagenesMirador(db: Db, agencyId: string, projectId: string, log: (t: string) => void, zonas = false) {
   const archivos = new Map(
     readdirSync(CARPETA_MIRADOR)
       .filter((a) => EXTENSIONES.test(a))
@@ -71,6 +95,20 @@ export async function aplicarImagenesMirador(db: Db, agencyId: string, projectId
     const planta = await subir(p.numero === 0 ? "planta-baja" : "planta-tipo");
     if (!planta) continue;
     fallar(`la planta del piso ${p.numero}`, (await db.from("project_floors").update({ planta_url: planta.url, planta_ancho: planta.ancho, planta_alto: planta.alto }).eq("id", p.id)).error);
+  }
+
+  // Zonas medidas sobre las imágenes reales: solo en un proyecto recién creado (no pisa los ajustes del panel).
+  if (zonas && fachada) {
+    for (const p of pisos ?? []) {
+      if (ZONAS_PISOS[p.numero]) fallar(`la zona del piso ${p.numero}`, (await db.from("project_floors").update({ poligono: ZONAS_PISOS[p.numero] }).eq("id", p.id)).error);
+    }
+  }
+  if (zonas && archivos.has("planta-tipo") && archivos.has("planta-baja")) {
+    const { data: unidades } = await db.from("units").select("id, codigo").eq("project_id", projectId);
+    for (const u of unidades ?? []) {
+      const zona = ZONAS_UNIDADES[letraUnidad(u.codigo)];
+      if (zona) fallar(`la zona de la unidad ${u.codigo}`, (await db.from("units").update({ poligono: zona }).eq("id", u.id)).error);
+    }
   }
 
   const { data: tipologias } = await db.from("unit_types").select("id, orden, salas:unit_type_rooms(id, orden)").eq("project_id", projectId).order("orden");

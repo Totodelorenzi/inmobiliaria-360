@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { centro, ESTADO_UNIDAD_COLOR, ESTADO_UNIDAD_LABEL, puntosSvg, rutaUnidad, type EstadoUnidad, type Punto } from "@/lib/edificio";
+import { centro, ESTADO_UNIDAD_COLOR, ESTADO_UNIDAD_LABEL, letraUnidad, puntosSvg, rutaUnidad, type EstadoUnidad, type Punto } from "@/lib/edificio";
 
 export type UnidadPlanta = { codigo: string; estado: EstadoUnidad; poligono: Punto[] };
 
@@ -42,7 +42,7 @@ export function Planta({ slug, nombre, imagen, unidades }: Props) {
             className="absolute grid min-h-11 min-w-11 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full px-3 text-base font-bold text-white shadow-md ring-2 ring-white/80"
             style={{ left: `${x}%`, top: `${y}%`, background: ESTADO_UNIDAD_COLOR[u.estado] }}
           >
-            {u.codigo}
+            {letraUnidad(u.codigo)}
           </Link>
         );
       })}

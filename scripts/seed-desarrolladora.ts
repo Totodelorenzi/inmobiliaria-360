@@ -415,7 +415,7 @@ async function main() {
 
   // 5. Imágenes reales, si ya están en demo-mirador/
   if (hayImagenesMirador()) {
-    const { subidas, faltan } = await aplicarImagenesMirador(db, agencyId, projectId, log);
+    const { subidas, faltan } = await aplicarImagenesMirador(db, agencyId, projectId, log, true);
     log(`Imágenes reales: ${subidas}${faltan.length ? ` (faltan: ${faltan.join(", ")})` : ""}`);
   }
 
