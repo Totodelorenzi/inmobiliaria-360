@@ -5,7 +5,7 @@ import { Limitador } from "@/lib/previsita/limite";
 import { actualizarLeadDelVisitante, asegurarVisitante, guardarLead, marcarActividad, recalcularLead, registrarEventos } from "@/lib/previsita/servidor";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { COOKIE_EQUIPO } from "@/lib/tracking/config";
-import { validarLote } from "@/lib/tracking/eventos";
+import { utmDeMeta, validarLote } from "@/lib/tracking/eventos";
 
 // Límites por instancia: 60 lotes por minuto por IP, 30 por visitante, 20 visitantes nuevos por hora por IP.
 const porIp = new Limitador(60, 60_000);
@@ -57,7 +57,13 @@ export async function POST(request: NextRequest) {
     // Tocó WhatsApp: lead provisorio con su código de referencia (el mismo del mensaje).
     const whatsapp = validado.lote.eventos.find((e) => e.tipo === "whatsapp_click");
     if (whatsapp) {
-      const lead = await guardarLead(db, { visitante, propertyId: whatsapp.propertyId ?? null, origen: "whatsapp_click" });
+      const lead = await guardarLead(db, {
+        visitante,
+        propertyId: whatsapp.propertyId ?? null,
+        unitId: whatsapp.unitId,
+        origen: "whatsapp_click",
+        utm: utmDeMeta(whatsapp.meta),
+      });
       await recalcularLead(db, lead);
     } else {
       await actualizarLeadDelVisitante(db, visitante);

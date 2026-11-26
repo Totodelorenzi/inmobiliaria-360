@@ -185,6 +185,11 @@ export default async function LeadPage({ params }: PageProps<"/admin/leads/[id]"
             <NotasLead id={lead.id} notas={lead.notas} />
           </Panel>
 
+          {lead.utm_source && (
+            <p className="text-xs text-muted">
+              Consultó desde la campaña: {[lead.utm_source, lead.utm_medium, lead.utm_campaign, lead.utm_content, lead.utm_term].filter(Boolean).join(" · ")}
+            </p>
+          )}
           {lead.visitante?.utm_source && (
             <p className="text-xs text-muted">
               Llegó desde: {[lead.visitante.utm_source, lead.visitante.utm_medium, lead.visitante.utm_campaign].filter(Boolean).join(" · ")}

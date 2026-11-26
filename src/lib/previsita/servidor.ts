@@ -124,7 +124,7 @@ async function destinosValidos(db: Db, agencyId: string): Promise<Destinos> {
   return destinos;
 }
 
-type DestinosProyecto = Map<string, { pisos: Set<string>; unidades: Set<string>; ambientes: Set<string> }>;
+type DestinosProyecto = Map<string, { pisos: Set<string>; unidades: Set<string>; ambientes: Set<string>; espacios: Set<string> }>;
 const cacheProyectos = new Map<string, { vence: number; destinos: DestinosProyecto }>();
 
 /** Proyectos publicados de la inmobiliaria con sus pisos, unidades y ambientes (60 s en memoria). */
@@ -133,7 +133,7 @@ async function proyectosValidos(db: Db, agencyId: string): Promise<DestinosProye
   if (enCache && enCache.vence > Date.now()) return enCache.destinos;
   const { data, error } = await db
     .from("projects")
-    .select("id, pisos:project_floors(id), unidades:units(id), tipologias:unit_types(ambientes:unit_type_rooms(id))")
+    .select("id, pisos:project_floors(id), unidades:units(id), tipologias:unit_types(ambientes:unit_type_rooms(id)), espacios:project_spaces(id)")
     .eq("agency_id", agencyId)
     .eq("publicado", true);
   if (error) fallar("No se pudieron validar los eventos", error);
@@ -144,6 +144,7 @@ async function proyectosValidos(db: Db, agencyId: string): Promise<DestinosProye
         pisos: new Set(p.pisos.map((x) => x.id)),
         unidades: new Set(p.unidades.map((x) => x.id)),
         ambientes: new Set(p.tipologias.flatMap((t) => t.ambientes.map((x) => x.id))),
+        espacios: new Set(p.espacios.map((x) => x.id)),
       },
     ]),
   );
@@ -161,9 +162,14 @@ export async function registrarEventos(db: Db, v: Visitante, eventos: EventoClie
       if (e.projectId) {
         const p = proyectos?.get(e.projectId);
         if (!p || e.propertyId) return false;
-        return (!e.floorId || p.pisos.has(e.floorId)) && (!e.unitId || p.unidades.has(e.unitId)) && (!e.roomId || p.ambientes.has(e.roomId));
+        return (
+          (!e.floorId || p.pisos.has(e.floorId)) &&
+          (!e.unitId || p.unidades.has(e.unitId)) &&
+          (!e.roomId || p.ambientes.has(e.roomId)) &&
+          (!e.spaceId || p.espacios.has(e.spaceId))
+        );
       }
-      if (e.floorId || e.unitId || e.roomId) return false;
+      if (e.floorId || e.unitId || e.roomId || e.spaceId) return false;
       if (!e.propertyId) return true;
       const d = destinos.get(e.propertyId);
       return Boolean(d) && (!e.sceneId || d!.escenas.has(e.sceneId)) && (!e.planId || d!.planos.has(e.planId));
@@ -179,6 +185,7 @@ export async function registrarEventos(db: Db, v: Visitante, eventos: EventoClie
       floor_id: e.floorId ?? null,
       unit_id: e.unitId ?? null,
       room_id: e.roomId ?? null,
+      space_id: e.spaceId ?? null,
       duracion_ms: e.duracionMs ?? null,
       sesion_id: e.sesion,
       meta: e.meta ?? {},
@@ -197,11 +204,17 @@ export async function registrarEventoServidor(
   v: Visitante,
   tipo: TipoEvento,
   propertyId: string | null,
-  unidad?: { projectId: string; unitId: string },
+  unidad?: { projectId: string; unitId: string; origen?: string },
 ) {
-  await db
-    .from("visitor_events")
-    .insert({ visitor_id: v.id, agency_id: v.agency_id, property_id: propertyId, tipo, project_id: unidad?.projectId ?? null, unit_id: unidad?.unitId ?? null });
+  await db.from("visitor_events").insert({
+    visitor_id: v.id,
+    agency_id: v.agency_id,
+    property_id: propertyId,
+    tipo,
+    project_id: unidad?.projectId ?? null,
+    unit_id: unidad?.unitId ?? null,
+    meta: unidad?.origen ? { origen: unidad.origen } : {},
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -224,9 +237,14 @@ export async function guardarLead(
     origen: Enums<"origen_lead">;
     datos?: DatosContacto;
     consentimiento?: boolean;
+    /** Campaña de la visita en la que consultó (queda la última). */
+    utm?: Utm;
   },
 ): Promise<Tables<"leads">> {
-  const { visitante: v, propertyId, unitId, origen, datos = {}, consentimiento } = opciones;
+  const { visitante: v, propertyId, unitId, origen, datos = {}, consentimiento, utm } = opciones;
+  const campana = utm && Object.values(utm).some(Boolean)
+    ? { utm_source: utm.source ?? null, utm_medium: utm.medium ?? null, utm_campaign: utm.campaign ?? null, utm_content: utm.content ?? null, utm_term: utm.term ?? null }
+    : {};
   const ahora = new Date().toISOString();
   const contacto = Object.fromEntries(Object.entries(datos).filter(([, valor]) => typeof valor === "string" && valor.trim() !== "")) as DatosContacto;
 
@@ -241,6 +259,7 @@ export async function guardarLead(
           origen: origenFinal,
           property_id: propertyId ?? existente.property_id,
           ...(unitId ? { unit_id: unitId } : {}),
+          ...campana,
           ultima_actividad: ahora,
           ...(consentimiento ? { consentimiento_at: ahora } : {}),
         })
@@ -260,6 +279,7 @@ export async function guardarLead(
         unit_id: unitId ?? null,
         origen,
         ...contacto,
+        ...campana,
         ultima_actividad: ahora,
         consentimiento_at: consentimiento ? ahora : null,
       })

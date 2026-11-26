@@ -149,6 +149,10 @@ export function resumirEventos(eventos: EventoPuntaje[]): Resumen {
         ms += e.duracion_ms ?? 0;
         if (e.room_id) renders.add(e.room_id);
         break;
+      case "space_view":
+        // Las imágenes de los amenities suman como tiempo mirando el proyecto.
+        ms += e.duracion_ms ?? 0;
+        break;
       case "visit_request":
         r.pidioVisita = true;
         break;
@@ -199,7 +203,7 @@ export function calcularPuntaje(r: Resumen, calificacion: Calificacion = null, e
   if (r.visitas > 1) sumar("visitas", `${r.visitas} visitas`, Math.min(P.maxVisitasExtra, (r.visitas - 1) * P.porVisitaExtra));
   if (r.fotos > 0) sumar("fotos", r.fotos === 1 ? "Vio 1 foto" : `Vio ${r.fotos} fotos`, Math.min(P.maxFotos, r.fotos * P.porFoto));
   if (r.unidades) sumar("unidades", r.unidades === 1 ? "Vio 1 unidad" : `Vio ${r.unidades} unidades`, Math.min(P.maxUnidades, r.unidades * P.porUnidad));
-  if (r.abrioAmbientes) sumar("ambientes", "Abrió los ambientes", P.abrioAmbientes);
+  if (r.abrioAmbientes) sumar("ambientes", "Abrió las imágenes de una unidad", P.abrioAmbientes);
   if (r.renders) sumar("renders", r.renders === 1 ? "Vio 1 render" : `Vio ${r.renders} renders`, Math.min(P.maxRenders, r.renders * P.porRender));
   if (r.pidioInfoUnidad) sumar("info", "Pidió información de una unidad", P.pidioInfoUnidad);
   if (r.pidioVisita) sumar("visita", "Pidió visita presencial", P.pidioVisita);

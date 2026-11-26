@@ -50,3 +50,4 @@ next-env.d.ts
 
 # Imágenes reales de la demo del Edificio Mirador (se suben con npm run imagenes:mirador)
 /demo-mirador/
+/demo-mirador-2/

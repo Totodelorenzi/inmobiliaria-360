@@ -14,6 +14,8 @@ export type EdificioCreado = {
   unidades: { id: string; codigo: string; floor_id: string; unit_type_id: string }[];
   /** Ambientes con render de cada tipología, en orden. */
   ambientes: Map<string, string[]>;
+  /** Espacios comunes (amenities, lobby). */
+  espacios: { id: string; slug: string; floor_id: string }[];
 };
 
 type Visita = {
@@ -25,6 +27,8 @@ type Visita = {
   /** Segundos promedio en cada ambiente. */
   segundos?: number;
   whatsapp?: boolean;
+  /** Espacios comunes que miró (slug). */
+  espacios?: string[];
 };
 
 type Persona = {
@@ -36,48 +40,57 @@ type Persona = {
   consulta?: { unidad: string; mensaje: string };
   estado?: Enums<"estado_lead">;
   notas?: string;
-  utm?: string;
+  campana?: { source: string; medium: string; campaign: string };
 };
+
+/** Campañas de la demo: de dónde vino cada consulta (UTM). */
+const CAMPANA = {
+  lanzamiento: { source: "instagram", medium: "paid_social", campaign: "lanzamiento-mirador" },
+  busqueda: { source: "google", medium: "cpc", campaign: "deptos-olavarria" },
+  remarketing: { source: "facebook", medium: "paid_social", campaign: "remarketing-mirador" },
+  cartel: { source: "cartel", medium: "qr", campaign: "obra-colon" },
+} as const;
 
 // Teléfonos con prefijo 0000: no existen en Argentina, así nadie recibe mensajes de una demo.
 const PERSONAS: Persona[] = [
-  // ---- Calientes: varias visitas, recorren los ambientes y piden información
+  // ---- Calientes: varias visitas, recorren las imágenes y piden información
   {
     nombre: "Carolina Méndez",
     telefono: "2284 00-0101",
     email: "carolina.mendez@example.com",
     visitas: [
-      { diasAtras: 11, unidades: ["2C", "3C"], ambientes: 5, segundos: 40 },
-      { diasAtras: 5, unidades: ["3C", "3D"], ambientes: 5, segundos: 35 },
-      { diasAtras: 1, unidades: ["3C"], ambientes: 3, segundos: 30 },
+      { diasAtras: 11, unidades: ["3C", "4C"], ambientes: 5, segundos: 40, espacios: ["pileta"] },
+      { diasAtras: 5, unidades: ["5B", "4C"], ambientes: 6, segundos: 35 },
+      { diasAtras: 1, unidades: ["5B"], ambientes: 4, segundos: 30, espacios: ["sum", "pileta"] },
     ],
-    consulta: { unidad: "3C", mensaje: "Hola, me interesa la 3C. ¿Qué plan de pagos tienen en pesos y cuál es el anticipo?" },
+    consulta: { unidad: "5B", mensaje: "Me interesa la unidad 5B de Edificio Mirador. Prefiero que me escriban por WhatsApp." },
     estado: "contactado",
     notas: "Pareja con un hijo. Viene el sábado a ver el obrador.",
-    utm: "instagram",
+    campana: CAMPANA.lanzamiento,
   },
   {
     nombre: "Ricardo Paz",
     telefono: "2284 00-0102",
     visitas: [
-      { diasAtras: 8, unidades: ["1E", "2E"], ambientes: 5, segundos: 45 },
-      { diasAtras: 2, unidades: ["2E", "3E"], ambientes: 5, segundos: 50, whatsapp: true },
+      { diasAtras: 8, unidades: ["7A", "6A"], ambientes: 5, segundos: 45 },
+      { diasAtras: 2, unidades: ["6A", "6B"], ambientes: 6, segundos: 50, whatsapp: true, espacios: ["gimnasio"] },
     ],
-    consulta: { unidad: "2E", mensaje: "¿Aceptan una camioneta como parte de pago? Busco la de 3 dormitorios en esquina." },
-    utm: "google",
+    consulta: { unidad: "6A", mensaje: "Me interesa la unidad 6A de Edificio Mirador. Prefiero que me escriban por WhatsApp." },
+    campana: CAMPANA.busqueda,
   },
   {
     nombre: "Julieta Ríos",
     telefono: "2284 00-0103",
     email: "julieta.rios@example.com",
     visitas: [
-      { diasAtras: 14, unidades: ["1A", "1B"], ambientes: 4, segundos: 30 },
-      { diasAtras: 9, unidades: ["2A", "2B"], ambientes: 4, segundos: 25 },
-      { diasAtras: 3, unidades: ["2A"], ambientes: 2, segundos: 20 },
+      { diasAtras: 14, unidades: ["1A", "1D"], ambientes: 4, segundos: 30 },
+      { diasAtras: 9, unidades: ["2A", "2D"], ambientes: 3, segundos: 25 },
+      { diasAtras: 3, unidades: ["2D"], ambientes: 3, segundos: 20 },
     ],
-    consulta: { unidad: "2A", mensaje: "Compro para invertir. ¿Cuánto estiman que se alquila un 1 dormitorio en la zona?" },
+    consulta: { unidad: "2D", mensaje: "Compro para invertir. ¿Cuánto estiman que se alquila un monoambiente en la zona?" },
     estado: "visita_agendada",
     notas: "Inversora, ya tiene otro departamento en pozo. Visita el martes 10 h.",
+    campana: CAMPANA.remarketing,
   },
   // ---- Tibios: una o dos visitas, miran algunas unidades y consultan
   {
@@ -85,23 +98,24 @@ const PERSONAS: Persona[] = [
     telefono: "2284 00-0104",
     visitas: [
       { diasAtras: 6, unidades: ["1C", "2C"], ambientes: 3, segundos: 30 },
-      { diasAtras: 4, unidades: ["1C"] },
+      { diasAtras: 4, unidades: ["1C", "C4"] },
     ],
-    consulta: { unidad: "1C", mensaje: "¿Tienen cochera para el 1C? ¿Se paga aparte?" },
+    consulta: { unidad: "C4", mensaje: "¿La cochera C4 se puede comprar junto con el 1C? ¿Tiene baulera?" },
+    campana: CAMPANA.busqueda,
   },
   {
     nombre: "Mariana Suárez",
     telefono: "2284 00-0105",
     email: "mariana.suarez@example.com",
-    visitas: [{ diasAtras: 4, unidades: ["PB A", "PB B"], ambientes: 2, segundos: 35 }],
-    consulta: { unidad: "PB A", mensaje: "¿La planta baja tiene patio propio? Tengo un perro." },
-    utm: "instagram",
+    visitas: [{ diasAtras: 4, unidades: ["Local"], ambientes: 2, segundos: 35 }],
+    consulta: { unidad: "Local", mensaje: "¿El local admite gastronomía? Busco para una cafetería." },
+    campana: CAMPANA.cartel,
   },
   {
     nombre: "Gonzalo Ibáñez",
     telefono: "2284 00-0106",
-    visitas: [{ diasAtras: 2, unidades: ["4B", "4D"], ambientes: 5, segundos: 40 }],
-    consulta: { unidad: "4D", mensaje: "¿Cuál es el precio del 4D? En la web dice consultar." },
+    visitas: [{ diasAtras: 2, unidades: ["5A", "5B"], ambientes: 5, segundos: 40 }],
+    consulta: { unidad: "5B", mensaje: "¿Cuál es el precio del 5B? En la web dice consultar." },
     estado: "contactado",
     notas: "Le pasé el precio por WhatsApp. Lo está pensando.",
   },
@@ -109,16 +123,17 @@ const PERSONAS: Persona[] = [
   {
     nombre: "Lucía Benítez",
     email: "lucia.benitez@example.com",
-    visitas: [{ diasAtras: 10, unidades: ["1A"] }],
-    consulta: { unidad: "1A", mensaje: "¿Tienen financiación propia?" },
+    visitas: [{ diasAtras: 10, unidades: ["1D"] }],
+    consulta: { unidad: "1D", mensaje: "¿Tienen financiación propia?" },
+    campana: CAMPANA.lanzamiento,
   },
-  { visitas: [{ diasAtras: 1, unidades: ["1B"], whatsapp: true }], utm: "whatsapp" },
-  { nombre: "Tomás Acosta", visitas: [{ diasAtras: 7, unidades: ["PB D", "2D"], whatsapp: true }] },
+  { visitas: [{ diasAtras: 1, unidades: ["1B"], whatsapp: true }], campana: CAMPANA.lanzamiento },
+  { nombre: "Tomás Acosta", visitas: [{ diasAtras: 7, unidades: ["2B", "3B"], whatsapp: true }] },
   {
     nombre: "Elena Vidal",
     telefono: "2284 00-0110",
-    visitas: [{ diasAtras: 18, unidades: ["4C"] }],
-    consulta: { unidad: "4C", mensaje: "¿Para cuándo es la entrega?" },
+    visitas: [{ diasAtras: 18, unidades: ["4B"] }],
+    consulta: { unidad: "4B", mensaje: "¿Para cuándo es la entrega?" },
     estado: "descartado",
     notas: "Necesita mudarse este año; la entrega es en 2028.",
   },
@@ -172,6 +187,13 @@ export function generarActividadEdificio(agencyId: string, e: EdificioCreado, ah
         evento("room_view", { unit_id: u.id, room_id: roomId, duracion_ms: s * 1000 });
       }
     }
+    for (const slug of v.espacios ?? []) {
+      const esp = e.espacios.find((x) => x.slug === slug);
+      if (!esp) throw new Error(`La actividad de ejemplo usa el espacio ${slug}, que no existe.`);
+      const s = entre(15, 40);
+      t += s * 1000;
+      evento("space_view", { floor_id: esp.floor_id, space_id: esp.id, duracion_ms: s * 1000 });
+    }
     if (v.whatsapp) evento("whatsapp_click");
     return t;
   }
@@ -184,7 +206,8 @@ export function generarActividadEdificio(agencyId: string, e: EdificioCreado, ah
 
   for (const persona of PERSONAS) {
     const primera = Math.max(...persona.visitas.map((v) => v.diasAtras));
-    const v = visitante({ utm_source: persona.utm ?? null, created_at: iso(ahora - primera * 86_400_000) });
+    const c = persona.campana;
+    const v = visitante({ utm_source: c?.source ?? null, utm_medium: c?.medium ?? null, utm_campaign: c?.campaign ?? null, created_at: iso(ahora - primera * 86_400_000) });
     let ultimo = 0;
     for (const visita of [...persona.visitas].sort((a, b) => b.diasAtras - a.diasAtras)) ultimo = sesion(v.id!, visita);
     v.first_seen = iso(ahora - primera * 86_400_000);
@@ -205,6 +228,7 @@ export function generarActividadEdificio(agencyId: string, e: EdificioCreado, ah
         project_id: x.project_id ?? null,
         unit_id: x.unit_id ?? null,
         room_id: x.room_id ?? null,
+        space_id: x.space_id ?? null,
       }));
     const { score, nivel, detalle } = calcularPuntaje(resumirEventos(historial));
     filas.leads.push({
@@ -227,11 +251,14 @@ export function generarActividadEdificio(agencyId: string, e: EdificioCreado, ah
       nivel,
       score_detalle: detalle as DetallePuntaje[],
       es_demo: true,
+      utm_source: c?.source ?? null,
+      utm_medium: c?.medium ?? null,
+      utm_campaign: c?.campaign ?? null,
     });
   }
 
   // Visitantes anónimos: miran la fachada, uno o dos pisos y alguna unidad.
-  const fuentes = [null, null, "instagram", "google", "whatsapp"];
+  const fuentes = [null, null, "instagram", "google", "facebook"];
   for (let i = 0; i < 30; i++) {
     const dias = entre(0, 20);
     const v = visitante({ utm_source: fuentes[entre(0, fuentes.length - 1)], created_at: iso(ahora - dias * 86_400_000) });

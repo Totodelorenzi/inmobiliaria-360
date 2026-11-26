@@ -68,14 +68,14 @@ isOneToOne: false
                   ]
                 },"leads": {
                   Row: {
-                    "agency_id": string,"codigo_ref": string | null,"consentimiento_at": string | null,"created_at": string,"email": string | null,"es_demo": boolean,"estado": Database["public"]['Enums']["estado_lead"],"id": string,"mensaje": string | null,"nivel": Database["public"]['Enums']["nivel_lead"],"nombre": string | null,"notas": string | null,"origen": Database["public"]['Enums']["origen_lead"],"property_id": string | null,"score": number,"score_detalle": NonNullable<Json>,"telefono": string | null,"ultima_actividad": string,"unit_id": string | null,"updated_at": string,"visitor_id": string | null
+                    "agency_id": string,"codigo_ref": string | null,"consentimiento_at": string | null,"created_at": string,"email": string | null,"es_demo": boolean,"estado": Database["public"]['Enums']["estado_lead"],"id": string,"mensaje": string | null,"nivel": Database["public"]['Enums']["nivel_lead"],"nombre": string | null,"notas": string | null,"origen": Database["public"]['Enums']["origen_lead"],"property_id": string | null,"score": number,"score_detalle": NonNullable<Json>,"telefono": string | null,"ultima_actividad": string,"unit_id": string | null,"updated_at": string,"utm_campaign": string | null,"utm_content": string | null,"utm_medium": string | null,"utm_source": string | null,"utm_term": string | null,"visitor_id": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "agency_id": string,"codigo_ref"?: string | null,"consentimiento_at"?: string | null,"created_at"?: string,"email"?: string | null,"es_demo"?: boolean,"estado"?: Database["public"]['Enums']["estado_lead"],"id"?: string,"mensaje"?: string | null,"nivel"?: Database["public"]['Enums']["nivel_lead"],"nombre"?: string | null,"notas"?: string | null,"origen"?: Database["public"]['Enums']["origen_lead"],"property_id"?: string | null,"score"?: number,"score_detalle"?: NonNullable<Json>,"telefono"?: string | null,"ultima_actividad"?: string,"unit_id"?: string | null,"updated_at"?: string,"visitor_id"?: string | null
+                    "agency_id": string,"codigo_ref"?: string | null,"consentimiento_at"?: string | null,"created_at"?: string,"email"?: string | null,"es_demo"?: boolean,"estado"?: Database["public"]['Enums']["estado_lead"],"id"?: string,"mensaje"?: string | null,"nivel"?: Database["public"]['Enums']["nivel_lead"],"nombre"?: string | null,"notas"?: string | null,"origen"?: Database["public"]['Enums']["origen_lead"],"property_id"?: string | null,"score"?: number,"score_detalle"?: NonNullable<Json>,"telefono"?: string | null,"ultima_actividad"?: string,"unit_id"?: string | null,"updated_at"?: string,"utm_campaign"?: string | null,"utm_content"?: string | null,"utm_medium"?: string | null,"utm_source"?: string | null,"utm_term"?: string | null,"visitor_id"?: string | null
                   }
                   Update: {
-                    "agency_id"?: string,"codigo_ref"?: string | null,"consentimiento_at"?: string | null,"created_at"?: string,"email"?: string | null,"es_demo"?: boolean,"estado"?: Database["public"]['Enums']["estado_lead"],"id"?: string,"mensaje"?: string | null,"nivel"?: Database["public"]['Enums']["nivel_lead"],"nombre"?: string | null,"notas"?: string | null,"origen"?: Database["public"]['Enums']["origen_lead"],"property_id"?: string | null,"score"?: number,"score_detalle"?: NonNullable<Json>,"telefono"?: string | null,"ultima_actividad"?: string,"unit_id"?: string | null,"updated_at"?: string,"visitor_id"?: string | null
+                    "agency_id"?: string,"codigo_ref"?: string | null,"consentimiento_at"?: string | null,"created_at"?: string,"email"?: string | null,"es_demo"?: boolean,"estado"?: Database["public"]['Enums']["estado_lead"],"id"?: string,"mensaje"?: string | null,"nivel"?: Database["public"]['Enums']["nivel_lead"],"nombre"?: string | null,"notas"?: string | null,"origen"?: Database["public"]['Enums']["origen_lead"],"property_id"?: string | null,"score"?: number,"score_detalle"?: NonNullable<Json>,"telefono"?: string | null,"ultima_actividad"?: string,"unit_id"?: string | null,"updated_at"?: string,"utm_campaign"?: string | null,"utm_content"?: string | null,"utm_medium"?: string | null,"utm_source"?: string | null,"utm_term"?: string | null,"visitor_id"?: string | null
                   }
                   Relationships: [
                     {
@@ -146,14 +146,14 @@ isOneToOne: false
                   ]
                 },"project_floors": {
                   Row: {
-                    "id": string,"nombre": string,"numero": number,"planta_alto": number | null,"planta_ancho": number | null,"planta_url": string | null,"poligono": Json | null,"project_id": string
+                    "id": string,"nombre": string,"numero": number,"planta_alto": number | null,"planta_ancho": number | null,"planta_url": string | null,"poligono": Json | null,"poligono2": Json | null,"project_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "id"?: string,"nombre": string,"numero": number,"planta_alto"?: number | null,"planta_ancho"?: number | null,"planta_url"?: string | null,"poligono"?: Json | null,"project_id": string
+                    "id"?: string,"nombre": string,"numero": number,"planta_alto"?: number | null,"planta_ancho"?: number | null,"planta_url"?: string | null,"poligono"?: Json | null,"poligono2"?: Json | null,"project_id": string
                   }
                   Update: {
-                    "id"?: string,"nombre"?: string,"numero"?: number,"planta_alto"?: number | null,"planta_ancho"?: number | null,"planta_url"?: string | null,"poligono"?: Json | null,"project_id"?: string
+                    "id"?: string,"nombre"?: string,"numero"?: number,"planta_alto"?: number | null,"planta_ancho"?: number | null,"planta_url"?: string | null,"poligono"?: Json | null,"poligono2"?: Json | null,"project_id"?: string
                   }
                   Relationships: [
                     {
@@ -164,16 +164,62 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"projects": {
+                },"project_space_images": {
                   Row: {
-                    "agency_id": string,"ciudad": string | null,"created_at": string,"descripcion": string | null,"direccion": string | null,"es_demo": boolean,"fachada_alto": number | null,"fachada_ancho": number | null,"fachada_url": string | null,"id": string,"nombre": string,"publicado": boolean,"slug": string,"updated_at": string
+                    "id": string,"nombre": string | null,"orden": number,"space_id": string,"url": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "agency_id": string,"ciudad"?: string | null,"created_at"?: string,"descripcion"?: string | null,"direccion"?: string | null,"es_demo"?: boolean,"fachada_alto"?: number | null,"fachada_ancho"?: number | null,"fachada_url"?: string | null,"id"?: string,"nombre": string,"publicado"?: boolean,"slug": string,"updated_at"?: string
+                    "id"?: string,"nombre"?: string | null,"orden"?: number,"space_id": string,"url"?: string | null
                   }
                   Update: {
-                    "agency_id"?: string,"ciudad"?: string | null,"created_at"?: string,"descripcion"?: string | null,"direccion"?: string | null,"es_demo"?: boolean,"fachada_alto"?: number | null,"fachada_ancho"?: number | null,"fachada_url"?: string | null,"id"?: string,"nombre"?: string,"publicado"?: boolean,"slug"?: string,"updated_at"?: string
+                    "id"?: string,"nombre"?: string | null,"orden"?: number,"space_id"?: string,"url"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "project_space_images_space_id_fkey"
+      columns: ["space_id"]
+isOneToOne: false
+      referencedRelation: "project_spaces"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"project_spaces": {
+                  Row: {
+                    "descripcion": string | null,"floor_id": string,"id": string,"nombre": string,"orden": number,"project_id": string,"punto": Json | null,"slug": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "descripcion"?: string | null,"floor_id": string,"id"?: string,"nombre": string,"orden"?: number,"project_id": string,"punto"?: Json | null,"slug": string
+                  }
+                  Update: {
+                    "descripcion"?: string | null,"floor_id"?: string,"id"?: string,"nombre"?: string,"orden"?: number,"project_id"?: string,"punto"?: Json | null,"slug"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "project_spaces_floor_id_fkey"
+      columns: ["floor_id"]
+isOneToOne: false
+      referencedRelation: "project_floors"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "project_spaces_project_id_fkey"
+      columns: ["project_id"]
+isOneToOne: false
+      referencedRelation: "projects"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"projects": {
+                  Row: {
+                    "agency_id": string,"ciudad": string | null,"created_at": string,"descripcion": string | null,"direccion": string | null,"es_demo": boolean,"fachada_alto": number | null,"fachada_ancho": number | null,"fachada_url": string | null,"id": string,"nombre": string,"publicado": boolean,"slug": string,"updated_at": string,"amenities": (string)[] | null,"color_fondo": string | null,"entrega": string | null,"fachada2_alto": number | null,"fachada2_ancho": number | null,"fachada2_url": string | null,"secuencia": Json | null,"sobre_texto": string | null,"sobre_titulo": string | null,"transicion": string,"vista1_nombre": string | null,"vista2_nombre": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "agency_id": string,"ciudad"?: string | null,"created_at"?: string,"descripcion"?: string | null,"direccion"?: string | null,"es_demo"?: boolean,"fachada_alto"?: number | null,"fachada_ancho"?: number | null,"fachada_url"?: string | null,"id"?: string,"nombre": string,"publicado"?: boolean,"slug": string,"updated_at"?: string,"amenities"?: (string)[] | null,"color_fondo"?: string | null,"entrega"?: string | null,"fachada2_alto"?: number | null,"fachada2_ancho"?: number | null,"fachada2_url"?: string | null,"secuencia"?: Json | null,"sobre_texto"?: string | null,"sobre_titulo"?: string | null,"transicion"?: string,"vista1_nombre"?: string | null,"vista2_nombre"?: string | null
+                  }
+                  Update: {
+                    "agency_id"?: string,"ciudad"?: string | null,"created_at"?: string,"descripcion"?: string | null,"direccion"?: string | null,"es_demo"?: boolean,"fachada_alto"?: number | null,"fachada_ancho"?: number | null,"fachada_url"?: string | null,"id"?: string,"nombre"?: string,"publicado"?: boolean,"slug"?: string,"updated_at"?: string,"amenities"?: (string)[] | null,"color_fondo"?: string | null,"entrega"?: string | null,"fachada2_alto"?: number | null,"fachada2_ancho"?: number | null,"fachada2_url"?: string | null,"secuencia"?: Json | null,"sobre_texto"?: string | null,"sobre_titulo"?: string | null,"transicion"?: string,"vista1_nombre"?: string | null,"vista2_nombre"?: string | null
                   }
                   Relationships: [
                     {
@@ -370,14 +416,14 @@ isOneToOne: false
                   ]
                 },"units": {
                   Row: {
-                    "codigo": string,"created_at": string,"espejada": boolean,"estado": Database["public"]['Enums']["estado_unidad"],"floor_id": string,"id": string,"moneda": Database["public"]['Enums']["moneda"],"orientacion": string | null,"poligono": Json | null,"precio": number | null,"project_id": string,"superficie_cubierta": number | null,"superficie_total": number | null,"unit_type_id": string,"updated_at": string
+                    "categoria": string,"codigo": string,"created_at": string,"espejada": boolean,"estado": Database["public"]['Enums']["estado_unidad"],"floor_id": string,"id": string,"moneda": Database["public"]['Enums']["moneda"],"operacion": string,"orientacion": string | null,"poligono": Json | null,"precio": number | null,"project_id": string,"superficie_cubierta": number | null,"superficie_total": number | null,"unit_type_id": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "codigo": string,"created_at"?: string,"espejada"?: boolean,"estado"?: Database["public"]['Enums']["estado_unidad"],"floor_id": string,"id"?: string,"moneda"?: Database["public"]['Enums']["moneda"],"orientacion"?: string | null,"poligono"?: Json | null,"precio"?: number | null,"project_id": string,"superficie_cubierta"?: number | null,"superficie_total"?: number | null,"unit_type_id": string,"updated_at"?: string
+                    "categoria"?: string,"codigo": string,"created_at"?: string,"espejada"?: boolean,"estado"?: Database["public"]['Enums']["estado_unidad"],"floor_id": string,"id"?: string,"moneda"?: Database["public"]['Enums']["moneda"],"operacion"?: string,"orientacion"?: string | null,"poligono"?: Json | null,"precio"?: number | null,"project_id": string,"superficie_cubierta"?: number | null,"superficie_total"?: number | null,"unit_type_id": string,"updated_at"?: string
                   }
                   Update: {
-                    "codigo"?: string,"created_at"?: string,"espejada"?: boolean,"estado"?: Database["public"]['Enums']["estado_unidad"],"floor_id"?: string,"id"?: string,"moneda"?: Database["public"]['Enums']["moneda"],"orientacion"?: string | null,"poligono"?: Json | null,"precio"?: number | null,"project_id"?: string,"superficie_cubierta"?: number | null,"superficie_total"?: number | null,"unit_type_id"?: string,"updated_at"?: string
+                    "categoria"?: string,"codigo"?: string,"created_at"?: string,"espejada"?: boolean,"estado"?: Database["public"]['Enums']["estado_unidad"],"floor_id"?: string,"id"?: string,"moneda"?: Database["public"]['Enums']["moneda"],"operacion"?: string,"orientacion"?: string | null,"poligono"?: Json | null,"precio"?: number | null,"project_id"?: string,"superficie_cubierta"?: number | null,"superficie_total"?: number | null,"unit_type_id"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -428,14 +474,14 @@ isOneToOne: false
                   ]
                 },"visitor_events": {
                   Row: {
-                    "agency_id": string,"created_at": string,"duracion_ms": number | null,"floor_id": string | null,"id": number,"meta": NonNullable<Json>,"plan_id": string | null,"project_id": string | null,"property_id": string | null,"room_id": string | null,"scene_id": string | null,"sesion_id": string | null,"tipo": Database["public"]['Enums']["tipo_evento"],"unit_id": string | null,"visitor_id": string
+                    "agency_id": string,"created_at": string,"duracion_ms": number | null,"floor_id": string | null,"id": number,"meta": NonNullable<Json>,"plan_id": string | null,"project_id": string | null,"property_id": string | null,"room_id": string | null,"scene_id": string | null,"sesion_id": string | null,"space_id": string | null,"tipo": Database["public"]['Enums']["tipo_evento"],"unit_id": string | null,"visitor_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "agency_id": string,"created_at"?: string,"duracion_ms"?: number | null,"floor_id"?: string | null,"id"?: never,"meta"?: NonNullable<Json>,"plan_id"?: string | null,"project_id"?: string | null,"property_id"?: string | null,"room_id"?: string | null,"scene_id"?: string | null,"sesion_id"?: string | null,"tipo": Database["public"]['Enums']["tipo_evento"],"unit_id"?: string | null,"visitor_id": string
+                    "agency_id": string,"created_at"?: string,"duracion_ms"?: number | null,"floor_id"?: string | null,"id"?: never,"meta"?: NonNullable<Json>,"plan_id"?: string | null,"project_id"?: string | null,"property_id"?: string | null,"room_id"?: string | null,"scene_id"?: string | null,"sesion_id"?: string | null,"space_id"?: string | null,"tipo": Database["public"]['Enums']["tipo_evento"],"unit_id"?: string | null,"visitor_id": string
                   }
                   Update: {
-                    "agency_id"?: string,"created_at"?: string,"duracion_ms"?: number | null,"floor_id"?: string | null,"id"?: never,"meta"?: NonNullable<Json>,"plan_id"?: string | null,"project_id"?: string | null,"property_id"?: string | null,"room_id"?: string | null,"scene_id"?: string | null,"sesion_id"?: string | null,"tipo"?: Database["public"]['Enums']["tipo_evento"],"unit_id"?: string | null,"visitor_id"?: string
+                    "agency_id"?: string,"created_at"?: string,"duracion_ms"?: number | null,"floor_id"?: string | null,"id"?: never,"meta"?: NonNullable<Json>,"plan_id"?: string | null,"project_id"?: string | null,"property_id"?: string | null,"room_id"?: string | null,"scene_id"?: string | null,"sesion_id"?: string | null,"space_id"?: string | null,"tipo"?: Database["public"]['Enums']["tipo_evento"],"unit_id"?: string | null,"visitor_id"?: string
                   }
                   Relationships: [
                     {
@@ -479,6 +525,12 @@ isOneToOne: false
       columns: ["scene_id"]
 isOneToOne: false
       referencedRelation: "tour_scenes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "visitor_events_space_id_fkey"
+      columns: ["space_id"]
+isOneToOne: false
+      referencedRelation: "project_spaces"
       referencedColumns: ["id"]
     },{
       foreignKeyName: "visitor_events_unit_id_fkey"
@@ -533,7 +585,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "estado_comercial": "disponible"|"reservada"|"vendida"|"alquilada","estado_lead": "nuevo"|"contactado"|"visita_agendada"|"descartado"|"cerrado","estado_obra": "terminada"|"en_construccion"|"en_pozo","estado_unidad": "disponible"|"reservada"|"vendida","forma_pago": "contado"|"credito_hipotecario"|"financiacion"|"no_sabe","moneda": "ARS"|"USD","nivel_lead": "frio"|"tibio"|"caliente","operacion": "alquiler"|"venta","origen_lead": "formulario"|"whatsapp_click"|"pedido_visita"|"link_personalizado","plazo_compra": "inmediato"|"1_3_meses"|"3_6_meses"|"mas_6_meses","rol_miembro": "admin"|"agente","tipo_evento": "view_property"|"photo_view"|"tour_start"|"scene_view"|"tour_complete"|"plan_view"|"plan_point_click"|"whatsapp_click"|"form_submit"|"visit_request"|"share"|"floor_view"|"unit_view"|"rooms_open"|"room_view","tipo_plano": "imagen"|"pdf","tipo_propiedad": "departamento"|"casa"|"ph"|"local"|"terreno"|"oficina"|"cochera"
+            "estado_comercial": "disponible"|"reservada"|"vendida"|"alquilada","estado_lead": "nuevo"|"contactado"|"visita_agendada"|"descartado"|"cerrado","estado_obra": "terminada"|"en_construccion"|"en_pozo","estado_unidad": "disponible"|"reservada"|"vendida"|"alquilada","forma_pago": "contado"|"credito_hipotecario"|"financiacion"|"no_sabe","moneda": "ARS"|"USD","nivel_lead": "frio"|"tibio"|"caliente","operacion": "alquiler"|"venta","origen_lead": "formulario"|"whatsapp_click"|"pedido_visita"|"link_personalizado","plazo_compra": "inmediato"|"1_3_meses"|"3_6_meses"|"mas_6_meses","rol_miembro": "admin"|"agente","tipo_evento": "view_property"|"photo_view"|"tour_start"|"scene_view"|"tour_complete"|"plan_view"|"plan_point_click"|"whatsapp_click"|"form_submit"|"visit_request"|"share"|"floor_view"|"unit_view"|"rooms_open"|"room_view"|"space_view","tipo_plano": "imagen"|"pdf","tipo_propiedad": "departamento"|"casa"|"ph"|"local"|"terreno"|"oficina"|"cochera"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -649,7 +701,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "estado_comercial": ["disponible", "reservada", "vendida", "alquilada"],"estado_lead": ["nuevo", "contactado", "visita_agendada", "descartado", "cerrado"],"estado_obra": ["terminada", "en_construccion", "en_pozo"],"estado_unidad": ["disponible", "reservada", "vendida"],"forma_pago": ["contado", "credito_hipotecario", "financiacion", "no_sabe"],"moneda": ["ARS", "USD"],"nivel_lead": ["frio", "tibio", "caliente"],"operacion": ["alquiler", "venta"],"origen_lead": ["formulario", "whatsapp_click", "pedido_visita", "link_personalizado"],"plazo_compra": ["inmediato", "1_3_meses", "3_6_meses", "mas_6_meses"],"rol_miembro": ["admin", "agente"],"tipo_evento": ["view_property", "photo_view", "tour_start", "scene_view", "tour_complete", "plan_view", "plan_point_click", "whatsapp_click", "form_submit", "visit_request", "share", "floor_view", "unit_view", "rooms_open", "room_view"],"tipo_plano": ["imagen", "pdf"],"tipo_propiedad": ["departamento", "casa", "ph", "local", "terreno", "oficina", "cochera"]
+            "estado_comercial": ["disponible", "reservada", "vendida", "alquilada"],"estado_lead": ["nuevo", "contactado", "visita_agendada", "descartado", "cerrado"],"estado_obra": ["terminada", "en_construccion", "en_pozo"],"estado_unidad": ["disponible", "reservada", "vendida", "alquilada"],"forma_pago": ["contado", "credito_hipotecario", "financiacion", "no_sabe"],"moneda": ["ARS", "USD"],"nivel_lead": ["frio", "tibio", "caliente"],"operacion": ["alquiler", "venta"],"origen_lead": ["formulario", "whatsapp_click", "pedido_visita", "link_personalizado"],"plazo_compra": ["inmediato", "1_3_meses", "3_6_meses", "mas_6_meses"],"rol_miembro": ["admin", "agente"],"tipo_evento": ["view_property", "photo_view", "tour_start", "scene_view", "tour_complete", "plan_view", "plan_point_click", "whatsapp_click", "form_submit", "visit_request", "share", "floor_view", "unit_view", "rooms_open", "room_view", "space_view"],"tipo_plano": ["imagen", "pdf"],"tipo_propiedad": ["departamento", "casa", "ph", "local", "terreno", "oficina", "cochera"]
           }
         }
 } as const

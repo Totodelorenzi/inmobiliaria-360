@@ -660,4 +660,77 @@ describe("desarrolladora", () => {
       await assert.rejects(como(db, "servicio", (tx) => tx.query("update units set poligono = $1 where id = $2", [malo, P.unidadA])), /check constraint/);
     }
   });
+
+  test("landing: espacios e imágenes se leen si el proyecto está publicado y los edita solo su tenant", async (t) => {
+    const E = { pubA: "a4000000-0000-4000-8000-00000000000a", borradorB: "a4000000-0000-4000-8000-00000000000b" };
+    // Fuera de `como` (que siempre revierte): las filas quedan para los usuarios del test y se borran al final.
+    await db.query(
+      "insert into project_spaces (id, project_id, floor_id, nombre, slug, punto) values ($1, $3, $5, 'Pileta', 'pileta', '[40, 60]'), ($2, $4, $6, 'SUM', 'sum', null)",
+      [E.pubA, E.borradorB, P.pubA, P.borradorB, P.pisoA, P.pisoB],
+    );
+    await db.query("insert into project_space_images (space_id, nombre, url) values ($1, 'Pileta', 'https://x/p.webp'), ($2, 'SUM', null)", [E.pubA, E.borradorB]);
+    t.after(() => db.query("delete from project_spaces where id in ($1, $2)", [E.pubA, E.borradorB]));
+    await como(db, "anon", async (tx) => {
+      assert.equal(await contar(tx, "select * from project_spaces"), 1);
+      assert.equal(await contar(tx, "select * from project_space_images"), 1);
+    });
+    await assert.rejects(como(db, "anon", (tx) => tx.query("update project_spaces set nombre = 'hack'")), RLS);
+    await como(db, "adminB", async (tx) => {
+      assert.equal(await contar(tx, "select * from project_spaces"), 2);
+      assert.equal((await tx.query("update project_spaces set nombre = 'hack' where id = $1", [E.pubA])).affectedRows, 0);
+      assert.equal((await tx.query("update project_space_images set url = null where space_id = $1", [E.pubA])).affectedRows, 0);
+      assert.equal((await tx.query("update project_spaces set punto = '[10, 10]' where id = $1", [E.borradorB])).affectedRows, 1);
+    });
+    await assert.rejects(
+      como(db, "adminB", (tx) => tx.query("insert into project_space_images (space_id, url) values ($1, 'https://x/y.webp')", [E.pubA])),
+      RLS,
+    );
+    // El piso tiene que ser del mismo proyecto y el punto va en porcentajes.
+    await assert.rejects(
+      como(db, "servicio", (tx) => tx.query("insert into project_spaces (project_id, floor_id, nombre, slug) values ($1, $2, 'Gym', 'gym')", [P.pubA, P.pisoB])),
+      /mismo proyecto/,
+    );
+    for (const malo of ["[120, 5]", "[1, 2, 3]", '{"x":1}']) {
+      await assert.rejects(como(db, "servicio", (tx) => tx.query("update project_spaces set punto = $1 where id = $2", [malo, E.pubA])), /check constraint/);
+    }
+  });
+
+  test("landing: textos y vistas del proyecto, local en alquiler y cocheras", async () => {
+    await como(db, "agenteA", async (tx) => {
+      const r = await tx.query(
+        `update projects set sobre_titulo = 'Quiénes somos', sobre_texto = 'Texto', entrega = 'Diciembre 2028',
+           amenities = '{"SUM con parrilla","Pileta"}', transicion = 'secuencia', color_fondo = '#101215',
+           secuencia = '{"patron": "https://x/c-{n}.webp", "cuadros": 60, "digitos": 4, "inicio": 1, "ancho": 1920, "alto": 1080}'
+         where id = $1`,
+        [P.pubA],
+      );
+      assert.equal(r.affectedRows, 1);
+      await tx.query("update project_floors set poligono2 = '[[0,0],[50,0],[50,50]]' where id = $1", [P.pisoA]);
+      await tx.query("update units set categoria = 'local', operacion = 'alquiler', estado = 'alquilada' where id = $1", [P.unidadA]);
+    });
+    for (const malo of [
+      "transicion = 'giro'",
+      "color_fondo = 'negro'",
+      `amenities = '{"",  "Pileta"}'`,
+      `secuencia = '{"patron": "http://x/c.webp", "cuadros": 60, "ancho": 1, "alto": 1}'`,
+      `secuencia = '{"patron": "https://x/c-{n}.webp", "cuadros": 1, "ancho": 1, "alto": 1}'`,
+    ]) {
+      await assert.rejects(como(db, "agenteA", (tx) => tx.query(`update projects set ${malo} where id = $1`, [P.pubA])), /check constraint/, malo);
+    }
+    await assert.rejects(como(db, "agenteA", (tx) => tx.query("update units set categoria = 'baulera' where id = $1", [P.unidadA])), /check constraint/);
+    await como(db, "adminB", async (tx) => {
+      assert.equal((await tx.query("update projects set sobre_texto = 'hack' where id = $1", [P.pubA])).affectedRows, 0);
+    });
+  });
+
+  test("landing: los UTM del lead los escribe el servidor y el admin no los cambia", async (t) => {
+    const lead = "a5000000-0000-4000-8000-00000000000a";
+    await db.query("insert into leads (id, agency_id, nombre, telefono, utm_source, utm_campaign) values ($1, $2, 'Eva', '1122', 'instagram', 'lanzamiento')", [lead, ID.agenciaA]);
+    t.after(() => db.query("delete from leads where id = $1", [lead]));
+    await como(db, "adminA", async (tx) => {
+      const { rows } = await tx.query<{ utm_campaign: string }>("select utm_campaign from leads where id = $1", [lead]);
+      assert.equal(rows[0].utm_campaign, "lanzamiento");
+    });
+    await assert.rejects(como(db, "adminA", (tx) => tx.query("update leads set utm_campaign = 'otra' where id = $1", [lead])), RLS);
+  });
 });

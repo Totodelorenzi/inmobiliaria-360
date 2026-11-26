@@ -33,8 +33,11 @@ export function formatExpensas(expensas: number | null) {
   return expensas ? `$ ${numero.format(expensas)}` : null;
 }
 
+const metros = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 1 });
+
+/** "45 m²", "12,5 m²". */
 export function formatM2(superficie: number | null) {
-  return superficie ? `${numero.format(superficie)} m²` : null;
+  return superficie ? `${metros.format(superficie)} m²` : null;
 }
 
 /** "marzo de 2027" a partir de una fecha ISO (YYYY-MM-DD). */

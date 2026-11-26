@@ -28,7 +28,7 @@ export async function GET(request: Request) {
   const supabase = await createClient();
   let query = supabase
     .from("leads")
-    .select("nombre, telefono, email, mensaje, origen, created_at, codigo_ref, score, nivel, estado, notas, ultima_actividad, propiedad:properties(titulo, slug), unidad:units(codigo, proyecto:projects(nombre))")
+    .select("nombre, telefono, email, mensaje, origen, created_at, codigo_ref, score, nivel, estado, notas, ultima_actividad, propiedad:properties(titulo, slug), unidad:units(codigo, categoria, proyecto:projects(nombre)), utm_source, utm_medium, utm_campaign, utm_content, utm_term")
     .eq("agency_id", estado.sesion.agencia.id)
     .order("score", { ascending: false })
     .limit(10000);
@@ -37,7 +37,7 @@ export async function GET(request: Request) {
   if (error) return new Response("No se pudieron exportar las consultas.", { status: 500 });
 
   const filas = [
-    ["Puntaje", "Nivel", "Estado", "Código", "Nombre", "Teléfono", "Email", "Propiedad", "Origen", "Mensaje", "Notas", "Primer contacto", "Última actividad"],
+    ["Puntaje", "Nivel", "Estado", "Código", "Nombre", "Teléfono", "Email", "Propiedad", "Origen", "Mensaje", "Notas", "Primer contacto", "Última actividad", "utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"],
     ...data.map((l) => [
       String(l.score),
       NIVEL[l.nivel],
@@ -52,6 +52,11 @@ export async function GET(request: Request) {
       l.notas,
       fecha.format(new Date(l.created_at)),
       fecha.format(new Date(l.ultima_actividad)),
+      l.utm_source,
+      l.utm_medium,
+      l.utm_campaign,
+      l.utm_content,
+      l.utm_term,
     ]),
   ];
   const csv = "﻿" + filas.map((f) => f.map(celda).join(";")).join("\r\n");

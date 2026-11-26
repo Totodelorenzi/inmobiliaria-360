@@ -129,7 +129,7 @@ export type FiltrosLeads = {
 };
 
 const CAMPOS_LEAD =
-  "id, nombre, telefono, email, mensaje, origen, created_at, codigo_ref, score, score_detalle, nivel, estado, notas, ultima_actividad, visitor_id, propiedad:properties(id, titulo, slug, asesor:advisors!properties_asesor_id_fkey(nombre)), unidad:units(codigo, proyecto:projects(nombre))";
+  "id, nombre, telefono, email, mensaje, origen, created_at, codigo_ref, score, score_detalle, nivel, estado, notas, ultima_actividad, visitor_id, propiedad:properties(id, titulo, slug, asesor:advisors!properties_asesor_id_fkey(nombre)), unidad:units(codigo, categoria, proyecto:projects(nombre)), utm_source, utm_medium, utm_campaign, utm_content, utm_term";
 
 export type LeadListado = Pick<
   Tables<"leads">,
@@ -147,6 +147,11 @@ export type LeadListado = Pick<
   | "notas"
   | "ultima_actividad"
   | "visitor_id"
+  | "utm_source"
+  | "utm_medium"
+  | "utm_campaign"
+  | "utm_content"
+  | "utm_term"
 > & {
   score_detalle: DetallePuntaje[];
   propiedad: { id: string; titulo: string; slug: string; asesor: { nombre: string } | null } | null;
@@ -227,7 +232,7 @@ export async function getLeadDetalle(agencyId: string, id: string): Promise<Lead
     base.visitor_id
       ? supabase
           .from("visitor_events")
-          .select("tipo, created_at, sesion_id, duracion_ms, meta, propiedad:properties(titulo), escena:tour_scenes(nombre_ambiente), plano:property_plans(nombre), piso:project_floors(nombre), unidad:units(codigo), ambiente:unit_type_rooms(nombre)")
+          .select("tipo, created_at, sesion_id, duracion_ms, meta, propiedad:properties(titulo), escena:tour_scenes(nombre_ambiente), plano:property_plans(nombre), piso:project_floors(nombre), unidad:units(codigo), ambiente:unit_type_rooms(nombre), espacio:project_spaces(nombre)")
           .eq("visitor_id", base.visitor_id)
           .order("created_at", { ascending: false })
           .limit(500)
@@ -246,6 +251,7 @@ export async function getLeadDetalle(agencyId: string, id: string): Promise<Lead
     piso: { nombre: string } | null;
     unidad: { codigo: string } | null;
     ambiente: { nombre: string } | null;
+    espacio: { nombre: string } | null;
   };
   const filas = (eventos.data ?? []) as unknown as FilaEvento[];
   const unidades = new Map<string, { codigo: string; vistas: number; consulto: boolean }>();
@@ -275,6 +281,7 @@ export async function getLeadDetalle(agencyId: string, id: string): Promise<Lead
       piso: e.piso?.nombre ?? null,
       unidad: e.unidad?.codigo ?? null,
       ambiente: e.ambiente?.nombre ?? null,
+      espacio: e.espacio?.nombre ?? null,
     })),
   };
 }

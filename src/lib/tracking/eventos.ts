@@ -17,6 +17,8 @@ export type EventoCliente = {
   floorId?: string;
   unitId?: string;
   roomId?: string;
+  /** Espacio común (amenities, lobby). */
+  spaceId?: string;
   duracionMs?: number;
   meta?: Record<string, string | number | boolean>;
   /** Momento del evento en el navegador (ms). */
@@ -24,7 +26,7 @@ export type EventoCliente = {
   sesion: string;
 };
 
-export type Utm = { source?: string; medium?: string; campaign?: string };
+export type Utm = { source?: string; medium?: string; campaign?: string; content?: string; term?: string };
 
 export type Lote = { eventos: EventoCliente[]; utm?: Utm };
 
@@ -36,7 +38,7 @@ const esObjeto = (v: unknown): v is Record<string, unknown> => typeof v === "obj
 const REQUIERE_PROPIEDAD: TipoEvento[] = ["view_property", "photo_view", "tour_start", "scene_view", "tour_complete", "plan_view", "plan_point_click"];
 
 /** Eventos del edificio: siempre sobre un proyecto, y cada uno con su piso, unidad o ambiente. */
-const REQUIERE_PROYECTO: TipoEvento[] = ["floor_view", "unit_view", "rooms_open", "room_view"];
+const REQUIERE_PROYECTO: TipoEvento[] = ["floor_view", "unit_view", "rooms_open", "room_view", "space_view"];
 
 function validarMeta(meta: unknown): EventoCliente["meta"] | null | undefined {
   if (meta === undefined) return undefined;
@@ -64,13 +66,14 @@ function validarEvento(e: unknown, ahora: number): EventoCliente | null {
   if (e.planId !== undefined && !esUuid(e.planId)) return null;
   if (tipo === "scene_view" && !e.sceneId) return null;
   if ((tipo === "plan_view" || tipo === "plan_point_click") && !e.planId) return null;
-  for (const campo of ["projectId", "floorId", "unitId", "roomId"] as const) {
+  for (const campo of ["projectId", "floorId", "unitId", "roomId", "spaceId"] as const) {
     if (e[campo] !== undefined && !esUuid(e[campo])) return null;
   }
   if (REQUIERE_PROYECTO.includes(tipo) && !e.projectId) return null;
   if (tipo === "floor_view" && !e.floorId) return null;
   if ((tipo === "unit_view" || tipo === "rooms_open" || tipo === "room_view") && !e.unitId) return null;
   if (tipo === "room_view" && !e.roomId) return null;
+  if (tipo === "space_view" && !e.spaceId) return null;
   if (e.duracionMs !== undefined && !(Number.isInteger(e.duracionMs) && (e.duracionMs as number) >= 0 && (e.duracionMs as number) <= MAX_DURACION_MS)) {
     return null;
   }
@@ -89,6 +92,7 @@ function validarEvento(e: unknown, ahora: number): EventoCliente | null {
     ...(e.floorId ? { floorId: e.floorId as string } : {}),
     ...(e.unitId ? { unitId: e.unitId as string } : {}),
     ...(e.roomId ? { roomId: e.roomId as string } : {}),
+    ...(e.spaceId ? { spaceId: e.spaceId as string } : {}),
     ...(e.duracionMs !== undefined ? { duracionMs: e.duracionMs as number } : {}),
     ...(meta ? { meta } : {}),
   };
@@ -97,7 +101,7 @@ function validarEvento(e: unknown, ahora: number): EventoCliente | null {
 function validarUtm(utm: unknown): Utm | undefined {
   if (!esObjeto(utm)) return undefined;
   const limpio: Utm = {};
-  for (const clave of ["source", "medium", "campaign"] as const) {
+  for (const clave of ["source", "medium", "campaign", "content", "term"] as const) {
     const v = utm[clave];
     if (typeof v === "string" && v.trim()) limpio[clave] = v.trim().slice(0, 100);
   }
@@ -113,4 +117,10 @@ export function validarLote(cuerpo: unknown, ahora = Date.now()): { lote: Lote; 
     lote: { eventos, utm: validarUtm(cuerpo.utm) },
     descartados: cuerpo.eventos.length - eventos.length,
   };
+}
+
+/** UTM que viajan en el `meta` de un evento (el click de WhatsApp lleva los de la visita). */
+export function utmDeMeta(meta: EventoCliente["meta"]): Utm | undefined {
+  if (!meta) return undefined;
+  return validarUtm({ source: meta.utm_source, medium: meta.utm_medium, campaign: meta.utm_campaign, content: meta.utm_content, term: meta.utm_term });
 }

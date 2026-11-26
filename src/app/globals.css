@@ -106,3 +106,13 @@
 html[data-aviso-privacidad="visto"] #aviso-privacidad {
   display: none;
 }
+
+/* Landing del proyecto: la rayita de "Deslizá para conocer el proyecto". */
+@keyframes bajar {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(300%);
+  }
+}

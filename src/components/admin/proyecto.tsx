@@ -9,9 +9,10 @@ import { cambiarEstadoUnidad, guardarZona, reemplazarImagen, type DestinoImagen 
 import type { PisoAdmin, ProyectoAdmin, UnidadAdmin } from "@/lib/admin/datos-proyecto";
 import { ErrorImagen, procesarImagenEdificio } from "@/lib/admin/imagenes";
 import { rutaNueva, subirArchivo } from "@/lib/admin/subida";
-import { ESTADOS_UNIDAD, ESTADO_UNIDAD_COLOR, ESTADO_UNIDAD_LABEL, metrosUnidad, precioUnidad, puntosSvg, type EstadoUnidad, type Punto } from "@/lib/edificio";
+import { ESTADOS_UNIDAD, ESTADO_UNIDAD_COLOR, ESTADO_UNIDAD_LABEL, estadosPara, metrosUnidad, precioUnidad, puntosSvg, type EstadoUnidad, type Punto } from "@/lib/edificio";
 import { cn } from "@/lib/utils";
 import { MostrarAviso, useAccion, type AvisoAccion } from "./acciones-ui";
+import { LienzoPuntos } from "./proyecto-landing";
 import { Aviso, Panel } from "./ui";
 
 // ---------------------------------------------------------------------------
@@ -45,7 +46,7 @@ export function UnidadesEstado({ proyecto }: { proyecto: ProyectoAdmin }) {
   return (
     <div className="flex flex-col gap-5">
       <p className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-        {ESTADOS_UNIDAD.map((estado) => (
+        {ESTADOS_UNIDAD.filter((estado) => estado !== "alquilada" || proyecto.unidades.some((u) => u.operacion === "alquiler")).map((estado) => (
           <span key={estado} className="flex items-center gap-1.5">
             <span className="size-3 rounded-full" style={{ background: ESTADO_UNIDAD_COLOR[estado] }} aria-hidden />
             {cuenta(estado)} {ESTADO_UNIDAD_LABEL[estado].toLowerCase()}s
@@ -53,7 +54,9 @@ export function UnidadesEstado({ proyecto }: { proyecto: ProyectoAdmin }) {
         ))}
       </p>
       {error && <Aviso tono="error">{error}</Aviso>}
-      {proyecto.pisos.map((piso) => (
+      {proyecto.pisos
+        .filter((piso) => proyecto.unidades.some((u) => u.floor_id === piso.id))
+        .map((piso) => (
         <Panel key={piso.id} titulo={piso.nombre}>
           <ul className="flex flex-col divide-y divide-border">
             {proyecto.unidades
@@ -68,12 +71,12 @@ export function UnidadesEstado({ proyecto }: { proyecto: ProyectoAdmin }) {
                         {u.codigo}
                       </span>
                       <span className="min-w-0">
-                        <span className="block truncate font-semibold">{[tipologia?.nombre, metrosUnidad(u)].filter(Boolean).join(" · ")}</span>
+                        <span className="block truncate font-semibold">{[u.categoria === "local" ? "Local comercial (alquiler)" : tipologia?.nombre, metrosUnidad(u)].filter(Boolean).join(" · ")}</span>
                         <span className="block text-sm text-muted">{precioUnidad({ ...u, estado: "disponible" })}</span>
                       </span>
                     </div>
-                    <div role="group" aria-label={`Estado de la unidad ${u.codigo}`} className="grid grid-cols-3 gap-1 rounded-xl bg-surface p-1">
-                      {ESTADOS_UNIDAD.map((estado) => (
+                    <div role="group" aria-label={`Estado de la unidad ${u.codigo}`} className={cn("grid gap-1 rounded-xl bg-surface p-1", u.operacion === "alquiler" ? "grid-cols-2" : "grid-cols-3")}>
+                      {estadosPara(u.operacion).map((estado) => (
                         <button
                           key={estado}
                           type="button"
@@ -166,8 +169,11 @@ export function ImagenesProyecto({ proyecto }: { proyecto: ProyectoAdmin }) {
   const grupos: { titulo: string; ayuda?: string; casillas: Casilla[] }[] = [
     {
       titulo: "Fachada",
-      ayuda: "Es lo primero que ve el comprador. Si la imagen nueva tiene otro encuadre, volvé a marcar los pisos en “Zonas”.",
-      casillas: [{ destino: { tipo: "fachada", id: proyecto.id }, nombre: "Fachada del edificio", url: proyecto.fachada_url, maxLado: 1600 }],
+      ayuda: "Horizontales (16:9) con el edificio centrado: al scrollear se pasa de la vista 1 a la 2. Si cambia el encuadre, volvé a marcar los pisos en “Zonas”.",
+      casillas: [
+        { destino: { tipo: "fachada", id: proyecto.id }, nombre: `Vista 1${proyecto.vista1_nombre ? ` (${proyecto.vista1_nombre})` : ""}`, url: proyecto.fachada_url, maxLado: 1920 },
+        { destino: { tipo: "fachada2", id: proyecto.id }, nombre: `Vista 2${proyecto.vista2_nombre ? ` (${proyecto.vista2_nombre})` : ""}`, url: proyecto.fachada2_url, maxLado: 1920 },
+      ],
     },
     {
       titulo: "Plantas",
@@ -182,6 +188,10 @@ export function ImagenesProyecto({ proyecto }: { proyecto: ProyectoAdmin }) {
     ...proyecto.tipologias.map((t) => ({
       titulo: `Renders · ${t.nombre}`,
       casillas: t.ambientes.map((a) => ({ destino: { tipo: "render" as const, id: a.id }, nombre: a.nombre, url: a.render_url, maxLado: 1920 })),
+    })),
+    ...proyecto.espacios.map((e) => ({
+      titulo: `Amenities · ${e.nombre}`,
+      casillas: e.imagenes.map((i) => ({ destino: { tipo: "espacio" as const, id: i.id }, nombre: i.nombre ?? e.nombre, url: i.url, maxLado: 1920 })),
     })),
   ];
   return (
@@ -209,13 +219,16 @@ export function ImagenesProyecto({ proyecto }: { proyecto: ProyectoAdmin }) {
 type Zona = { id: string; nombre: string; poligono: Punto[] | null };
 
 export function MarcadorZonas({ proyecto }: { proyecto: ProyectoAdmin }) {
-  // "fachada": los pisos sobre la fachada. Si no, el id del piso cuyas unidades se marcan sobre su planta.
+  // "fachada" / "fachada2": los pisos sobre cada vista. "puntos:<piso>": los espacios comunes de ese piso.
+  // Si no, el id del piso cuyas unidades se marcan sobre su planta.
   const [lienzo, setLienzo] = useState("fachada");
+  const conPuntos = lienzo.startsWith("puntos:") ? proyecto.pisos.find((p) => p.id === lienzo.slice(7)) : undefined;
   const piso: PisoAdmin | undefined = proyecto.pisos.find((p) => p.id === lienzo);
-  const imagen = piso ? piso.planta_url : proyecto.fachada_url;
+  const vista2 = lienzo === "fachada2";
+  const imagen = conPuntos ? conPuntos.planta_url : piso ? piso.planta_url : vista2 ? proyecto.fachada2_url : proyecto.fachada_url;
   const zonas: Zona[] = piso
     ? proyecto.unidades.filter((u) => u.floor_id === piso.id).map((u) => ({ id: u.id, nombre: u.codigo, poligono: u.poligono }))
-    : proyecto.pisos.map((p) => ({ id: p.id, nombre: p.nombre, poligono: p.poligono }));
+    : proyecto.pisos.filter((p) => p.numero >= 0).map((p) => ({ id: p.id, nombre: p.nombre, poligono: vista2 ? p.poligono2 : p.poligono }));
 
   return (
     <div className="flex flex-col gap-4">
@@ -223,17 +236,29 @@ export function MarcadorZonas({ proyecto }: { proyecto: ProyectoAdmin }) {
         <label className="flex flex-col gap-1.5 text-sm font-medium">
           ¿Qué querés marcar?
           <Select value={lienzo} onChange={(e) => setLienzo(e.target.value)}>
-            <option value="fachada">Los pisos, sobre la fachada</option>
-            {[...proyecto.pisos].reverse().map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.nombre}: las unidades, sobre su planta
-              </option>
-            ))}
+            <option value="fachada">Los pisos, sobre la vista 1</option>
+            {proyecto.fachada2_url && <option value="fachada2">Los pisos, sobre la vista 2</option>}
+            {[...proyecto.pisos].reverse().map((p) =>
+              proyecto.unidades.some((u) => u.floor_id === p.id) ? (
+                <option key={p.id} value={p.id}>
+                  {p.nombre}: las unidades, sobre su planta
+                </option>
+              ) : null,
+            )}
+            {[...proyecto.pisos].reverse().map((p) =>
+              proyecto.espacios.some((e) => e.floor_id === p.id) ? (
+                <option key={`puntos:${p.id}`} value={`puntos:${p.id}`}>
+                  {p.nombre}: los espacios comunes (un punto cada uno)
+                </option>
+              ) : null,
+            )}
           </Select>
         </label>
       </Panel>
-      {imagen ? (
-        <Lienzo key={lienzo} tipo={piso ? "unidad" : "piso"} imagen={imagen} zonas={zonas} />
+      {imagen && conPuntos ? (
+        <LienzoPuntos key={lienzo} imagen={imagen} espacios={proyecto.espacios.filter((e) => e.floor_id === conPuntos.id)} />
+      ) : imagen ? (
+        <Lienzo key={lienzo} tipo={piso ? "unidad" : vista2 ? "piso2" : "piso"} imagen={imagen} zonas={zonas} />
       ) : (
         <Aviso tono="alerta">Primero subí la imagen en “Imágenes”.</Aviso>
       )}
@@ -241,7 +266,7 @@ export function MarcadorZonas({ proyecto }: { proyecto: ProyectoAdmin }) {
   );
 }
 
-function Lienzo({ tipo, imagen, zonas }: { tipo: "piso" | "unidad"; imagen: string; zonas: Zona[] }) {
+function Lienzo({ tipo, imagen, zonas }: { tipo: "piso" | "piso2" | "unidad"; imagen: string; zonas: Zona[] }) {
   const [elegida, setElegida] = useState(zonas.find((z) => !z.poligono)?.id ?? zonas[0]?.id ?? null);
   // null: se muestra la zona guardada. Una lista: se está marcando de nuevo.
   const [puntos, setPuntos] = useState<Punto[] | null>(null);
@@ -278,7 +303,7 @@ function Lienzo({ tipo, imagen, zonas }: { tipo: "piso" | "unidad"; imagen: stri
 
   return (
     <Panel>
-      <div className="mb-3 flex flex-wrap gap-2" role="group" aria-label={tipo === "piso" ? "Pisos" : "Unidades"}>
+      <div className="mb-3 flex flex-wrap gap-2" role="group" aria-label={tipo === "unidad" ? "Unidades" : "Pisos"}>
         {zonas.map((z) => (
           <button
             key={z.id}
@@ -293,7 +318,7 @@ function Lienzo({ tipo, imagen, zonas }: { tipo: "piso" | "unidad"; imagen: stri
       </div>
       <p className="mb-3 text-sm text-muted">
         {marcando
-          ? `Tocá las esquinas de ${tipo === "piso" ? zona.nombre.toLowerCase() : `la unidad ${zona.nombre}`} sobre la imagen, una por una y en orden, bordeando la zona. ${marcando.length < 3 ? `Faltan ${3 - marcando.length} como mínimo.` : "Cuando termines, tocá Guardar."}`
+          ? `Tocá las esquinas de ${tipo !== "unidad" ? zona.nombre.toLowerCase() : `la unidad ${zona.nombre}`} sobre la imagen, una por una y en orden, bordeando la zona. ${marcando.length < 3 ? `Faltan ${3 - marcando.length} como mínimo.` : "Cuando termines, tocá Guardar."}`
           : "Esta zona ya está marcada. Si quedó corrida, volvé a marcarla."}
       </p>
       <MostrarAviso aviso={aviso} />

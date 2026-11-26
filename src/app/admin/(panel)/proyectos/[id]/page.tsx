@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ImagenesProyecto, MarcadorZonas, UnidadesEstado } from "@/components/admin/proyecto";
+import { TextosProyecto } from "@/components/admin/proyecto-landing";
 import { Encabezado, Pagina } from "@/components/admin/ui";
 import { buttonStyles } from "@/components/ui/button";
 import { getProyectoAdmin } from "@/lib/admin/datos-proyecto";
@@ -16,6 +17,7 @@ const VISTAS = [
   { clave: "unidades", label: "Unidades" },
   { clave: "imagenes", label: "Imágenes" },
   { clave: "zonas", label: "Zonas" },
+  { clave: "textos", label: "Textos" },
 ] as const;
 
 export default async function ProyectoPage({ params, searchParams }: PageProps<"/admin/proyectos/[id]">) {
@@ -39,7 +41,7 @@ export default async function ProyectoPage({ params, searchParams }: PageProps<"
           )
         }
       />
-      <nav aria-label="Secciones del proyecto" className="mb-5 grid grid-cols-3 gap-1 rounded-xl bg-surface p-1">
+      <nav aria-label="Secciones del proyecto" className="mb-5 grid grid-cols-4 gap-1 rounded-xl bg-surface p-1">
         {VISTAS.map((v) => (
           <Link
             key={v.clave}
@@ -54,6 +56,7 @@ export default async function ProyectoPage({ params, searchParams }: PageProps<"
       {vista === "unidades" && <UnidadesEstado proyecto={proyecto} />}
       {vista === "imagenes" && <ImagenesProyecto proyecto={proyecto} />}
       {vista === "zonas" && <MarcadorZonas proyecto={proyecto} />}
+      {vista === "textos" && <TextosProyecto proyecto={proyecto} />}
     </Pagina>
   );
 }

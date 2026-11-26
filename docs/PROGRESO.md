@@ -2,7 +2,7 @@
 
 Leyenda: [ ] pendiente · [~] en curso · [x] hecho
 
-**Próximo paso:** el usuario revisa en el preview las imágenes reales de la tipología 1 y los polígonos propuestos; cuando deje las de t2 y t3 en `demo-mirador/`, correr `npm run imagenes:mirador`, después los E2E y recién con su OK unir `udevelop-demo` a `main`.
+**Próximo paso:** con el OK del usuario, aplicar la migración 0014 (`npx supabase db push --linked`), correr `npm run seed:desarrolladora`, subir la rama `udevelop-demo` y pasarle el link del preview. No unir a `main` sin su OK.
 
 **Cómo verificar:** `npm run typecheck`, `npm run lint`, `npm test` (unitarios + base con PGlite), `npm run build`, `npm run test:e2e` (Playwright; con el build hecho).
 
@@ -83,6 +83,16 @@ Leyenda: [ ] pendiente · [~] en curso · [x] hecho
   - [x] Zonas: la zona de una unidad se copia a la misma letra de los pisos con la misma planta.
   - [~] Imágenes reales (`npm run imagenes:mirador`, carpeta `demo-mirador/` fuera del repo): cargadas fachada (horizontal 16:9), plantas, maqueta y ambientes de la tipología 1 (2026-11-19); faltan t2 y t3. Polígonos de pisos y unidades medidos sobre las imágenes reales (el seed los aplica).
   - Verificado: typecheck, lint, build, 58 unitarios y 49 de base. E2E no corridos en esta etapa.
+
+- [~] 17. Landing del proyecto (rama `udevelop-demo`, 2026-11-22): Edificio Mirador nuevo (esquina 20 × 15 m, subsuelo con 8 cocheras, PB con lobby y local en alquiler, pisos 1–7 con 20 departamentos de 6 tipologías, piso 8 de amenities) y experiencia en una sola pantalla oscura.
+  - [x] Migración 0014 (aditiva): segunda vista de fachada y su zona por piso, transición fundido/secuencia con cuadros, textos de la desarrolladora y datos del proyecto, color de fondo, categoría y operación de cada unidad (estado `alquilada`), espacios comunes con punto e imágenes, evento `space_view` y UTM en el lead. 3 tests de permisos (52 de base).
+  - [x] Etapa 1 – Datos y fachada con scroll: seed nuevo (`npm run seed:desarrolladora`, dibujos provisorios en `scripts/seed/mirador/`), una URL por paso (`/proyecto/[slug]/[[...vista]]`), escena fija con dos vistas (fundido + acercamiento, o cuadros con el scroll), textos que entran y salen, selector de pisos, cierre con logo, WhatsApp, aviso y crédito. Panel: pestaña "Textos".
+  - [x] Etapa 2 – Piso, unidad e imágenes: la franja se abre en la planta inclinada (CSS 3D, polígonos alineados), la unidad se recorta, se eleva y pasa a su maqueta con datos a los costados; galería a pantalla completa. Atrás del navegador y "volver" con la animación inversa.
+  - [x] Etapa 3 – Contacto, amenities, PB y cocheras: pop-up una vez por sesión, lead con UTM; piso 8 con puntos; local con "Consultar alquiler"; cocheras desde los datos de la vista 2. Panel: estados por tipo de unidad, imágenes de la vista 2 y de amenities, zonas sobre la vista 2 y puntos de los espacios.
+  - [x] Verificado en local con `/dev/edificio` (solo `next dev`, sin base): recorrido completo en compu e iPhone 13, sin errores de consola. Typecheck, lint, build, 58 unitarios y 52 de base.
+  - [ ] BLOQUEO: aplicar la migración 0014 en la base real (el control de permisos frenó `supabase db push`; espera el OK del usuario), correr `npm run seed:desarrolladora`, push y revisar el preview.
+  - [ ] 2026-11-25: por un error de comando corrió el seed sin la migración: borró el Edificio Mirador viejo (autorizado, pero antes de tiempo) y falló al crear el nuevo. Se limpiaron los archivos que subió. Hasta correr el seed, la demo de Desarrollos Demo no tiene proyecto (Horizonte intacto). El seed ahora verifica la migración antes de borrar.
+  - [ ] `demo-mirador-2/` estaba vacía: cuando estén los planos o renders, `npm run imagenes:mirador` (nombres en `docs/clientes/desarrollos-demo/imagenes.md`) y revisar zonas en el panel.
 
 ## Pendientes técnicos
 
