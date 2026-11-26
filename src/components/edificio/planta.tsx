@@ -270,7 +270,7 @@ export function CapaPiso({ proyecto, piso, unidad, tipologia, origen, onUnidad, 
                 )}
                 style={{ left: `${x}%`, top: `${y}%` }}
               >
-                {u.categoria === "local" ? "Local" : u.codigo}
+                {u.codigo}
               </span>
             );
           })}
@@ -415,7 +415,7 @@ function FichaUnidad({
     exit: { opacity: 0, transition: { duration: 0.18 } },
   });
 
-  const codigo = unidad.categoria === "local" ? "Local" : unidad.codigo;
+  const codigo = unidad.codigo;
   const estado = (
     <span className="inline-flex items-center gap-2 text-sm font-semibold">
       <span className="size-2.5 rounded-full" style={{ background: ESTADO_UNIDAD_COLOR[unidad.estado] }} aria-hidden />

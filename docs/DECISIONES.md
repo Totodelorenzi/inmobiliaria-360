@@ -230,3 +230,6 @@ Una línea por decisión: fecha · qué · por qué.
 - 2026-11-22 · Tipografía de la landing: Archivo con eje de ancho (títulos anchos, texto normal) si el tema del cliente no define otra · grotesca arquitectónica del perfil desarrolladora; una sola familia.
 - 2026-11-22 · Entorno de prueba local `/dev/edificio` (solo con `next dev`, 404 en producción) con el edificio armado en memoria · permite revisar la experiencia sin tocar la base.
 - 2026-11-25 · El seed de la desarrolladora verifica la migración antes de borrar y borra las carpetas de Storage con subcarpetas · una corrida accidental sin migración borró el proyecto viejo antes de fallar.
+- 2026-11-25 · Edificio Mirador versión torre libre (pedido del usuario): las plantas combinan cinco bloques (A y C esquinas de frente, B al medio, D y E esquinas de contrafrente) alrededor del núcleo; las unidades de la derecha son el espejo de las de la izquierda (`units.espejada`), así una tipología tiene una sola maqueta y el recorte calza con la maqueta dada vuelta.
+- 2026-11-25 · Los locales se muestran como "Comercial, alquiler" con su código ("Local 1", "Local 2") y estados disponible/alquilado; no cuentan como unidades en venta en los datos del proyecto.
+- 2026-11-25 · Tipos de la base regenerados con `supabase gen types` después de aplicar la 0014 (reemplazan los agregados a mano).

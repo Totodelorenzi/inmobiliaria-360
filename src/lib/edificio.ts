@@ -31,7 +31,7 @@ export const ESTADO_UNIDAD_COLOR: Record<EstadoUnidad, string> = {
   alquilada: "var(--estado-vendida)",
 };
 
-export const CATEGORIA_LABEL: Record<Categoria, string> = { departamento: "Departamento", local: "Local comercial", cochera: "Cochera" };
+export const CATEGORIA_LABEL: Record<Categoria, string> = { departamento: "Departamento", local: "Comercial, alquiler", cochera: "Cochera" };
 export const esCategoria = (v: string): v is Categoria => v === "departamento" || v === "local" || v === "cochera";
 
 /** Lo que guarda la base (jsonb) → lista de vértices, o null si no hay una zona válida. */
@@ -99,6 +99,13 @@ export function metrosUnidad(u: Pick<Tables<"units">, "superficie_cubierta" | "s
   return m ? `${numero.format(m)} m²` : null;
 }
 
+/** "la unidad 3C", "la cochera C4", "el local 1" (para mensajes). */
+export function conArticulo(u: { codigo: string; categoria?: string }) {
+  if (u.categoria === "local") return `el ${u.codigo.toLowerCase()}`;
+  if (u.categoria === "cochera") return `la cochera ${u.codigo}`;
+  return `la unidad ${u.codigo}`;
+}
+
 /** Unidad de un lead como la devuelven las consultas del panel. */
 export type UnidadLead = { codigo: string; categoria?: string; proyecto: { nombre: string } | null };
 
@@ -108,9 +115,9 @@ export function asuntoLead(lead: { propiedad?: { titulo: string } | null; unidad
   return lead.propiedad?.titulo ?? "Consulta general";
 }
 
-/** "Unidad 3C", "Cochera C4" o "Local comercial". */
+/** "Unidad 3C", "Cochera C4" o "Local 1". */
 export function nombreUnidad(u: { codigo: string; categoria?: string }) {
-  if (u.categoria === "local") return "Local comercial";
+  if (u.categoria === "local") return u.codigo;
   if (u.categoria === "cochera") return `Cochera ${u.codigo}`;
   return `Unidad ${u.codigo}`;
 }
@@ -141,8 +148,12 @@ export function detallePiso(unidades: UnidadRotulo[], espacios: { nombre: string
   if (cocheras.length) return `${cocheras.length === 1 ? "1 cochera" : `${cocheras.length} cocheras`} · ${disponibles(cocheras)}`;
   const partes = [
     ...espacios.map((e) => e.nombre),
-    ...unidades.filter((u) => u.categoria === "local").map((u) => (u.estado === "disponible" ? "Local en alquiler" : "Local alquilado")),
   ];
+  const locales = unidades.filter((u) => u.categoria === "local");
+  if (locales.length) {
+    const libres = locales.filter((u) => u.estado === "disponible").length;
+    partes.push(locales.length === 1 ? (libres ? "Local en alquiler" : "Local alquilado") : `${locales.length} locales${libres ? ` · ${libres === 1 ? "1 en alquiler" : `${libres} en alquiler`}` : " alquilados"}`);
+  }
   if (!partes.length) return null;
   // Un piso solo de espacios comunes es el de amenities: el detalle los nombra en su planta.
   return unidades.length === 0 && espacios.length > 1 ? "Amenities" : partes.join(" · ");

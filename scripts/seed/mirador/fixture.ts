@@ -72,7 +72,7 @@ export function proyectoDePrueba(imagen: (nombre: string) => string): Proyecto {
       precio: CONSULTAR.has(u.codigo) ? null : precioUnidad(u),
       moneda: "USD",
       estado: ESTADOS[u.codigo] ?? "disponible",
-      espejada: false,
+      espejada: u.espejada,
       poligono: enPlanta(u.forma),
     })),
     espacios: ESPACIOS.map((e, orden) => ({

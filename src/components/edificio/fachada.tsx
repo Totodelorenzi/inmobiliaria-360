@@ -365,7 +365,7 @@ function Textos({
             <Dato numero={resumen.metros.min === resumen.metros.max ? String(resumen.metros.min) : `${resumen.metros.min}–${resumen.metros.max}`} unidad="m²" etiqueta="por unidad" compacto={!ancha} />
           )}
           {proyecto.entrega && <Dato numero={proyecto.entrega.match(/\d{4}/)?.[0] ?? proyecto.entrega} etiqueta="entrega" detalle={ancha ? proyecto.entrega : null} compacto={!ancha} />}
-          {ancha && resumen.cocheras && <Dato numero={String(resumen.cocheras.total)} etiqueta="cocheras" detalle={resumen.locales ? "y local comercial en planta baja" : null} />}
+          {ancha && resumen.cocheras && <Dato numero={String(resumen.cocheras.total)} etiqueta="cocheras" detalle={resumen.locales ? (resumen.locales.total === 1 ? "y un local comercial en planta baja" : `y ${resumen.locales.total} locales comerciales en planta baja`) : null} />}
           {ubicacion && (
             <div className={ancha ? "col-span-2" : "col-span-3"}>
               <dt className="text-xs text-muted">Ubicación</dt>

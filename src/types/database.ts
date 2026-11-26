@@ -1,6 +1,3 @@
-// Generado desde la base real. Para regenerar después de una migración:
-//   npx supabase gen types typescript --linked --schema public > src/types/database.ts
-// (y volver a agregar este encabezado)
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
@@ -212,14 +209,14 @@ isOneToOne: false
                   ]
                 },"projects": {
                   Row: {
-                    "agency_id": string,"ciudad": string | null,"created_at": string,"descripcion": string | null,"direccion": string | null,"es_demo": boolean,"fachada_alto": number | null,"fachada_ancho": number | null,"fachada_url": string | null,"id": string,"nombre": string,"publicado": boolean,"slug": string,"updated_at": string,"amenities": (string)[] | null,"color_fondo": string | null,"entrega": string | null,"fachada2_alto": number | null,"fachada2_ancho": number | null,"fachada2_url": string | null,"secuencia": Json | null,"sobre_texto": string | null,"sobre_titulo": string | null,"transicion": string,"vista1_nombre": string | null,"vista2_nombre": string | null
+                    "agency_id": string,"amenities": (string)[] | null,"ciudad": string | null,"color_fondo": string | null,"created_at": string,"descripcion": string | null,"direccion": string | null,"entrega": string | null,"es_demo": boolean,"fachada_alto": number | null,"fachada_ancho": number | null,"fachada_url": string | null,"fachada2_alto": number | null,"fachada2_ancho": number | null,"fachada2_url": string | null,"id": string,"nombre": string,"publicado": boolean,"secuencia": Json | null,"slug": string,"sobre_texto": string | null,"sobre_titulo": string | null,"transicion": string,"updated_at": string,"vista1_nombre": string | null,"vista2_nombre": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "agency_id": string,"ciudad"?: string | null,"created_at"?: string,"descripcion"?: string | null,"direccion"?: string | null,"es_demo"?: boolean,"fachada_alto"?: number | null,"fachada_ancho"?: number | null,"fachada_url"?: string | null,"id"?: string,"nombre": string,"publicado"?: boolean,"slug": string,"updated_at"?: string,"amenities"?: (string)[] | null,"color_fondo"?: string | null,"entrega"?: string | null,"fachada2_alto"?: number | null,"fachada2_ancho"?: number | null,"fachada2_url"?: string | null,"secuencia"?: Json | null,"sobre_texto"?: string | null,"sobre_titulo"?: string | null,"transicion"?: string,"vista1_nombre"?: string | null,"vista2_nombre"?: string | null
+                    "agency_id": string,"amenities"?: (string)[] | null,"ciudad"?: string | null,"color_fondo"?: string | null,"created_at"?: string,"descripcion"?: string | null,"direccion"?: string | null,"entrega"?: string | null,"es_demo"?: boolean,"fachada_alto"?: number | null,"fachada_ancho"?: number | null,"fachada_url"?: string | null,"fachada2_alto"?: number | null,"fachada2_ancho"?: number | null,"fachada2_url"?: string | null,"id"?: string,"nombre": string,"publicado"?: boolean,"secuencia"?: Json | null,"slug": string,"sobre_texto"?: string | null,"sobre_titulo"?: string | null,"transicion"?: string,"updated_at"?: string,"vista1_nombre"?: string | null,"vista2_nombre"?: string | null
                   }
                   Update: {
-                    "agency_id"?: string,"ciudad"?: string | null,"created_at"?: string,"descripcion"?: string | null,"direccion"?: string | null,"es_demo"?: boolean,"fachada_alto"?: number | null,"fachada_ancho"?: number | null,"fachada_url"?: string | null,"id"?: string,"nombre"?: string,"publicado"?: boolean,"slug"?: string,"updated_at"?: string,"amenities"?: (string)[] | null,"color_fondo"?: string | null,"entrega"?: string | null,"fachada2_alto"?: number | null,"fachada2_ancho"?: number | null,"fachada2_url"?: string | null,"secuencia"?: Json | null,"sobre_texto"?: string | null,"sobre_titulo"?: string | null,"transicion"?: string,"vista1_nombre"?: string | null,"vista2_nombre"?: string | null
+                    "agency_id"?: string,"amenities"?: (string)[] | null,"ciudad"?: string | null,"color_fondo"?: string | null,"created_at"?: string,"descripcion"?: string | null,"direccion"?: string | null,"entrega"?: string | null,"es_demo"?: boolean,"fachada_alto"?: number | null,"fachada_ancho"?: number | null,"fachada_url"?: string | null,"fachada2_alto"?: number | null,"fachada2_ancho"?: number | null,"fachada2_url"?: string | null,"id"?: string,"nombre"?: string,"publicado"?: boolean,"secuencia"?: Json | null,"slug"?: string,"sobre_texto"?: string | null,"sobre_titulo"?: string | null,"transicion"?: string,"updated_at"?: string,"vista1_nombre"?: string | null,"vista2_nombre"?: string | null
                   }
                   Relationships: [
                     {

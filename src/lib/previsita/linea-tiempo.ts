@@ -30,7 +30,7 @@ export function duracion(segundos: number) {
 const DESTACADOS: Enums<"tipo_evento">[] = ["tour_complete", "visit_request", "form_submit", "whatsapp_click"];
 
 /** "la unidad 3C", "la cochera C4" o "el local". */
-const laUnidad = (codigo: string | null | undefined) => (!codigo ? "una unidad" : /^local$/i.test(codigo) ? "el local" : /^C\d+$/.test(codigo) ? `la cochera ${codigo}` : `la unidad ${codigo}`);
+const laUnidad = (codigo: string | null | undefined) => (!codigo ? "una unidad" : /^local/i.test(codigo) ? `el ${codigo.toLowerCase()}` : /^C\d+$/.test(codigo) ? `la cochera ${codigo}` : `la unidad ${codigo}`);
 
 function texto(e: EventoHistorial, repeticiones: number, ms: number) {
   const en = e.propiedad ? ` de “${e.propiedad}”` : "";

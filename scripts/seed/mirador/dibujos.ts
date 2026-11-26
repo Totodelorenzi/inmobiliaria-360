@@ -13,11 +13,14 @@ import {
   ESPACIOS,
   LADO_X,
   LADO_Y,
+  LOBBY,
   NUCLEO,
-  PATIO,
+  NUCLEO_PB,
   PISOS,
+  RETIRO,
   TIPOLOGIAS,
   UNIDADES,
+  Y_FRENTE,
   altoPiso,
   zPiso,
   type Ambiente,
@@ -35,9 +38,9 @@ const r1 = (n: number) => Math.round(n * 10) / 10;
 const pct = (v: number, total: number) => Math.round((v / total) * 10000) / 100;
 
 // ---------------------------------------------------------------------------
-// Plantas: 1600 × 1200, 68 px por metro
+// Plantas: 1600 × 1200, 62 px por metro (a la izquierda entra el retiro lateral con la rampa)
 // ---------------------------------------------------------------------------
-export const PLANTA = { ancho: 1600, alto: 1200, escala: 68, x0: 120, y0: 90 };
+export const PLANTA = { ancho: 1600, alto: 1200, escala: 62, x0: 290, y0: 135 };
 const px = (x: number) => r1(PLANTA.x0 + x * PLANTA.escala);
 const py = (y: number) => r1(PLANTA.y0 + y * PLANTA.escala);
 const m = (v: number) => r1(v * PLANTA.escala);
@@ -130,25 +133,46 @@ function muebles(lista: Mueble[], estilo: "trazo" | "maqueta", X: (x: number) =>
 const textoPlanta = (x: number, y: number, texto: string, tam = 22, color = "#8b8d93", extra = "") =>
   `<text x="${px(x)}" y="${py(y)}" font-family="${FUENTE}" font-size="${tam}" fill="${color}" text-anchor="middle" dominant-baseline="middle" ${extra}>${texto}</text>`;
 
-/** Unidades y ambientes de cada planta (con sus tipologías ya ubicadas). */
+/** Espejo respecto del eje x = 10 (las unidades de la derecha son el espejo de las de la izquierda). */
+const ex = (x: number) => LADO_X - x;
+const espejarRect = ([x1, y1, x2, y2]: Rect): Rect => [ex(x2), y1, ex(x1), y2];
+function espejarMueble(mu: Mueble): Mueble {
+  if ("r" in mu) return { ...mu, r: espejarRect(mu.r) } as Mueble;
+  return { ...mu, c: [ex(mu.c[0]), mu.c[1]] } as Mueble;
+}
+export const espejarAmbiente = (a: Ambiente): Ambiente => ({ ...a, r: espejarRect(a.r), muebles: a.muebles.map(espejarMueble) });
+
+/** Ambientes de cada unidad de una planta, en su lugar (dados vuelta si la unidad es espejada). */
 function ambientesDePlanta(clave: ClavePlanta): Ambiente[] {
   const numero = PISOS.find((p) => p.planta === clave)!.numero;
-  return UNIDADES.filter((u) => u.piso === numero && u.tipo !== "cochera").flatMap((u) => TIPOLOGIAS.find((t) => t.clave === u.tipo)?.interior ?? []);
+  return UNIDADES.filter((u) => u.piso === numero && u.tipo !== "cochera").flatMap((u) => {
+    const interior = TIPOLOGIAS.find((t) => t.clave === u.tipo)?.interior ?? [];
+    return u.espejada ? interior.map(espejarAmbiente) : interior;
+  });
 }
 
-function nucleo(baja: boolean) {
-  const [x1, y1, x2, y2] = NUCLEO;
-  const escalera: Rect = [x1 + 0.2, y1 + 0.2, x1 + 2.6, y1 + 5];
+function nucleo([x1, y1, x2, y2]: Rect, etiqueta: string | null) {
+  const escalera: Rect = [x1 + 0.2, y1 + 0.2, x1 + 2.5, y1 + 5];
   const peldaños = Array.from({ length: 9 }, (_, i) => `<line x1="${px(escalera[0])}" y1="${py(escalera[1] + 0.5 + i * 0.5)}" x2="${px(escalera[2])}" y2="${py(escalera[1] + 0.5 + i * 0.5)}" stroke="#3d4047" stroke-width="2"/>`).join("");
-  const ascensor = (x: number) => rectSvg([x, y1 + 0.2, x + 1.6, y1 + 2.0], `fill="#1c1f25" stroke="#4a4d55" stroke-width="2"`) + `<line x1="${px(x)}" y1="${py(y1 + 0.2)}" x2="${px(x + 1.6)}" y2="${py(y1 + 2.0)}" stroke="#3d4047" stroke-width="2"/><line x1="${px(x + 1.6)}" y1="${py(y1 + 0.2)}" x2="${px(x)}" y2="${py(y1 + 2.0)}" stroke="#3d4047" stroke-width="2"/>`;
+  const ascensor = (x: number) =>
+    rectSvg([x, y1 + 0.2, x + 1.35, y1 + 1.9], `fill="#1c1f25" stroke="#4a4d55" stroke-width="2"`) +
+    `<line x1="${px(x)}" y1="${py(y1 + 0.2)}" x2="${px(x + 1.35)}" y2="${py(y1 + 1.9)}" stroke="#3d4047" stroke-width="2"/><line x1="${px(x + 1.35)}" y1="${py(y1 + 0.2)}" x2="${px(x)}" y2="${py(y1 + 1.9)}" stroke="#3d4047" stroke-width="2"/>`;
+  const ancho = x2 - x1;
   return (
     rectSvg([x1, y1, x2, y2], `fill="#14161b"`) +
     rectSvg(escalera, `fill="none" stroke="#4a4d55" stroke-width="2"`) +
     peldaños +
-    ascensor(x1 + 3.0) +
-    ascensor(x1 + 4.8) +
-    (baja ? "" : textoPlanta((x1 + x2) / 2, y1 + 6.4, "Palier", 20))
+    (ancho > 5 ? ascensor(x1 + 2.8) + ascensor(x1 + 4.35) : ascensor(x1 + 2.6 > x2 - 1.4 ? x2 - 1.45 : x1 + 2.6)) +
+    (etiqueta ? textoPlanta((x1 + x2) / 2, y2 - 1.3, etiqueta, 20) : "")
   );
+}
+
+/** Rampa a las cocheras por el retiro lateral izquierdo. */
+function rampa(texto: string) {
+  const r: Rect = [-RETIRO + 0.3, 0, -0.3, LADO_Y];
+  let s = rectSvg(r, `fill="#191c22" stroke="#3a3d44" stroke-width="2"`);
+  for (let i = 0; i < 11; i++) s += `<line x1="${px(r[0] + 0.3)}" y1="${py(1 + i * 1.25)}" x2="${px(r[2] - 0.3)}" y2="${py(1.4 + i * 1.25)}" stroke="#3d4047" stroke-width="3"/>`;
+  return s + textoPlanta(-RETIRO / 2, LADO_Y / 2, texto, 19, "#8b8d93", `transform="rotate(-90 ${px(-RETIRO / 2)} ${py(LADO_Y / 2)})"`);
 }
 
 /** Planta de un piso, vista desde arriba, sin las zonas (las pinta la web encima). */
@@ -156,89 +180,94 @@ export function svgPlanta(clave: ClavePlanta, fondo = FONDO) {
   const pared = `fill="none" stroke="#d6d1c8" stroke-linejoin="round"`;
   const partes: string[] = [];
   const contorno: Rect = [0, 0, LADO_X, LADO_Y];
+  const unidadesDelPiso = UNIDADES.filter((x) => x.piso === PISOS.find((p) => p.planta === clave)!.numero);
 
   if (clave === "subsuelo") {
     partes.push(rectSvg(contorno, `fill="#14161b"`));
-    partes.push(rectSvg([0, 0, 3, LADO_Y], `fill="#191c22"`));
-    for (let i = 0; i < 10; i++) partes.push(`<line x1="${px(0.3)}" y1="${py(1 + i * 1.4)}" x2="${px(2.7)}" y2="${py(1.5 + i * 1.4)}" stroke="#3d4047" stroke-width="3"/>`);
-    partes.push(textoPlanta(1.5, 7.5, "Rampa", 20, "#8b8d93", `transform="rotate(-90 ${px(1.5)} ${py(7.5)})"`));
-    partes.push(rectSvg([3, 0, 6.4, 5], `fill="#191c22" stroke="#4a4d55" stroke-width="2"`) + textoPlanta(4.7, 2.5, "Máquinas", 18));
-    partes.push(rectSvg([6.4, 0, 10, 5], `fill="#1c1f25" stroke="#4a4d55" stroke-width="2"`) + textoPlanta(8.2, 2.5, "Ascensores", 18));
-    partes.push(rectSvg([3, 10, 10, 15], `fill="#191c22" stroke="#4a4d55" stroke-width="2"`) + textoPlanta(6.5, 12.5, "Bauleras", 20));
+    partes.push(rampa("Rampa por el retiro lateral"));
+    partes.push(nucleo([17.5, 0, LADO_X, 5], null) + textoPlanta(18.75, 3.9, "Ascensores", 16));
+    partes.push(rectSvg([17.5, 10, LADO_X, LADO_Y], `fill="#191c22" stroke="#4a4d55" stroke-width="2"`) + textoPlanta(18.75, 12.5, "Máquinas", 16));
     for (const c of COCHERAS) {
       partes.push(rectSvg(c.r, `fill="none" stroke="#6b6e75" stroke-width="3"`));
-      const auto: Rect = [c.r[0] + 0.35, c.r[1] + 0.4, c.r[2] - 0.35, c.r[3] - 0.4];
-      partes.push(rectSvg(auto, `fill="none" stroke="#3a3d44" stroke-width="2" rx="${m(0.35)}"`));
+      partes.push(rectSvg([c.r[0] + 0.35, c.r[1] + 0.4, c.r[2] - 0.35, c.r[3] - 0.4], `fill="none" stroke="#3a3d44" stroke-width="2" rx="${m(0.35)}"`));
     }
-    partes.push(textoPlanta(15, 7.5, "Circulación", 20, "#5d6068"));
-    partes.push(`<path d="M${px(12)} ${py(7.5)} h${m(6)} m-${m(0.6)} -${m(0.4)} l${m(0.6)} ${m(0.4)} l-${m(0.6)} ${m(0.4)}" stroke="#3d4047" stroke-width="3" fill="none"/>`);
+    partes.push(textoPlanta(9, 7.5, "Circulación", 20, "#5d6068"));
+    partes.push(`<path d="M${px(1)} ${py(6.6)} h${m(5)} m-${m(0.6)} -${m(0.4)} l${m(0.6)} ${m(0.4)} l-${m(0.6)} ${m(0.4)}" stroke="#3d4047" stroke-width="3" fill="none"/>`);
   } else if (clave === "pb") {
     partes.push(rectSvg(contorno, `fill="#14161b"`));
-    partes.push(rectSvg([0, 0, 3, LADO_Y], `fill="#191c22"`));
-    for (let i = 0; i < 10; i++) partes.push(`<line x1="${px(0.3)}" y1="${py(1 + i * 1.4)}" x2="${px(2.7)}" y2="${py(1.5 + i * 1.4)}" stroke="#3d4047" stroke-width="3"/>`);
-    partes.push(textoPlanta(1.5, 7.5, "Rampa a cocheras", 20, "#8b8d93", `transform="rotate(-90 ${px(1.5)} ${py(7.5)})"`));
-    // Núcleo y hall de ascensores
-    partes.push(rectSvg([3, 0, 12.5, 8.75], `fill="#14161b"`));
-    partes.push(nucleo(true));
-    partes.push(textoPlanta(9.5, 6.8, "Hall", 20));
-    // Lobby con doble altura y mostrador
-    partes.push(rectSvg([3, 8.75, 6.5, LADO_Y], `fill="#1a1c21"`));
-    partes.push(rectSvg([3.4, 10.0, 4.1, 12.4], `fill="none" stroke="#5d6068" stroke-width="2" rx="6"`));
-    partes.push(`<circle cx="${px(5.6)}" cy="${py(14.0)}" r="${m(0.35)}" fill="none" stroke="#5d6068" stroke-width="2"/>`);
-    // Local: piso de piedra y muebles
-    partes.push(formaSvg(UNIDADES.find((u) => u.codigo === "Local")!.forma, `fill="#17191e"`));
-    for (const a of TIPOLOGIAS.find((t) => t.clave === "local")!.interior) partes.push(rectSvg(a.r, `fill="none" stroke="#3a3d44" stroke-width="2"`) + muebles(a.muebles, "trazo", px, py, m));
-    partes.push(textoPlanta(13.2, 12.4, "Local comercial", 24, "#a3a5ab"));
-    partes.push(textoPlanta(4.75, 9.4, "Lobby", 18));
-    partes.push(formaSvg(UNIDADES.find((u) => u.codigo === "Local")!.forma, `${pared} stroke-width="5"`));
-    // Vidrieras sobre las dos calles
-    partes.push(`<line x1="${px(6.6)}" y1="${py(15)}" x2="${px(20)}" y2="${py(15)}" stroke="#7fa7bd" stroke-width="5"/><line x1="${px(20)}" y1="${py(0.2)}" x2="${px(20)}" y2="${py(15)}" stroke="#7fa7bd" stroke-width="5"/>`);
+    partes.push(rampa("Rampa a cocheras"));
+    for (const u of unidadesDelPiso) partes.push(formaSvg(u.forma, `fill="#17191e"`));
+    for (const a of ambientesDePlanta("pb")) partes.push(rectSvg(a.r, `fill="none" stroke="#3a3d44" stroke-width="2"`) + muebles(a.muebles, "trazo", px, py, m));
+    partes.push(nucleo(NUCLEO_PB, null));
+    partes.push(rectSvg(LOBBY, `fill="#1a1c21"`) + rectSvg([NUCLEO_PB[0], NUCLEO_PB[3], NUCLEO_PB[2], LOBBY[1]], `fill="#1a1c21"`));
+    partes.push(rectSvg([8.6, 9.4, 11.4, 10.1], `fill="none" stroke="#5d6068" stroke-width="2" rx="6"`));
+    partes.push(`<circle cx="${px(7.2)}" cy="${py(14.1)}" r="${m(0.35)}" fill="none" stroke="#5d6068" stroke-width="2"/><circle cx="${px(12.8)}" cy="${py(14.1)}" r="${m(0.35)}" fill="none" stroke="#5d6068" stroke-width="2"/>`);
+    partes.push(textoPlanta(16.6, 12.6, "Local 1", 24, "#a3a5ab") + textoPlanta(3.4, 12.6, "Local 2", 24, "#a3a5ab") + textoPlanta(10, 13.6, "Lobby", 18));
+    for (const u of unidadesDelPiso) partes.push(formaSvg(u.forma, `${pared} stroke-width="5"`));
+    // Vidrieras sobre las dos calles y el lado oeste (perímetro libre)
+    partes.push(
+      `<line x1="${px(0.2)}" y1="${py(LADO_Y)}" x2="${px(6.2)}" y2="${py(LADO_Y)}" stroke="#7fa7bd" stroke-width="5"/>` +
+        `<line x1="${px(13.8)}" y1="${py(LADO_Y)}" x2="${px(19.8)}" y2="${py(LADO_Y)}" stroke="#7fa7bd" stroke-width="5"/>` +
+        `<line x1="${px(LADO_X)}" y1="${py(0.2)}" x2="${px(LADO_X)}" y2="${py(14.8)}" stroke="#7fa7bd" stroke-width="5"/>` +
+        `<line x1="${px(6.6)}" y1="${py(LADO_Y)}" x2="${px(13.4)}" y2="${py(LADO_Y)}" stroke="#c9b48c" stroke-width="5"/>`,
+    );
+  } else if (clave === "p8") {
+    partes.push(rectSvg(contorno, `fill="#131519"`));
+    const terraza: Forma = [
+      [13.13, 0],
+      [LADO_X, 0],
+      [LADO_X, LADO_Y],
+      [11.82, LADO_Y],
+      [11.82, Y_FRENTE],
+      [13.13, Y_FRENTE],
+    ];
+    partes.push(formaSvg(terraza, `fill="#16191d"`));
+    for (let x = 12.2; x < LADO_X; x += 0.6) partes.push(`<line x1="${px(x)}" y1="${py(Y_FRENTE + 0.15)}" x2="${px(x)}" y2="${py(LADO_Y - 0.15)}" stroke="#1d2026" stroke-width="2"/>`);
+    partes.push(muebles([{ tipo: "agua", r: [13.8, 9.2, 19.3, 12.9] }], "trazo", px, py, m));
+    partes.push(
+      muebles(
+        [
+          { tipo: "reposera", r: [14.2, 1.0, 14.9, 2.8] },
+          { tipo: "reposera", r: [15.5, 1.0, 16.2, 2.8] },
+          { tipo: "reposera", r: [16.8, 1.0, 17.5, 2.8] },
+          { tipo: "reposera", r: [18.1, 1.0, 18.8, 2.8] },
+          { tipo: "planta", c: [19.3, 6.5], radio: 0.5 },
+          { tipo: "planta", c: [12.5, 14.2], radio: 0.45 },
+        ],
+        "trazo",
+        px,
+        py,
+        m,
+      ),
+    );
+    // SUM con parrilla (81 m²), gimnasio (56 m²) y vestuarios en el núcleo
+    partes.push(rectSvg([0, Y_FRENTE, 11.82, LADO_Y], `fill="#17191e"`) + rectSvg(BLOQUE.d, `fill="#17191e"`));
+    partes.push(nucleo([6.87, 0, 13.13, 5.0], null));
+    partes.push(rectSvg([6.87, 5.0, 10, Y_FRENTE], `fill="#17191e" stroke="#3a3d44" stroke-width="2"`) + rectSvg([10, 5.0, 13.13, Y_FRENTE], `fill="#17191e" stroke="#3a3d44" stroke-width="2"`));
+    partes.push(muebles([{ tipo: "mesa", r: [2.0, 10.3, 7.2, 11.4], sillas: 10 }, { tipo: "mesada", r: [0.15, 13.9, 4.6, 14.5] }, { tipo: "sillon", r: [8.8, 9.0, 11.5, 9.9] }, { tipo: "alfombra", r: [8.6, 10.2, 11.6, 12.8] }], "trazo", px, py, m));
+    partes.push(rectSvg([4.9, 13.8, 6.3, 14.7], `fill="none" stroke="#a0623f" stroke-width="3"`));
+    const gimnasio: Mueble[] = [0.6, 2.3, 4.0].map((x) => ({ tipo: "aparato", r: [x, 5.9, x + 0.9, 7.6] }));
+    gimnasio.push({ tipo: "aparato", r: [0.5, 0.6, 2.4, 1.3] }, { tipo: "alfombra", r: [3.0, 0.6, 6.4, 3.6] });
+    partes.push(muebles(gimnasio, "trazo", px, py, m));
+    partes.push(textoPlanta(5.9, 9.0, "SUM y parrilla", 20) + textoPlanta(3.4, 4.6, "Gimnasio", 20) + textoPlanta(9.97, 6.6, "Vestuarios", 16) + textoPlanta(16.5, 14.2, "Pileta", 20, "#7fa7bd") + textoPlanta(16.5, 4.2, "Solárium", 20));
+    partes.push(rectSvg([0, Y_FRENTE, 11.82, LADO_Y], `${pared} stroke-width="5"`) + rectSvg(BLOQUE.d, `${pared} stroke-width="5"`));
+    partes.push(formaSvg(terraza, `fill="none" stroke="#7fa7bd" stroke-width="3" stroke-dasharray="10 6"`));
   } else {
-    partes.push(rectSvg(contorno, `fill="${clave === "p8" ? "#131519" : "#14161b"}"`));
-    partes.push(rectSvg(PATIO, `fill="${fondo}"`));
-    partes.push(nucleo(false));
-    if (clave === "p8") {
-      // Amenities: SUM, gimnasio, vestuarios y terraza con pileta
-      const terraza: Forma = [
-        [8, 8.75],
-        [14.2, 8.75],
-        [14.2, 0],
-        [20, 0],
-        [20, 15],
-        [8, 15],
-      ];
-      partes.push(formaSvg(terraza, `fill="#16191d"`));
-      for (let x = 8.4; x < 20; x += 0.6) partes.push(`<line x1="${px(x)}" y1="${py(8.9)}" x2="${px(x)}" y2="${py(14.85)}" stroke="#1d2026" stroke-width="2"/>`);
-      partes.push(muebles([{ tipo: "agua", r: [10.2, 10.2, 18.6, 13.6] }], "trazo", px, py, m));
-      partes.push(muebles([{ tipo: "reposera", r: [15.0, 1.0, 15.7, 2.8] }, { tipo: "reposera", r: [16.3, 1.0, 17.0, 2.8] }, { tipo: "reposera", r: [17.6, 1.0, 18.3, 2.8] }, { tipo: "planta", c: [19.3, 6.5], radio: 0.5 }, { tipo: "planta", c: [8.8, 14.2], radio: 0.45 }], "trazo", px, py, m));
-      partes.push(rectSvg(BLOQUE.b1, `fill="#17191e"`) + rectSvg(BLOQUE.b2, `fill="#17191e"`));
-      partes.push(rectSvg([6.4, 5.2, 14.2, 8.75], `fill="#17191e"`));
-      partes.push(muebles([{ tipo: "mesa", r: [1.0, 2.6, 4.6, 3.6], sillas: 8 }, { tipo: "mesada", r: [0.15, 6.2, 3.6, 6.8] }, { tipo: "sillon", r: [4.4, 6.9, 6.2, 8.5] }], "trazo", px, py, m));
-      partes.push(rectSvg([0.3, 6.95, 1.5, 7.9], `fill="none" stroke="#a0623f" stroke-width="3"`));
-      const gimnasio: Mueble[] = [0.8, 2.6, 4.4].map((x) => ({ tipo: "aparato", r: [x, 13.3, x + 0.8, 14.6] }));
-      gimnasio.push({ tipo: "aparato", r: [0.6, 9.6, 2.4, 10.3] }, { tipo: "alfombra", r: [4.6, 9.6, 7.4, 12.0] });
-      partes.push(muebles(gimnasio, "trazo", px, py, m));
-      partes.push(textoPlanta(3.2, 1.0, "SUM y parrilla", 20) + textoPlanta(4, 9.2, "Gimnasio", 20) + textoPlanta(10.3, 7.0, "Vestuarios", 18) + textoPlanta(14.4, 14.4, "Pileta", 20, "#7fa7bd") + textoPlanta(17.1, 4.2, "Solárium", 20));
-      partes.push(rectSvg([8, 5.2, 10.3, 8.75], `fill="none" stroke="#3a3d44" stroke-width="2"`) + rectSvg([10.3, 5.2, 14.2, 8.75], `fill="none" stroke="#3a3d44" stroke-width="2"`));
-      partes.push(rectSvg(BLOQUE.b1, `${pared} stroke-width="5"`) + rectSvg(BLOQUE.b2, `${pared} stroke-width="5"`));
-      partes.push(formaSvg(terraza, `fill="none" stroke="#7fa7bd" stroke-width="3" stroke-dasharray="10 6"`));
-    } else {
-      // Departamentos: ambientes con sus muebles en trazo fino y los nombres apenas visibles
-      for (const a of ambientesDePlanta(clave)) {
-        partes.push(rectSvg(a.r, `fill="${a.piso === "exterior" ? "#121418" : "#17191e"}" stroke="#3a3d44" stroke-width="2"`));
-        partes.push(muebles(a.muebles, "trazo", px, py, m));
-      }
-      for (const u of UNIDADES.filter((x) => x.piso === PISOS.find((p) => p.planta === clave)!.numero)) partes.push(formaSvg(u.forma, `${pared} stroke-width="6"`));
+    partes.push(rectSvg(contorno, `fill="#14161b"`));
+    partes.push(nucleo(NUCLEO, "Palier"));
+    for (const a of ambientesDePlanta(clave)) {
+      partes.push(rectSvg(a.r, `fill="${a.piso === "exterior" ? "#121418" : "#17191e"}" stroke="#3a3d44" stroke-width="2"`));
+      partes.push(muebles(a.muebles, "trazo", px, py, m));
     }
+    for (const u of unidadesDelPiso) partes.push(formaSvg(u.forma, `${pared} stroke-width="6"`));
   }
-  // Contorno del edificio y las calles
-  partes.push(clave === "subsuelo" || clave === "pb" ? rectSvg(contorno, `${pared} stroke-width="10"`) : formaSvg([[0, 0], [14.2, 0], [14.2, 2.375], [20, 2.375], [20, 15], [0, 15]], `${pared} stroke-width="10"`));
+  partes.push(rectSvg(contorno, `${pared} stroke-width="10"`));
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${PLANTA.ancho}" height="${PLANTA.alto}" viewBox="0 0 ${PLANTA.ancho} ${PLANTA.alto}">
   <defs><linearGradient id="agua" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2d7fa0"/><stop offset="1" stop-color="#18506a"/></linearGradient></defs>
   <rect width="${PLANTA.ancho}" height="${PLANTA.alto}" fill="${fondo}"/>
   ${partes.join("\n  ")}
-  ${clave === "subsuelo" ? "" : `<text x="${px(LADO_X / 2)}" y="${py(LADO_Y) + 58}" font-family="${FUENTE}" font-size="26" letter-spacing="4" fill="#6f7178" text-anchor="middle">AV. COLÓN</text>
-  <text x="${px(LADO_X) + 58}" y="${py(LADO_Y / 2)}" font-family="${FUENTE}" font-size="26" letter-spacing="4" fill="#6f7178" text-anchor="middle" transform="rotate(90 ${px(LADO_X) + 58} ${py(LADO_Y / 2)})">RIVADAVIA</text>`}
+  ${clave === "subsuelo" ? "" : `<text x="${px(LADO_X / 2)}" y="${py(LADO_Y) + 56}" font-family="${FUENTE}" font-size="26" letter-spacing="4" fill="#6f7178" text-anchor="middle">AV. COLÓN</text>
+  <text x="${px(LADO_X) + 44}" y="${py(LADO_Y / 2)}" font-family="${FUENTE}" font-size="26" letter-spacing="4" fill="#6f7178" text-anchor="middle" transform="rotate(90 ${px(LADO_X) + 44} ${py(LADO_Y / 2)})">RIVADAVIA</text>`}
 </svg>`;
 }
 
@@ -424,16 +453,16 @@ export function svgFachada(cam: Camara) {
   fondo.push(poly([[-60, LADO_Y, 0], [LADO_X + 3.5, LADO_Y, 0], [LADO_X + 3.5, LADO_Y + 3.5, 0], [-60, LADO_Y + 3.5, 0]], `fill="#17181c"`));
   fondo.push(poly([[LADO_X, -60, 0], [LADO_X + 3.5, -60, 0], [LADO_X + 3.5, LADO_Y + 3.5, 0], [LADO_X, LADO_Y + 3.5, 0]], `fill="#17181c"`));
   // Vecinos oscuros: dan escala y hacen leer la esquina
-  fondo.push(frente(-16, 0, 0, 14, `fill="#14161b"`) + frente(0, LADO_X, 0, 18, `fill="#111318"`, -2) + lateral(-12, 0, 0, 18, `fill="#0f1114"`, LADO_X));
+  fondo.push(frente(-28, -9, 0, 14, `fill="#14161b"`) + frente(-6, 26, 0, 18, `fill="#111318"`, -12) + lateral(-26, -12, 0, 18, `fill="#0f1114"`, 26));
   for (let i = 0; i < 9; i++) {
-    const x = -15 + (i % 3) * 4.6;
+    const x = -27 + (i % 3) * 4.6;
     const z = 2.5 + Math.floor(i / 3) * 3.8;
     if (rnd() > 0.45) fondo.push(frente(x, x + 2.2, z, z + 1.5, `fill="#d9a974" opacity="${(0.1 + rnd() * 0.15).toFixed(2)}"`));
   }
 
   const zTop = zPiso(8);
-  const y4 = BLOQUE.b4[1];
-  const y3 = BLOQUE.b3[1];
+  const y4 = 0;
+  const y3 = Y_FRENTE;
 
   // Frente (Av. Colón): pisos 1 a 7 con losas, vidrios y barandas
   const detallesFrente: string[] = [frente(0, LADO_X, ALTURA.pb, zTop + 0.35, `fill="#3f4246"`)];
@@ -442,8 +471,9 @@ export function svgFachada(cam: Camara) {
     const z1 = zPiso(n);
     const z2 = z1 + ALTURA.piso;
     for (const [a, b] of [
-      [0, 8],
-      [8, LADO_X],
+      [0, BLOQUE.a[2]],
+      [BLOQUE.b[0], BLOQUE.b[2]],
+      [BLOQUE.c[0], LADO_X],
     ]) {
       const prendida = rnd() > 0.4;
       detallesFrente.push(frente(a + 0.15, b - 0.15, z1 + 0.35, z2, luz(prendida, "frente")));
@@ -468,37 +498,34 @@ export function svgFachada(cam: Camara) {
   // Planta baja: rampa, lobby iluminado y el local con vidrieras en las dos calles
   detallesFrente.unshift(
     frente(0, LADO_X, 0, ALTURA.pb, `fill="#26292e"`),
-    frente(0.2, 2.9, 0, 2.6, `fill="#0b0c0e"`),
-    frente(0.2, 2.9, 2.5, 2.6, `fill="#e8b878" opacity="0.5"`),
-    frente(3.1, 6.4, 0, 3.6, `fill="#e9c995" opacity="0.8"`),
-    frente(4.4, 5.2, 0, 2.4, `fill="#3b2f22" opacity="0.6"`),
-    frente(2.8, 6.8, 3.6, 3.9, `fill="#e9e3d8"`),
-    frente(6.6, LADO_X - 0.15, 0.2, 3.7, `fill="#d9b886" opacity="0.62"`),
+    frente(0.15, LOBBY[0] - 0.15, 0.2, 3.9, `fill="#d9b886" opacity="0.6"`),
+    frente(LOBBY[0] + 0.15, LOBBY[2] - 0.15, 0, 3.9, `fill="#e9c995" opacity="0.82"`),
+    frente(9.4, 10.6, 0, 2.5, `fill="#3b2f22" opacity="0.6"`),
+    frente(LOBBY[0] - 0.3, LOBBY[2] + 0.3, 3.9, 4.15, `fill="#e9e3d8"`),
+    frente(LOBBY[2] + 0.15, LADO_X - 0.15, 0.2, 3.9, `fill="#d9b886" opacity="0.62"`),
   );
-  for (let x = 8.4; x < LADO_X; x += 1.9) detallesFrente.push(frente(x - 0.06, x + 0.06, 0.2, 3.7, `fill="#2a2d32"`));
-  detallesFrente.push(frente(-0.05, LADO_X + 0.05, 3.7, ALTURA.pb, `fill="#bdb6ab"`));
-  detallesLateral.unshift(lateral(0, LADO_Y, 0, ALTURA.pb, `fill="#212428"`), lateral(0.15, LADO_Y - 0.15, 0.2, 3.7, `fill="#c7a676" opacity="0.55"`));
-  for (let y = 1.9; y < LADO_Y; y += 1.9) detallesLateral.push(lateral(y - 0.06, y + 0.06, 0.2, 3.7, `fill="#26292e"`));
-  detallesLateral.push(lateral(0, LADO_Y, 3.7, ALTURA.pb, `fill="#97918a"`));
+  for (const x of [2.1, 4.2, 15.8, 17.9]) detallesFrente.push(frente(x - 0.06, x + 0.06, 0.2, 3.9, `fill="#2a2d32"`));
+  detallesFrente.push(frente(-0.05, LADO_X + 0.05, 4.15, ALTURA.pb, `fill="#bdb6ab"`));
+  detallesLateral.unshift(lateral(0, LADO_Y, 0, ALTURA.pb, `fill="#212428"`), lateral(0.15, LADO_Y - 0.15, 0.2, 3.9, `fill="#c7a676" opacity="0.55"`));
+  for (let y = 1.9; y < LADO_Y; y += 1.9) detallesLateral.push(lateral(y - 0.06, y + 0.06, 0.2, 3.9, `fill="#26292e"`));
+  detallesLateral.push(lateral(0, LADO_Y, 4.15, ALTURA.pb, `fill="#97918a"`));
 
   cara([LADO_X / 2, LADO_Y, zTop / 2], ...detallesFrente);
   cara([LADO_X, (y4 + LADO_Y) / 2, zTop / 2], ...detallesLateral);
-  // Fondo del patio (contrafrente del núcleo, en sombra)
-  cara([PATIO[0], PATIO[3] / 2, zTop / 2], lateral(0, PATIO[3], ALTURA.pb, zTop + 0.35, `fill="#1c1e22"`, PATIO[0]));
 
   // Piso 8: gimnasio y SUM cerrados, terraza con pileta en la esquina
   const z8 = zTop + 0.35;
   const z8b = zTop + ALTURA.amenities;
   const zp = z8b + ALTURA.parapeto;
-  cara([8, (y3 + LADO_Y) / 2, z8], lateral(y3, LADO_Y, z8, zp, `fill="#2c3035"`, 8), lateral(y3 + 0.3, LADO_Y - 0.3, z8 + 0.2, z8b - 0.3, `fill="#b98c5c" opacity="0.55"`, 8), lateral(y3, LADO_Y, z8b, zp, `fill="#9d978d"`, 8));
-  cara([11.1, y3, z8], frente(8, 14.2, z8, zp, `fill="#30343a"`, y3), frente(8.6, 13.6, z8 + 0.2, z8b - 0.4, `fill="#c99a66" opacity="0.45"`, y3), frente(8, 14.2, z8b, zp, `fill="#b9b2a7"`, y3));
-  cara([14.2, y3 / 2, z8], lateral(0, y3, z8, zp, `fill="#2a2d32"`, 14.2), lateral(0.5, y3 - 0.5, z8 + 0.2, z8b - 0.4, `fill="#b98c5c" opacity="0.4"`, 14.2), lateral(0, y3, z8b, zp, `fill="#98928a"`, 14.2));
-  const vidriosGym = [frente(0, 8, z8, zp, `fill="#3f4246"`), frente(0.3, 7.7, z8 + 0.2, z8b - 0.3, `fill="#d8aa70" opacity="0.75"`)];
-  for (let x = 1.6; x < 7.7; x += 1.6) vidriosGym.push(frente(x - 0.05, x + 0.05, z8 + 0.2, z8b - 0.3, `fill="#2a2d32"`));
-  vidriosGym.push(frente(-0.1, 8.1, z8b, zp, `fill="#d3cdc2"`));
-  cara([4, LADO_Y, z8], ...vidriosGym);
+  cara([11.82, (y3 + LADO_Y) / 2, z8], lateral(y3, LADO_Y, z8, zp, `fill="#2c3035"`, 11.82), lateral(y3 + 0.3, LADO_Y - 0.3, z8 + 0.2, z8b - 0.3, `fill="#b98c5c" opacity="0.55"`, 11.82), lateral(y3, LADO_Y, z8b, zp, `fill="#9d978d"`, 11.82));
+  cara([12.5, y3, z8], frente(11.82, 13.13, z8, zp, `fill="#30343a"`, y3), frente(11.82, 13.13, z8b, zp, `fill="#b9b2a7"`, y3));
+  cara([13.13, y3 / 2, z8], lateral(0, y3, z8, zp, `fill="#2a2d32"`, 13.13), lateral(0.5, y3 - 0.5, z8 + 0.2, z8b - 0.4, `fill="#b98c5c" opacity="0.4"`, 13.13), lateral(0, y3, z8b, zp, `fill="#98928a"`, 13.13));
+  const vidriosGym = [frente(0, 11.82, z8, zp, `fill="#3f4246"`), frente(0.3, 11.82 - 0.3, z8 + 0.2, z8b - 0.3, `fill="#d8aa70" opacity="0.75"`)];
+  for (let x = 1.6; x < 11.82 - 0.4; x += 1.6) vidriosGym.push(frente(x - 0.05, x + 0.05, z8 + 0.2, z8b - 0.3, `fill="#2a2d32"`));
+  vidriosGym.push(frente(-0.1, 11.82 + 0.1, z8b, zp, `fill="#d3cdc2"`));
+  cara([5.9, LADO_Y, z8], ...vidriosGym);
   // Barandas de vidrio (lo más cercano)
-  cara([14, LADO_Y + 0.2, z8], frente(8, LADO_X, z8, z8 + 1.1, `fill="#a9c6d6" opacity="0.25"`), frente(8, LADO_X, z8 + 1.04, z8 + 1.12, `fill="#d3cdc2"`));
+  cara([16, LADO_Y + 0.2, z8], frente(11.82, LADO_X, z8, z8 + 1.1, `fill="#a9c6d6" opacity="0.25"`), frente(11.82, LADO_X, z8 + 1.04, z8 + 1.12, `fill="#d3cdc2"`));
   cara([LADO_X + 0.2, LADO_Y / 2, z8], lateral(0, LADO_Y, z8, z8 + 1.1, `fill="#a9c6d6" opacity="0.2"`), lateral(0, LADO_Y, z8 + 1.04, z8 + 1.12, `fill="#a59f95"`));
 
   const dist = ([x, y, z]: V3) => Math.hypot(x - pos[0], y - pos[1], z - pos[2]);
@@ -519,7 +546,7 @@ export function svgFachada(cam: Camara) {
   const zonas: Record<number, Punto[]> = {};
   for (const p of PISOS.filter((x) => x.numero >= 0 && x.numero < 8)) {
     const z1 = zPiso(p.numero);
-    zonas[p.numero] = franja(proy, z1, z1 + altoPiso(p.numero), p.numero >= 1 ? PATIO[3] : 0);
+    zonas[p.numero] = franja(proy, z1, z1 + altoPiso(p.numero), 0);
   }
   // Piso 8: la losa, la baranda de la terraza y el contorno de los volúmenes cerrados (gimnasio, SUM y núcleo).
   zonas[8] = (
@@ -528,10 +555,10 @@ export function svgFachada(cam: Camara) {
       [LADO_X, LADO_Y, zTop],
       [LADO_X, 0, zTop],
       [LADO_X, 0, z8 + 1.1],
-      [14.2, 0, zp],
-      [14.2, y3, zp],
-      [8, y3, zp],
-      [8, LADO_Y, zp],
+      [13.13, 0, zp],
+      [13.13, y3, zp],
+      [11.82, y3, zp],
+      [11.82, LADO_Y, zp],
       [0, LADO_Y, zp],
     ] as V3[]
   ).map(aPct);

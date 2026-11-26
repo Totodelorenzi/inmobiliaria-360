@@ -1,7 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
-import { nombreUnidad } from "@/lib/edificio";
+import { conArticulo } from "@/lib/edificio";
 import { validarConsulta, type DatosConsulta, type ErroresConsulta } from "@/lib/consulta";
 import { getAgenciaDelPedido } from "@/lib/data/sitio";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -71,7 +71,7 @@ export async function pedirContacto(_prev: EstadoContacto, formData: FormData): 
       propertyId: null,
       unitId: unidad.id,
       origen: "formulario",
-      datos: { nombre: datos.nombre, telefono: datos.telefono, mensaje: `Me interesa ${nombreUnidad(unidad).replace(/^Unidad/, "la unidad").replace(/^Cochera/, "la cochera").replace(/^Local comercial/, "el local comercial")} de ${unidad.proyecto.nombre}. Prefiero que me escriban por WhatsApp.` },
+      datos: { nombre: datos.nombre, telefono: datos.telefono, mensaje: `Me interesa ${conArticulo(unidad)} de ${unidad.proyecto.nombre}. Prefiero que me escriban por WhatsApp.` },
       consentimiento: true,
       utm,
     });

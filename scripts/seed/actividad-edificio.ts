@@ -59,8 +59,8 @@ const PERSONAS: Persona[] = [
     telefono: "2284 00-0101",
     email: "carolina.mendez@example.com",
     visitas: [
-      { diasAtras: 11, unidades: ["3C", "4C"], ambientes: 5, segundos: 40, espacios: ["pileta"] },
-      { diasAtras: 5, unidades: ["5B", "4C"], ambientes: 6, segundos: 35 },
+      { diasAtras: 11, unidades: ["3B", "4B"], ambientes: 5, segundos: 40, espacios: ["pileta"] },
+      { diasAtras: 5, unidades: ["5B", "4B"], ambientes: 6, segundos: 35 },
       { diasAtras: 1, unidades: ["5B"], ambientes: 4, segundos: 30, espacios: ["sum", "pileta"] },
     ],
     consulta: { unidad: "5B", mensaje: "Me interesa la unidad 5B de Edificio Mirador. Prefiero que me escriban por WhatsApp." },
@@ -107,8 +107,8 @@ const PERSONAS: Persona[] = [
     nombre: "Mariana Suárez",
     telefono: "2284 00-0105",
     email: "mariana.suarez@example.com",
-    visitas: [{ diasAtras: 4, unidades: ["Local"], ambientes: 2, segundos: 35 }],
-    consulta: { unidad: "Local", mensaje: "¿El local admite gastronomía? Busco para una cafetería." },
+    visitas: [{ diasAtras: 4, unidades: ["Local 1"], ambientes: 2, segundos: 35 }],
+    consulta: { unidad: "Local 1", mensaje: "¿El local admite gastronomía? Busco para una cafetería." },
     campana: CAMPANA.cartel,
   },
   {

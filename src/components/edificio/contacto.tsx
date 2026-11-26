@@ -9,6 +9,7 @@ import { WhatsappIcon } from "@/components/sitio/iconos-marca";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
 import type { UnidadProyecto } from "@/lib/data/proyecto";
+import { nombreUnidad } from "@/lib/edificio";
 import { abrirWhatsapp, campana } from "./utiles";
 
 export type PedidoContacto = { unidad: UnidadProyecto; origen: "galeria_fin" | "galeria_cierre" | "boton"; detalle: string | null };
@@ -31,7 +32,7 @@ export function Contacto({ pedido, ...resto }: Props) {
 
 /** "el 3C", "el local", "la cochera C4". */
 function articulo(u: UnidadProyecto) {
-  if (u.categoria === "local") return "el local";
+  if (u.categoria === "local") return `el ${u.codigo.toLowerCase()}`;
   if (u.categoria === "cochera") return `la cochera ${u.codigo}`;
   return `el ${u.codigo}`;
 }
@@ -102,7 +103,7 @@ function Ventana({ pedido, agencyId, projectId, proyecto, whatsapp, url, onCerra
             </div>
             <p className="rounded-xl border border-white/10 px-3 py-2 text-sm">
               <span className="text-muted">Consulta por </span>
-              <strong className="font-semibold">{unidad.categoria === "local" ? "Local comercial" : unidad.categoria === "cochera" ? `Cochera ${unidad.codigo}` : `Unidad ${unidad.codigo}`}</strong>
+              <strong className="font-semibold">{nombreUnidad(unidad)}</strong>
               {pedido.detalle && <span className="text-muted"> · {pedido.detalle}</span>}
             </p>
             {e?.general && (

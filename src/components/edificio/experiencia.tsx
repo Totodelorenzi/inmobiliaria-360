@@ -9,6 +9,7 @@ import type { EspacioProyecto, Proyecto, UnidadProyecto } from "@/lib/data/proye
 import {
   buscarEspacio,
   buscarUnidad,
+  conArticulo,
   leerVista,
   mismaVista,
   nombrePiso,
@@ -328,10 +329,10 @@ function Barra({
         : p.tipo === "piso"
           ? nombrePiso(p.numero)
           : p.tipo === "unidad"
-            ? (buscarUnidad(proyecto, p.codigo)?.unidad.categoria === "local" ? "Local" : (buscarUnidad(proyecto, p.codigo)?.unidad.codigo ?? "Unidad"))
+            ? (buscarUnidad(proyecto, p.codigo)?.unidad.codigo ?? "Unidad")
             : "Volver";
   const enGaleria = vista.tipo === "imagenes" || vista.tipo === "espacio";
-  const mensaje = unidad ? `Hola, me interesa ${unidad.categoria === "local" ? "el local" : unidad.categoria === "cochera" ? `la cochera ${unidad.codigo}` : `la unidad ${unidad.codigo}`} de ${proyecto.nombre}. ${urlUnidad(unidad)}` : `Hola, quiero saber más sobre ${proyecto.nombre}. ${urlPublica}`;
+  const mensaje = unidad ? `Hola, me interesa ${conArticulo(unidad)} de ${proyecto.nombre}. ${urlUnidad(unidad)}` : `Hola, quiero saber más sobre ${proyecto.nombre}. ${urlPublica}`;
 
   return (
     <header

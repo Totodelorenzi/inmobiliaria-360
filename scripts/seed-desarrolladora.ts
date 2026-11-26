@@ -231,10 +231,11 @@ async function main() {
     precio: CONSULTAR.has(u.codigo) ? null : precioUnidad(u),
     moneda: "USD",
     estado: ESTADOS[u.codigo] ?? "disponible",
+    espejada: u.espejada,
     poligono: enPlanta(u.forma),
   }));
   fallar("Unidades", (await db.from("units").insert(unidades)).error);
-  log(`${pisos.length} pisos y ${unidades.length} unidades (${UNIDADES.filter((u) => u.categoria === "departamento").length} departamentos, local y ${UNIDADES.filter((u) => u.categoria === "cochera").length} cocheras)`);
+  log(`${pisos.length} pisos y ${unidades.length} unidades (${UNIDADES.filter((u) => u.categoria === "departamento").length} departamentos, ${UNIDADES.filter((u) => u.categoria === "local").length} locales y ${UNIDADES.filter((u) => u.categoria === "cochera").length} cocheras)`);
 
   // 7. Espacios comunes con su punto en la planta y sus imágenes
   const espacios = ESPACIOS.map((e, orden) => ({
