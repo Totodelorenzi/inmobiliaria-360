@@ -47,7 +47,8 @@ export default async function EdificioLayout({ children, params }: LayoutProps<"
       <style>{`html,body{background:${FONDO_EDIFICIO};color-scheme:dark}html{scrollbar-width:none}html::-webkit-scrollbar{display:none}`}</style>
       {children}
       <ScriptAvisoPrivacidad />
-      <AvisoPrivacidad />
+      {/* Arriba: abajo tapaba el nombre del proyecto en la primera pantalla del celular. */}
+      <AvisoPrivacidad posicion="arriba" />
     </div>
   );
 }
